@@ -894,12 +894,40 @@ function renderHeader() {
   ui.todayLabel.textContent = `${dateLabel} | 선택 루틴: ${weekday.title}${weekendHint}`;
 }
 
+function setAuthSignedInView(isSignedIn) {
+  if (ui.authEmailInput) {
+    ui.authEmailInput.hidden = isSignedIn;
+  }
+  if (ui.authPasswordInput) {
+    ui.authPasswordInput.hidden = isSignedIn;
+  }
+  if (ui.authLoginBtn) {
+    ui.authLoginBtn.hidden = isSignedIn;
+  }
+  if (ui.authSignupBtn) {
+    ui.authSignupBtn.hidden = isSignedIn;
+  }
+  if (ui.authGoogleBtn) {
+    ui.authGoogleBtn.hidden = isSignedIn;
+  }
+  if (ui.authKakaoBtn) {
+    ui.authKakaoBtn.hidden = isSignedIn;
+  }
+  if (ui.authLogoutBtn) {
+    ui.authLogoutBtn.hidden = !isSignedIn;
+  }
+  if (ui.cloudSyncBtn) {
+    ui.cloudSyncBtn.hidden = !isSignedIn;
+  }
+}
+
 function renderAuth() {
   if (!ui.authStatus || !ui.authLoginBtn || !ui.authSignupBtn || !ui.authGoogleBtn || !ui.authKakaoBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
     return;
   }
 
   if (!cloudState.enabled) {
+    setAuthSignedInView(false);
     ui.authStatus.textContent = "클라우드: 미설정";
     ui.authLoginBtn.textContent = "로그인";
     if (ui.authEmailInput) {
@@ -924,6 +952,8 @@ function renderAuth() {
 
   const email = cloudState.user?.email || "";
   const identity = email || "로그인됨";
+  const isSignedIn = Boolean(cloudState.user);
+  setAuthSignedInView(isSignedIn);
   ui.authStatus.textContent = cloudState.user
     ? `클라우드: ${identity}`
     : "클라우드: 로그아웃";
@@ -964,6 +994,35 @@ function renderAuth() {
   ui.authMessage.textContent = "";
 }
 
+function getExerciseIcon(exercise) {
+  const idText = String(exercise?.id || "").toLowerCase();
+  const nameText = String(exercise?.name || "").toLowerCase();
+  const fullText = `${idText} ${nameText}`;
+
+  if (fullText.includes("walk") || fullText.includes("cardio") || fullText.includes("incline")) {
+    return "🚶";
+  }
+  if (fullText.includes("hip") || fullText.includes("glute") || fullText.includes("thrust")) {
+    return "🍑";
+  }
+  if (fullText.includes("lat") || fullText.includes("row") || fullText.includes("pulldown")) {
+    return "🪢";
+  }
+  if (fullText.includes("curl") || fullText.includes("triceps") || fullText.includes("biceps") || fullText.includes("hammer")) {
+    return "💪";
+  }
+  if (fullText.includes("plank") || fullText.includes("crunch") || fullText.includes("raise") || fullText.includes("twist")) {
+    return "🧘";
+  }
+  if (fullText.includes("leg") || fullText.includes("squat") || fullText.includes("calf")) {
+    return "🦵";
+  }
+  if (fullText.includes("press") || fullText.includes("shoulder") || fullText.includes("chest")) {
+    return "🏋️";
+  }
+  return "✨";
+}
+
 function renderDayTabs() {
   ui.dayTabs.innerHTML = WEEKDAYS.map((item) => {
     const activeClass = item.code === selectedDay ? "active" : "";
@@ -1000,7 +1059,10 @@ function renderQueue() {
 
     return `
       <li class="${classNames}">
-        <button class="queue-name" data-jump-exercise="${item.id}">${escapeHtml(item.name)}</button>
+        <button class="queue-name" data-jump-exercise="${item.id}">
+          <span class="queue-icon" aria-hidden="true">${getExerciseIcon(item)}</span>
+          <span class="queue-text">${escapeHtml(item.name)}</span>
+        </button>
         <span class="queue-meta">${doneSets}/${totalSets}세트</span>
       </li>
     `;
@@ -1028,7 +1090,7 @@ function renderRoutineEditor() {
   }
 
   ui.editorExerciseSelect.innerHTML = exercises.map((item, index) => {
-    const optionLabel = `${index + 1}. ${item.name}`;
+    const optionLabel = `${index + 1}. ${getExerciseIcon(item)} ${item.name}`;
     return `<option value="${escapeHtml(item.id)}">${escapeHtml(optionLabel)}</option>`;
   }).join("");
   ui.editorExerciseSelect.value = editorSelectedExerciseId;
@@ -1048,7 +1110,7 @@ function renderCurrentExercise() {
   const active = getActiveExercise();
 
   if (!active || allDone) {
-    ui.currentExerciseTitle.textContent = "오늘 루틴 완료";
+    ui.currentExerciseTitle.textContent = "🎉 오늘 루틴 완료";
     ui.currentExerciseTarget.textContent = "좋아, 계획한 운동은 전부 끝났어.";
     ui.targetSetList.innerHTML = "";
     ui.guideHowTo.textContent = "마무리 스트레칭 5분 진행하고 수분 보충해.";
@@ -1068,7 +1130,7 @@ function renderCurrentExercise() {
   ui.startWorkoutBtn.textContent = workoutTimer.running ? "운동 진행중" : "운동 시작";
   ui.completeSetBtn.disabled = false;
   ui.markExerciseDoneBtn.disabled = false;
-  ui.currentExerciseTitle.textContent = active.name;
+  ui.currentExerciseTitle.textContent = `${getExerciseIcon(active)} ${active.name}`;
   ui.currentExerciseTarget.textContent = `목표 ${active.sets.length}세트 | 기본 휴식 ${active.restSec}초`;
 
   const done = getSetDone(active.id);
