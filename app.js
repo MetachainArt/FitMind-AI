@@ -17,6 +17,32 @@ const DEFAULT_EXERCISE_GUIDE = {
   mistake: "Using momentum instead of target-muscle tension."
 };
 
+const EXERCISE_VIDEO_QUERY_OVERRIDES = {
+  "leg-press": { howTo: "레그프레스 운동방법", machine: "레그프레스 기구 사용법" },
+  "hip-abduction": { howTo: "힙 어브덕션 운동방법", machine: "힙 어브덕션 머신 사용법" },
+  "hip-adduction": { howTo: "힙 어덕션 운동방법", machine: "힙 어덕션 머신 사용법" },
+  "lying-leg-curl": { howTo: "라잉 레그컬 운동방법", machine: "라잉 레그컬 기구 사용법" },
+  "standing-calf-raise": { howTo: "스탠딩 카프레이즈 운동방법", machine: "카프레이즈 머신 사용법" },
+  "lat-pulldown": { howTo: "랫풀다운 운동방법", machine: "랫풀다운 기구 사용법" },
+  "seated-row": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
+  "barbell-curl": { howTo: "바벨 컬 운동방법", machine: "바벨 컬 그립 사용법" },
+  "hammer-curl": { howTo: "해머 컬 운동방법", machine: "덤벨 해머 컬 자세" },
+  "triceps-pushdown": { howTo: "트라이셉스 푸시다운 운동방법", machine: "케이블 푸시다운 기구 사용법" },
+  "hanging-leg-raise": { howTo: "행잉 레그레이즈 운동방법", machine: "철봉 딥스 스테이션 사용법" },
+  "cable-crunch": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
+  plank: { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
+  "squat-machine": { howTo: "스쿼트 머신 운동방법", machine: "스쿼트 머신 사용법" },
+  "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
+  "leg-curl-seated": { howTo: "시티드 레그컬 운동방법", machine: "시티드 레그컬 기구 사용법" },
+  "hip-thrust": { howTo: "힙 쓰러스트 운동방법", machine: "힙쓰러스트 머신 사용법" },
+  "calf-press": { howTo: "카프 프레스 운동방법", machine: "카프 프레스 기구 사용법" },
+  "chest-press": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 기구 사용법" },
+  "shoulder-press": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
+  "lateral-raise": { howTo: "레터럴 레이즈 운동방법", machine: "덤벨 레터럴 레이즈 자세" },
+  "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
+  "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
+};
+
 function exercise({
   id,
   name,
@@ -381,6 +407,9 @@ const ui = {
   guideBall: document.getElementById("guideBall"),
   guideSafety: document.getElementById("guideSafety"),
   guideMistake: document.getElementById("guideMistake"),
+  videoLinkNote: document.getElementById("videoLinkNote"),
+  howToVideoLink: document.getElementById("howToVideoLink"),
+  machineVideoLink: document.getElementById("machineVideoLink"),
   completionRate: document.getElementById("completionRate"),
   exerciseDoneCount: document.getElementById("exerciseDoneCount"),
   setDoneCount: document.getElementById("setDoneCount"),
@@ -897,6 +926,7 @@ function renderCurrentExercise() {
     ui.startWorkoutBtn.textContent = "운동 완료";
     ui.completeSetBtn.disabled = true;
     ui.markExerciseDoneBtn.disabled = true;
+    renderExerciseVideoLinks(null);
     return;
   }
 
@@ -924,6 +954,7 @@ function renderCurrentExercise() {
   ui.guideBall.textContent = active.ball;
   ui.guideSafety.textContent = active.safety;
   ui.guideMistake.textContent = `자주 하는 실수: ${active.mistake}`;
+  renderExerciseVideoLinks(active);
 }
 
 function renderSummary() {
@@ -1282,6 +1313,55 @@ function getPlanByDay(dayCode) {
 
 function getCurrentPlan() {
   return getPlanByDay(selectedDay);
+}
+
+function buildYoutubeSearchUrl(query) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${query} 한국어`)}`;
+}
+
+function toExerciseVideoKeyword(exerciseName) {
+  const raw = String(exerciseName || "").trim();
+  if (!raw) {
+    return "헬스 운동";
+  }
+  const withoutParen = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+  return withoutParen || raw;
+}
+
+function getExerciseVideoQueries(exerciseItem) {
+  if (!exerciseItem || !exerciseItem.id) {
+    return {
+      howTo: "운동 마무리 스트레칭",
+      machine: "헬스장 기구 세팅 사용법"
+    };
+  }
+  const override = EXERCISE_VIDEO_QUERY_OVERRIDES[exerciseItem.id];
+  if (override) {
+    return override;
+  }
+  const keyword = toExerciseVideoKeyword(exerciseItem.name);
+  return {
+    howTo: `${keyword} 운동방법`,
+    machine: `${keyword} 기구 사용법`
+  };
+}
+
+function renderExerciseVideoLinks(exerciseItem) {
+  if (!ui.videoLinkNote || !ui.howToVideoLink || !ui.machineVideoLink) {
+    return;
+  }
+  const queries = getExerciseVideoQueries(exerciseItem);
+  if (!exerciseItem) {
+    ui.videoLinkNote.textContent = "루틴 완료 기준 | 마무리/기구 세팅 영상";
+    ui.howToVideoLink.textContent = "마무리 스트레칭 영상 보기";
+    ui.machineVideoLink.textContent = "기구 세팅/정리 영상 보기";
+  } else {
+    ui.videoLinkNote.textContent = `선택 운동: ${exerciseItem.name} | 한국어 영상`;
+    ui.howToVideoLink.textContent = "운동방법 영상 보기";
+    ui.machineVideoLink.textContent = "기구사용법 영상 보기";
+  }
+  ui.howToVideoLink.href = buildYoutubeSearchUrl(queries.howTo);
+  ui.machineVideoLink.href = buildYoutubeSearchUrl(queries.machine);
 }
 
 function splitSetTarget(setText) {
