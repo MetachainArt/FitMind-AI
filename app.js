@@ -386,7 +386,9 @@ const ui = {
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   authStatus: document.getElementById("authStatus"),
   authEmailInput: document.getElementById("authEmailInput"),
+  authPasswordInput: document.getElementById("authPasswordInput"),
   authLoginBtn: document.getElementById("authLoginBtn"),
+  authSignupBtn: document.getElementById("authSignupBtn"),
   authLogoutBtn: document.getElementById("authLogoutBtn"),
   cloudSyncBtn: document.getElementById("cloudSyncBtn"),
   authMessage: document.getElementById("authMessage"),
@@ -460,8 +462,6 @@ const cloudState = {
   enabled: false,
   syncing: false,
   loginSubmitting: false,
-  loginCooldownUntilMs: 0,
-  loginCooldownTimerId: null,
   message: "",
   authSubscription: null
 };
@@ -517,6 +517,10 @@ function bindEvents() {
 
   ui.authLoginBtn.addEventListener("click", () => {
     void handleCloudLogin();
+  });
+
+  ui.authSignupBtn.addEventListener("click", () => {
+    void handleCloudSignup();
   });
 
   ui.authLogoutBtn.addEventListener("click", () => {
@@ -880,7 +884,7 @@ function renderHeader() {
 }
 
 function renderAuth() {
-  if (!ui.authStatus || !ui.authLoginBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
+  if (!ui.authStatus || !ui.authLoginBtn || !ui.authSignupBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
     return;
   }
 
@@ -890,7 +894,11 @@ function renderAuth() {
     if (ui.authEmailInput) {
       ui.authEmailInput.disabled = true;
     }
+    if (ui.authPasswordInput) {
+      ui.authPasswordInput.disabled = true;
+    }
     ui.authLoginBtn.disabled = true;
+    ui.authSignupBtn.disabled = true;
     ui.authLogoutBtn.disabled = true;
     ui.cloudSyncBtn.disabled = true;
     if (!cloudState.message) {
@@ -907,19 +915,22 @@ function renderAuth() {
     ? `클라우드: ${identity}`
     : "클라우드: 로그아웃";
   if (ui.authEmailInput) {
-    ui.authEmailInput.disabled = Boolean(cloudState.user);
+    ui.authEmailInput.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
     if (cloudState.user?.email) {
       ui.authEmailInput.value = cloudState.user.email;
     }
   }
-  const cooldownSec = getLoginCooldownSeconds();
-  ui.authLoginBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting || cooldownSec > 0;
+  if (ui.authPasswordInput) {
+    ui.authPasswordInput.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
+  }
+  ui.authLoginBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
+  ui.authSignupBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
   if (cloudState.loginSubmitting) {
-    ui.authLoginBtn.textContent = "로그인 요청중...";
-  } else if (cooldownSec > 0 && !cloudState.user) {
-    ui.authLoginBtn.textContent = `로그인 (${cooldownSec}s)`;
+    ui.authLoginBtn.textContent = "처리중...";
+    ui.authSignupBtn.textContent = "처리중...";
   } else {
     ui.authLoginBtn.textContent = "로그인";
+    ui.authSignupBtn.textContent = "회원가입";
   }
   ui.authLogoutBtn.disabled = !cloudState.user;
   ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
@@ -1096,47 +1107,6 @@ function readSupabaseConfig() {
   return { url, anonKey, redirectUrl };
 }
 
-function getLoginCooldownSeconds() {
-  const remainMs = Math.max(0, cloudState.loginCooldownUntilMs - Date.now());
-  return Math.ceil(remainMs / 1000);
-}
-
-function ensureLoginCooldownTicker() {
-  if (cloudState.loginCooldownTimerId) {
-    return;
-  }
-  cloudState.loginCooldownTimerId = window.setInterval(() => {
-    if (getLoginCooldownSeconds() <= 0) {
-      window.clearInterval(cloudState.loginCooldownTimerId);
-      cloudState.loginCooldownTimerId = null;
-    }
-    renderAuth();
-  }, 1000);
-}
-
-function setLoginCooldown(seconds) {
-  const sec = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
-  if (sec <= 0) {
-    cloudState.loginCooldownUntilMs = 0;
-    if (cloudState.loginCooldownTimerId) {
-      window.clearInterval(cloudState.loginCooldownTimerId);
-      cloudState.loginCooldownTimerId = null;
-    }
-    return;
-  }
-  cloudState.loginCooldownUntilMs = Date.now() + sec * 1000;
-  ensureLoginCooldownTicker();
-}
-
-function parseAuthCooldownSeconds(message) {
-  const text = String(message || "");
-  const matched = text.match(/after\s+(\d+)\s+seconds?/i);
-  if (matched && Number.isFinite(Number(matched[1]))) {
-    return Number(matched[1]);
-  }
-  return 0;
-}
-
 function readAuthCallbackState() {
   const hashRaw = window.location.hash.startsWith("#")
     ? window.location.hash.slice(1)
@@ -1235,16 +1205,12 @@ async function handleCloudLogin() {
     return;
   }
 
-  const cooldownSec = getLoginCooldownSeconds();
-  if (cooldownSec > 0) {
-    cloudState.message = `보안 제한으로 ${cooldownSec}초 후 다시 시도해줘.`;
-    renderAuth();
-    return;
-  }
-
   const inputEmail = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
-  const email = inputEmail || String(window.prompt("Supabase 로그인 이메일을 입력해 주세요.") || "").trim();
+  const email = inputEmail || String(window.prompt("이메일을 입력해 주세요.") || "").trim();
+  const password = ui.authPasswordInput ? String(ui.authPasswordInput.value || "") : "";
   if (!email) {
+    cloudState.message = "이메일을 입력해 주세요.";
+    renderAuth();
     return;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1252,34 +1218,88 @@ async function handleCloudLogin() {
     renderAuth();
     return;
   }
+  if (!password) {
+    cloudState.message = "비밀번호를 입력해 주세요.";
+    renderAuth();
+    return;
+  }
 
   cloudState.loginSubmitting = true;
-  cloudState.message = "로그인 링크 전송 중...";
+  cloudState.message = "로그인 중...";
   renderAuth();
-  const redirectTo = String(window.FITMIND_SUPABASE_REDIRECT_URL || window.location.origin).trim();
-  const { error } = await cloudState.client.auth.signInWithOtp({
+  const { error } = await cloudState.client.auth.signInWithPassword({
     email: email.trim(),
-    options: {
-      emailRedirectTo: redirectTo
-    }
+    password
   });
   cloudState.loginSubmitting = false;
   if (error) {
-    const waitSec = parseAuthCooldownSeconds(error.message);
-    if (waitSec > 0) {
-      setLoginCooldown(waitSec);
-      cloudState.message = `보안 제한으로 ${waitSec}초 후 다시 시도해줘.`;
-    } else {
-      cloudState.message = `로그인 실패: ${error.message}`;
-    }
+    cloudState.message = `로그인 실패: ${error.message}`;
     renderAuth();
     return;
   }
   if (ui.authEmailInput) {
     ui.authEmailInput.value = email;
   }
-  setLoginCooldown(8);
-  cloudState.message = "메일로 로그인 링크를 보냈어. 메일에서 링크를 열어 완료해줘.";
+  if (ui.authPasswordInput) {
+    ui.authPasswordInput.value = "";
+  }
+  cloudState.message = "로그인 성공";
+  renderAuth();
+  await syncCloudSummaries({ pushLocalFirst: true });
+}
+
+async function handleCloudSignup() {
+  if (!cloudState.enabled || !cloudState.client) {
+    cloudState.message = "Supabase가 설정되지 않았어.";
+    renderAuth();
+    return;
+  }
+
+  const email = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
+  const password = ui.authPasswordInput ? String(ui.authPasswordInput.value || "") : "";
+  if (!email) {
+    cloudState.message = "이메일을 입력해 주세요.";
+    renderAuth();
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    cloudState.message = "이메일 형식이 올바르지 않아.";
+    renderAuth();
+    return;
+  }
+  if (!password || password.length < 6) {
+    cloudState.message = "비밀번호는 6자 이상으로 입력해 주세요.";
+    renderAuth();
+    return;
+  }
+
+  cloudState.loginSubmitting = true;
+  cloudState.message = "회원가입 처리 중...";
+  renderAuth();
+  const { data, error } = await cloudState.client.auth.signUp({
+    email,
+    password
+  });
+  cloudState.loginSubmitting = false;
+  if (error) {
+    cloudState.message = `회원가입 실패: ${error.message}`;
+    renderAuth();
+    return;
+  }
+
+  const hasSession = Boolean(data?.session);
+  if (hasSession) {
+    cloudState.user = data?.session?.user || null;
+    cloudState.message = "회원가입 및 로그인 완료";
+    if (ui.authPasswordInput) {
+      ui.authPasswordInput.value = "";
+    }
+    renderAuth();
+    await syncCloudSummaries({ pushLocalFirst: true });
+    return;
+  }
+
+  cloudState.message = "회원가입 완료. 이메일 인증 후 로그인해 주세요.";
   renderAuth();
 }
 
@@ -1288,7 +1308,6 @@ async function handleCloudLogout() {
     return;
   }
   cloudState.loginSubmitting = false;
-  setLoginCooldown(0);
   const { error } = await cloudState.client.auth.signOut();
   if (error) {
     cloudState.message = `로그아웃 실패: ${error.message}`;
@@ -1296,6 +1315,9 @@ async function handleCloudLogout() {
     cloudState.user = null;
     if (ui.authEmailInput) {
       ui.authEmailInput.value = "";
+    }
+    if (ui.authPasswordInput) {
+      ui.authPasswordInput.value = "";
     }
     cloudState.message = "로그아웃됨";
   }

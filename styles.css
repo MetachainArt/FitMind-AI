@@ -100,6 +100,12 @@ body {
   padding: 6px 10px;
 }
 
+.auth-password-input {
+  width: min(180px, 100%);
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
 .chip {
   margin: 0;
   display: inline-flex;
