@@ -38,8 +38,10 @@ const ROUTINE_PLAN = {
     trainingFocus: "Training Focus: Legs, Glutes, Fat burn",
     warmupMain: "Dynamic warm-up (hip/ankle/knee)",
     warmupTime: "5 min",
+    warmupNote: "가볍게 관절 풀기 + 엉덩이 활성화",
     cardioMain: "Incline Walk 5.8~6.3 km/h",
     cardioTime: "40 min",
+    cardioPlan: "0-5' 6% -> 5-15' 8% -> 15-30' 10% -> 30-35' 8% -> 35-40' 6%",
     exercises: [
       exercise({
         id: "leg-press",
@@ -51,6 +53,28 @@ const ROUTINE_PLAN = {
         ball: "대체: 짐볼 월 스쿼트 12회 x 3세트.",
         safety: "무릎을 끝까지 잠그지 말고 발끝과 무릎 방향을 맞춰.",
         mistake: "반동으로 빠르게 밀면 무릎과 허리에 부담이 커져."
+      }),
+      exercise({
+        id: "hip-abduction",
+        name: "힙 어브덕션 (Hip Abduction, 벌리기)",
+        sets: ["35kg x15", "35kg x15", "35kg x15"],
+        restSec: 70,
+        howTo: "허리를 세우고 무릎으로 바깥쪽을 밀어 엉덩이 옆쪽을 조여.",
+        machine: "등받이에 밀착하고 패드 위치를 무릎 바깥에 맞춘 뒤 가동범위를 일정하게 유지.",
+        ball: "대체: 미니밴드 사이드 스텝 15회 x 3세트.",
+        safety: "반동 없이 천천히 벌리고 모아. 허리 과신전 금지.",
+        mistake: "상체를 흔들어 밀면 중둔근 자극이 줄어."
+      }),
+      exercise({
+        id: "hip-adduction",
+        name: "힙 어덕션 (Hip Adduction, 조이기)",
+        sets: ["30kg x15", "30kg x15", "30kg x15"],
+        restSec: 70,
+        howTo: "골반을 고정하고 허벅지 안쪽 힘으로 패드를 조여.",
+        machine: "등을 붙이고 좌석 깊이를 맞춘 뒤 양쪽 다리 각도를 대칭으로 유지.",
+        ball: "대체: 짐볼/요가볼 무릎 사이 조이기 15회 x 3세트.",
+        safety: "사타구니 통증이 있으면 가동범위를 줄여서 진행.",
+        mistake: "힘으로 빠르게 닫으면 내전근 긴장만 올라가고 자극이 분산돼."
       }),
       exercise({
         id: "lying-leg-curl",
@@ -82,8 +106,10 @@ const ROUTINE_PLAN = {
     trainingFocus: "Training Focus: Back, Biceps, Fat loss",
     warmupMain: "Band row + shoulder mobility",
     warmupTime: "5 min",
+    warmupNote: "등/어깨 관절 가동 + 등 활성화",
     cardioMain: "Incline Walk 6.0~6.5 km/h",
     cardioTime: "40 min",
+    cardioPlan: "0-5' 6% -> 5-10' 8% -> 10-20' 10% -> 20-30' 12%(힘들면 10%) -> 30-35' 8% -> 35-40' 6%",
     exercises: [
       exercise({
         id: "lat-pulldown",
@@ -148,13 +174,15 @@ const ROUTINE_PLAN = {
     trainingFocus: "Training Focus: Belly fat destruction",
     warmupMain: "Easy walk + trunk activation",
     warmupTime: "5 min",
+    warmupNote: "복압/호흡 잡고 코어 깨우기",
     cardioMain: "Incline Walk 5.8~6.2 km/h",
     cardioTime: "40 min",
+    cardioPlan: "0-5' 6% -> 5-25' 10% 유지 -> 25-35' 12%(심박 과하면 10%) -> 35-40' 6%",
     exercises: [
       exercise({
         id: "hanging-leg-raise",
         name: "행잉 레그레이즈 (Hanging Leg Raise)",
-        sets: ["10회", "10회", "10회"],
+        sets: ["10", "10", "10"],
         restSec: 75,
         howTo: "골반을 말아 올린다는 느낌으로 다리를 들어.",
         machine: "철봉/딥스 스테이션에서 어깨를 끌어내리고 버텨.",
@@ -165,7 +193,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "cable-crunch",
         name: "케이블 크런치 (Cable Crunch)",
-        sets: ["15회", "15회", "15회"],
+        sets: ["15", "15", "15"],
         restSec: 60,
         howTo: "갈비뼈를 골반 쪽으로 접는 느낌으로 말아 내려와.",
         machine: "케이블 로프를 머리 옆에 고정하고 무릎 고정.",
@@ -176,7 +204,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "plank",
         name: "플랭크 (Plank)",
-        sets: ["60초", "60초", "60초"],
+        sets: ["60s", "60s", "60s"],
         restSec: 60,
         howTo: "머리-골반-발뒤꿈치가 일직선. 배꼽을 끌어당겨 유지해.",
         machine: "기구 없음. 팔꿈치는 어깨 아래 정렬.",
@@ -192,8 +220,10 @@ const ROUTINE_PLAN = {
     trainingFocus: "Training Focus: Thighs, Glutes",
     warmupMain: "Lower-body prep (glute bridge/air squat)",
     warmupTime: "5 min",
+    warmupNote: "무릎/고관절 안정화 위주",
     cardioMain: "Incline Walk 5.8~6.3 km/h",
     cardioTime: "40 min",
+    cardioPlan: "0-5' 6% -> 5-20' 8% -> 20-30' 10% -> 30-35' 8% -> 35-40' 6%",
     exercises: [
       exercise({
         id: "squat-machine",
@@ -258,8 +288,10 @@ const ROUTINE_PLAN = {
     trainingFocus: "Training Focus: Upper body, Core",
     warmupMain: "Shoulder warm-up (band pull-apart/light press)",
     warmupTime: "5 min",
+    warmupNote: "어깨 가동 + 가슴/견갑 안정",
     cardioMain: "Incline Walk 6.0~6.5 km/h",
     cardioTime: "40 min",
+    cardioPlan: "0-5' 6% -> 5-15' 8% -> 15-25' 10% -> 25-35' 12% -> 35-40' 6%",
     exercises: [
       exercise({
         id: "chest-press",
@@ -297,7 +329,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "cable-crunch-fri",
         name: "케이블 크런치 (Cable Crunch)",
-        sets: ["15회", "15회", "15회"],
+        sets: ["15", "15", "15"],
         restSec: 60,
         howTo: "복부를 둥글게 말며 천천히 수축해.",
         machine: "케이블 로프를 머리 옆에 고정하고 코어 유지.",
@@ -308,7 +340,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "russian-twist",
         name: "러시안 트위스트 (Russian Twist)",
-        sets: ["20회", "20회", "20회"],
+        sets: ["20", "20", "20"],
         restSec: 60,
         howTo: "상체를 길게 세운 채 몸통 회전으로 좌우를 터치해.",
         machine: "기구 없음. 필요하면 가벼운 플레이트 사용.",
@@ -329,8 +361,10 @@ const ui = {
   dayTrainingFocus: document.getElementById("dayTrainingFocus"),
   warmupMain: document.getElementById("warmupMain"),
   warmupTime: document.getElementById("warmupTime"),
+  warmupNote: document.getElementById("warmupNote"),
   cardioMain: document.getElementById("cardioMain"),
   cardioTime: document.getElementById("cardioTime"),
+  cardioPlan: document.getElementById("cardioPlan"),
   exerciseQueue: document.getElementById("exerciseQueue"),
   currentExerciseTitle: document.getElementById("currentExerciseTitle"),
   currentExerciseTarget: document.getElementById("currentExerciseTarget"),
@@ -733,8 +767,10 @@ function renderDayInfo() {
   ui.dayTrainingFocus.textContent = plan.trainingFocus;
   ui.warmupMain.textContent = plan.warmupMain;
   ui.warmupTime.textContent = plan.warmupTime;
+  ui.warmupNote.textContent = plan.warmupNote || "";
   ui.cardioMain.textContent = plan.cardioMain;
   ui.cardioTime.textContent = plan.cardioTime;
+  ui.cardioPlan.textContent = plan.cardioPlan || "";
 }
 
 function renderQueue() {
@@ -1116,8 +1152,10 @@ function normalizePlanForDay(rawPlan, dayCode) {
     trainingFocus: typeof source.trainingFocus === "string" ? source.trainingFocus : base.trainingFocus,
     warmupMain: typeof source.warmupMain === "string" ? source.warmupMain : base.warmupMain,
     warmupTime: typeof source.warmupTime === "string" ? source.warmupTime : base.warmupTime,
+    warmupNote: typeof source.warmupNote === "string" ? source.warmupNote : (base.warmupNote || ""),
     cardioMain: typeof source.cardioMain === "string" ? source.cardioMain : base.cardioMain,
     cardioTime: typeof source.cardioTime === "string" ? source.cardioTime : base.cardioTime,
+    cardioPlan: typeof source.cardioPlan === "string" ? source.cardioPlan : (base.cardioPlan || ""),
     exercises: sourceExercises.map((item, index) => cloneExerciseItem(item, index))
   };
 }

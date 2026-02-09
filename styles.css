@@ -190,6 +190,11 @@ body {
   font-size: 14px;
 }
 
+.mini-card .detail-note {
+  margin-top: var(--space-2);
+  line-height: 1.45;
+}
+
 .section-title {
   margin: 0 0 var(--space-3);
   font-size: 16px;
