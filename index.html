@@ -68,13 +68,11 @@
         <label for="editorRestSec" class="editor-label">Rest (sec)</label>
         <input id="editorRestSec" class="editor-input" type="number" min="0" max="600" step="5" value="75">
 
-        <label for="editorSets" class="editor-label">Sets (one line each)</label>
-        <textarea
-          id="editorSets"
-          class="editor-input editor-sets"
-          rows="5"
-          placeholder="50kg x12&#10;50kg x12&#10;45kg x10"
-        ></textarea>
+        <label class="editor-label">Sets (edit each set)</label>
+        <div id="editorSetRows" class="editor-set-rows" aria-label="세트 편집"></div>
+        <div class="editor-set-actions">
+          <button id="addSetRowBtn" class="btn ghost small" type="button">+ Set 추가</button>
+        </div>
 
         <div class="editor-actions">
           <button id="saveExerciseBtn" class="btn secondary" type="button">Save</button>

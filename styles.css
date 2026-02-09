@@ -290,10 +290,27 @@ body {
   border-color: transparent;
 }
 
-.editor-sets {
-  min-height: 96px;
-  resize: vertical;
-  line-height: 1.4;
+.editor-set-rows {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-set-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.editor-set-index {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.editor-set-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .editor-actions {

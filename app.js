@@ -396,7 +396,8 @@ const ui = {
   editorExerciseSelect: document.getElementById("editorExerciseSelect"),
   editorExerciseName: document.getElementById("editorExerciseName"),
   editorRestSec: document.getElementById("editorRestSec"),
-  editorSets: document.getElementById("editorSets"),
+  editorSetRows: document.getElementById("editorSetRows"),
+  addSetRowBtn: document.getElementById("addSetRowBtn"),
   saveExerciseBtn: document.getElementById("saveExerciseBtn"),
   addExerciseBtn: document.getElementById("addExerciseBtn"),
   deleteExerciseBtn: document.getElementById("deleteExerciseBtn"),
@@ -629,6 +630,36 @@ function bindEvents() {
     renderRoutineEditor();
   });
 
+  ui.addSetRowBtn.addEventListener("click", () => {
+    const currentSets = readEditorSetValues({ includeEmpty: true });
+    const nextSets = currentSets.length ? currentSets : [""];
+    nextSets.push("");
+    renderEditorSetRows(nextSets);
+    const lastInput = ui.editorSetRows.querySelector(`[data-set-input-index="${nextSets.length - 1}"]`);
+    if (lastInput instanceof HTMLInputElement) {
+      lastInput.focus();
+    }
+    ui.editorMessage.textContent = "";
+  });
+
+  ui.editorSetRows.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const removeIndex = Number(target.dataset.removeSetIndex);
+    if (!Number.isInteger(removeIndex)) {
+      return;
+    }
+    const currentSets = readEditorSetValues({ includeEmpty: true });
+    if (currentSets.length <= 1) {
+      return;
+    }
+    currentSets.splice(removeIndex, 1);
+    renderEditorSetRows(currentSets);
+    ui.editorMessage.textContent = "";
+  });
+
   ui.saveExerciseBtn.addEventListener("click", () => {
     const draft = readEditorDraft();
     if (draft.error) {
@@ -805,9 +836,10 @@ function renderRoutineEditor() {
     ui.editorExerciseSelect.innerHTML = "";
     ui.editorExerciseName.value = "";
     ui.editorRestSec.value = "75";
-    ui.editorSets.value = "";
+    renderEditorSetRows([""]);
     ui.saveExerciseBtn.disabled = true;
     ui.deleteExerciseBtn.disabled = true;
+    ui.addSetRowBtn.disabled = true;
     return;
   }
 
@@ -824,9 +856,10 @@ function renderRoutineEditor() {
   const current = exercises.find((item) => item.id === editorSelectedExerciseId) || exercises[0];
   ui.editorExerciseName.value = current.name;
   ui.editorRestSec.value = String(Number.isFinite(current.restSec) ? current.restSec : 75);
-  ui.editorSets.value = (Array.isArray(current.sets) ? current.sets : []).join("\n");
+  renderEditorSetRows(Array.isArray(current.sets) ? current.sets : []);
   ui.saveExerciseBtn.disabled = false;
   ui.deleteExerciseBtn.disabled = false;
+  ui.addSetRowBtn.disabled = false;
 }
 
 function renderCurrentExercise() {
@@ -1223,13 +1256,51 @@ function getCurrentPlan() {
   return getPlanByDay(selectedDay);
 }
 
+function renderEditorSetRows(sets) {
+  const normalizedSets = Array.isArray(sets) && sets.length
+    ? sets.map((entry) => String(entry))
+    : [""];
+  const canRemove = normalizedSets.length > 1;
+  ui.editorSetRows.innerHTML = normalizedSets.map((setText, index) => {
+    return `
+      <div class="editor-set-row">
+        <span class="editor-set-index">${index + 1}세트</span>
+        <input
+          class="editor-input"
+          type="text"
+          data-set-input-index="${index}"
+          value="${escapeHtml(setText)}"
+          placeholder="예: 50kg x12"
+        >
+        <button
+          class="btn ghost small"
+          type="button"
+          data-remove-set-index="${index}"
+          ${canRemove ? "" : "disabled"}
+        >삭제</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function readEditorSetValues({ includeEmpty = false } = {}) {
+  const setInputs = Array.from(ui.editorSetRows.querySelectorAll("[data-set-input-index]"));
+  const rawValues = setInputs.map((input) => {
+    if (!(input instanceof HTMLInputElement)) {
+      return "";
+    }
+    return input.value;
+  });
+  if (includeEmpty) {
+    return rawValues;
+  }
+  return rawValues.map((value) => value.trim()).filter(Boolean);
+}
+
 function readEditorDraft() {
   const name = (ui.editorExerciseName.value || "").trim();
   const rawRestSec = Number(ui.editorRestSec.value);
-  const sets = (ui.editorSets.value || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const sets = readEditorSetValues();
 
   if (!name) {
     return { error: "운동 이름을 입력해 주세요." };
@@ -1238,7 +1309,7 @@ function readEditorDraft() {
     return { error: "휴식 시간(초)을 숫자로 입력해 주세요." };
   }
   if (sets.length === 0) {
-    return { error: "세트 목표를 한 줄 이상 입력해 주세요." };
+    return { error: "세트를 하나 이상 입력해 주세요." };
   }
 
   return {
