@@ -94,6 +94,12 @@ body {
   font-size: 13px;
 }
 
+.auth-email-input {
+  width: min(260px, 100%);
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
 .chip {
   margin: 0;
   display: inline-flex;

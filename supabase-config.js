@@ -1,3 +1,3 @@
 window.FITMIND_SUPABASE_URL = "https://cakuasqjzrqdghgpywis.supabase.co";
-window.FITMIND_SUPABASE_ANON_KEY = "sb_publishable_UGtTW7BQ66-6uPHzPuRs2A_vHYVYsM1";
+window.FITMIND_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNha3Vhc3FqenJxZGdoZ3B5d2lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1Njg3NTMsImV4cCI6MjA4NjE0NDc1M30.yH5S-7stBOD5iDjtc9UtgsUEou6IaKMY2S3pjPdkKiQ";
 window.FITMIND_SUPABASE_REDIRECT_URL = "https://fitmind.dmssolution.co.kr";

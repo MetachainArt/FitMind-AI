@@ -385,6 +385,7 @@ const ui = {
   todayLabel: document.getElementById("todayLabel"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   authStatus: document.getElementById("authStatus"),
+  authEmailInput: document.getElementById("authEmailInput"),
   authLoginBtn: document.getElementById("authLoginBtn"),
   authLogoutBtn: document.getElementById("authLogoutBtn"),
   cloudSyncBtn: document.getElementById("cloudSyncBtn"),
@@ -882,6 +883,9 @@ function renderAuth() {
 
   if (!cloudState.enabled) {
     ui.authStatus.textContent = "클라우드: 미설정";
+    if (ui.authEmailInput) {
+      ui.authEmailInput.disabled = true;
+    }
     ui.authLoginBtn.disabled = true;
     ui.authLogoutBtn.disabled = true;
     ui.cloudSyncBtn.disabled = true;
@@ -898,6 +902,12 @@ function renderAuth() {
   ui.authStatus.textContent = cloudState.user
     ? `클라우드: ${identity}`
     : "클라우드: 로그아웃";
+  if (ui.authEmailInput) {
+    ui.authEmailInput.disabled = Boolean(cloudState.user);
+    if (cloudState.user?.email) {
+      ui.authEmailInput.value = cloudState.user.email;
+    }
+  }
   ui.authLoginBtn.disabled = Boolean(cloudState.user);
   ui.authLogoutBtn.disabled = !cloudState.user;
   ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
@@ -1074,6 +1084,35 @@ function readSupabaseConfig() {
   return { url, anonKey, redirectUrl };
 }
 
+function readAuthCallbackState() {
+  const hashRaw = window.location.hash.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash;
+  const hashParams = new URLSearchParams(hashRaw);
+  const queryParams = new URLSearchParams(window.location.search);
+
+  const error = hashParams.get("error_description")
+    || hashParams.get("error")
+    || queryParams.get("error_description")
+    || queryParams.get("error");
+  const hasAuthPayload = hashParams.has("access_token")
+    || hashParams.has("refresh_token")
+    || queryParams.has("code");
+  return {
+    error: error ? decodeURIComponent(String(error)) : "",
+    hasAuthPayload
+  };
+}
+
+function cleanupAuthCallbackUrl() {
+  const callbackState = readAuthCallbackState();
+  if (!callbackState.hasAuthPayload && !callbackState.error) {
+    return;
+  }
+  const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+  window.history.replaceState({}, document.title, cleanUrl);
+}
+
 async function initSupabaseCloud() {
   const config = readSupabaseConfig();
   if (!config) {
@@ -1098,6 +1137,10 @@ async function initSupabaseCloud() {
   });
   cloudState.enabled = true;
   cloudState.message = "";
+  const callbackState = readAuthCallbackState();
+  if (callbackState.error) {
+    cloudState.message = `로그인 콜백 오류: ${callbackState.error}`;
+  }
   renderAuth();
 
   const { data, error } = await cloudState.client.auth.getSession();
@@ -1115,6 +1158,7 @@ async function initSupabaseCloud() {
       cloudState.message = "로그아웃됨";
     } else if (event === "SIGNED_IN") {
       cloudState.message = "로그인 상태 동기화됨";
+      cleanupAuthCallbackUrl();
     }
     renderAuth();
     if (event === "SIGNED_IN" && cloudState.user) {
@@ -1138,8 +1182,14 @@ async function handleCloudLogin() {
     return;
   }
 
-  const email = window.prompt("Supabase 로그인 이메일을 입력해 주세요.");
+  const inputEmail = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
+  const email = inputEmail || String(window.prompt("Supabase 로그인 이메일을 입력해 주세요.") || "").trim();
   if (!email) {
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    cloudState.message = "이메일 형식이 올바르지 않아.";
+    renderAuth();
     return;
   }
 
@@ -1157,6 +1207,9 @@ async function handleCloudLogin() {
     renderAuth();
     return;
   }
+  if (ui.authEmailInput) {
+    ui.authEmailInput.value = email;
+  }
   cloudState.message = "메일로 로그인 링크를 보냈어. 메일에서 링크를 열어 완료해줘.";
   renderAuth();
 }
@@ -1170,6 +1223,9 @@ async function handleCloudLogout() {
     cloudState.message = `로그아웃 실패: ${error.message}`;
   } else {
     cloudState.user = null;
+    if (ui.authEmailInput) {
+      ui.authEmailInput.value = "";
+    }
     cloudState.message = "로그아웃됨";
   }
   renderAuth();
