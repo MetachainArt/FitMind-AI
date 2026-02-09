@@ -44,6 +44,7 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
 };
 
 const ANALYTICS_SCOPES = ["day", "week", "month"];
+const CLOUD_SUMMARY_TABLE = "fitmind_workout_summaries";
 
 function exercise({
   id,
@@ -383,6 +384,11 @@ const ROUTINE_PLAN = {
 const ui = {
   todayLabel: document.getElementById("todayLabel"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
+  authStatus: document.getElementById("authStatus"),
+  authLoginBtn: document.getElementById("authLoginBtn"),
+  authLogoutBtn: document.getElementById("authLogoutBtn"),
+  cloudSyncBtn: document.getElementById("cloudSyncBtn"),
+  authMessage: document.getElementById("authMessage"),
   dayTabs: document.getElementById("dayTabs"),
   dayTitle: document.getElementById("dayTitle"),
   dayFocus: document.getElementById("dayFocus"),
@@ -447,6 +453,14 @@ const ui = {
 const state = loadState();
 let selectedDay = selectInitialDay();
 let analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
+const cloudState = {
+  client: null,
+  user: null,
+  enabled: false,
+  syncing: false,
+  message: "",
+  authSubscription: null
+};
 let restTimer = {
   intervalId: null,
   remainingSec: 0,
@@ -468,6 +482,7 @@ function bootstrap() {
   bindEvents();
   renderAll();
   announce("좋아, 오늘 순서대로 하나씩 진행해보자.");
+  void initSupabaseCloud();
 }
 
 function bindEvents() {
@@ -494,6 +509,18 @@ function bindEvents() {
     ui.saveMessage.textContent = "";
     renderAll();
     announce(`좋아, ${weekdayByCode(code).title} 루틴으로 바꿨어.`);
+  });
+
+  ui.authLoginBtn.addEventListener("click", () => {
+    void handleCloudLogin();
+  });
+
+  ui.authLogoutBtn.addEventListener("click", () => {
+    void handleCloudLogout();
+  });
+
+  ui.cloudSyncBtn.addEventListener("click", () => {
+    void syncCloudSummaries({ pushLocalFirst: true });
   });
 
   ui.exerciseQueue.addEventListener("click", (event) => {
@@ -828,6 +855,7 @@ function bindEvents() {
 
 function renderAll() {
   renderHeader();
+  renderAuth();
   renderDayTabs();
   renderDayInfo();
   renderQueue();
@@ -845,6 +873,43 @@ function renderHeader() {
   const isWeekend = !["MON", "TUE", "WED", "THU", "FRI"].includes(getTodayCode());
   const weekendHint = isWeekend ? " | 주말이라 월요일 루틴을 기본 추천 중" : "";
   ui.todayLabel.textContent = `${dateLabel} | 선택 루틴: ${weekday.title}${weekendHint}`;
+}
+
+function renderAuth() {
+  if (!ui.authStatus || !ui.authLoginBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
+    return;
+  }
+
+  if (!cloudState.enabled) {
+    ui.authStatus.textContent = "클라우드: 미설정";
+    ui.authLoginBtn.disabled = true;
+    ui.authLogoutBtn.disabled = true;
+    ui.cloudSyncBtn.disabled = true;
+    if (!cloudState.message) {
+      ui.authMessage.textContent = "Supabase URL/Anon Key를 설정하면 로그인과 클라우드 저장이 켜집니다.";
+      return;
+    }
+    ui.authMessage.textContent = cloudState.message;
+    return;
+  }
+
+  const email = cloudState.user?.email || "";
+  const identity = email || "로그인됨";
+  ui.authStatus.textContent = cloudState.user
+    ? `클라우드: ${identity}`
+    : "클라우드: 로그아웃";
+  ui.authLoginBtn.disabled = Boolean(cloudState.user);
+  ui.authLogoutBtn.disabled = !cloudState.user;
+  ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
+  if (cloudState.message) {
+    ui.authMessage.textContent = cloudState.message;
+    return;
+  }
+  if (state.cloudLastSyncedAt && cloudState.user) {
+    ui.authMessage.textContent = `마지막 동기화: ${formatDateLabel(new Date(state.cloudLastSyncedAt))}`;
+    return;
+  }
+  ui.authMessage.textContent = "";
 }
 
 function renderDayTabs() {
@@ -999,6 +1064,280 @@ function renderSummary() {
   ui.anxietyValue.textContent = `${session.anxietyScore}/5`;
 }
 
+function readSupabaseConfig() {
+  const url = String(window.FITMIND_SUPABASE_URL || "").trim();
+  const anonKey = String(window.FITMIND_SUPABASE_ANON_KEY || "").trim();
+  const redirectUrl = String(window.FITMIND_SUPABASE_REDIRECT_URL || window.location.origin).trim();
+  if (!url || !anonKey) {
+    return null;
+  }
+  return { url, anonKey, redirectUrl };
+}
+
+async function initSupabaseCloud() {
+  const config = readSupabaseConfig();
+  if (!config) {
+    cloudState.enabled = false;
+    cloudState.message = "Supabase 미설정";
+    renderAuth();
+    return;
+  }
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    cloudState.enabled = false;
+    cloudState.message = "Supabase SDK 로드 실패";
+    renderAuth();
+    return;
+  }
+
+  cloudState.client = window.supabase.createClient(config.url, config.anonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+  cloudState.enabled = true;
+  cloudState.message = "";
+  renderAuth();
+
+  const { data, error } = await cloudState.client.auth.getSession();
+  if (error) {
+    cloudState.message = `세션 확인 실패: ${error.message}`;
+    renderAuth();
+    return;
+  }
+  cloudState.user = data?.session?.user || null;
+  renderAuth();
+
+  const { data: authData } = cloudState.client.auth.onAuthStateChange((event, session) => {
+    cloudState.user = session?.user || null;
+    if (event === "SIGNED_OUT") {
+      cloudState.message = "로그아웃됨";
+    } else if (event === "SIGNED_IN") {
+      cloudState.message = "로그인 상태 동기화됨";
+    }
+    renderAuth();
+    if (event === "SIGNED_IN" && cloudState.user) {
+      void syncCloudSummaries({ pushLocalFirst: true });
+    }
+  });
+  cloudState.authSubscription = authData?.subscription || null;
+
+  if (cloudState.user) {
+    await syncCloudSummaries({ pushLocalFirst: true });
+  } else {
+    cloudState.message = "로그인하면 기록이 클라우드에 저장됩니다.";
+    renderAuth();
+  }
+}
+
+async function handleCloudLogin() {
+  if (!cloudState.enabled || !cloudState.client) {
+    cloudState.message = "Supabase가 설정되지 않았어.";
+    renderAuth();
+    return;
+  }
+
+  const email = window.prompt("Supabase 로그인 이메일을 입력해 주세요.");
+  if (!email) {
+    return;
+  }
+
+  cloudState.message = "로그인 링크 전송 중...";
+  renderAuth();
+  const redirectTo = String(window.FITMIND_SUPABASE_REDIRECT_URL || window.location.origin).trim();
+  const { error } = await cloudState.client.auth.signInWithOtp({
+    email: email.trim(),
+    options: {
+      emailRedirectTo: redirectTo
+    }
+  });
+  if (error) {
+    cloudState.message = `로그인 실패: ${error.message}`;
+    renderAuth();
+    return;
+  }
+  cloudState.message = "메일로 로그인 링크를 보냈어. 메일에서 링크를 열어 완료해줘.";
+  renderAuth();
+}
+
+async function handleCloudLogout() {
+  if (!cloudState.client) {
+    return;
+  }
+  const { error } = await cloudState.client.auth.signOut();
+  if (error) {
+    cloudState.message = `로그아웃 실패: ${error.message}`;
+  } else {
+    cloudState.user = null;
+    cloudState.message = "로그아웃됨";
+  }
+  renderAuth();
+}
+
+function summaryToCloudRow(summary, userId) {
+  const dateKey = isDateKey(summary?.date) ? summary.date : getTodayDateString();
+  return {
+    user_id: userId,
+    session_key: String(summary?.sessionKey || `${dateKey}_MON`),
+    summary_date: dateKey,
+    day_code: String(summary?.dayCode || "MON"),
+    completion_rate: Number.isFinite(Number(summary?.completionRate)) ? Number(summary.completionRate) : 0,
+    exercise_done: Number.isFinite(Number(summary?.exerciseDone)) ? Number(summary.exerciseDone) : 0,
+    exercise_total: Number.isFinite(Number(summary?.exerciseTotal)) ? Number(summary.exerciseTotal) : 0,
+    set_done: Number.isFinite(Number(summary?.setDone)) ? Number(summary.setDone) : 0,
+    set_total: Number.isFinite(Number(summary?.setTotal)) ? Number(summary.setTotal) : 0,
+    search_count: Number.isFinite(Number(summary?.searchCount)) ? Number(summary.searchCount) : 0,
+    workout_elapsed_sec: Number.isFinite(Number(summary?.workoutElapsedSec)) ? Number(summary.workoutElapsedSec) : 0,
+    anxiety_score: Number.isFinite(Number(summary?.anxietyScore)) ? Number(summary.anxietyScore) : 3,
+    saved_at: typeof summary?.savedAt === "string" ? summary.savedAt : new Date().toISOString()
+  };
+}
+
+function cloudRowToSummary(row) {
+  return {
+    sessionKey: String(row.session_key || ""),
+    date: String(row.summary_date || ""),
+    dayCode: String(row.day_code || "MON"),
+    completionRate: Number.isFinite(Number(row.completion_rate)) ? Number(row.completion_rate) : 0,
+    exerciseDone: Number.isFinite(Number(row.exercise_done)) ? Number(row.exercise_done) : 0,
+    exerciseTotal: Number.isFinite(Number(row.exercise_total)) ? Number(row.exercise_total) : 0,
+    setDone: Number.isFinite(Number(row.set_done)) ? Number(row.set_done) : 0,
+    setTotal: Number.isFinite(Number(row.set_total)) ? Number(row.set_total) : 0,
+    searchCount: Number.isFinite(Number(row.search_count)) ? Number(row.search_count) : 0,
+    workoutElapsedSec: Number.isFinite(Number(row.workout_elapsed_sec)) ? Number(row.workout_elapsed_sec) : 0,
+    anxietyScore: Number.isFinite(Number(row.anxiety_score)) ? Number(row.anxiety_score) : 3,
+    savedAt: typeof row.saved_at === "string" ? row.saved_at : new Date().toISOString()
+  };
+}
+
+function mergeSummaryLists(listA, listB) {
+  const bySession = {};
+  [...listA, ...listB].forEach((item) => {
+    if (!item || typeof item.sessionKey !== "string" || !item.sessionKey) {
+      return;
+    }
+    const current = bySession[item.sessionKey];
+    if (!current) {
+      bySession[item.sessionKey] = item;
+      return;
+    }
+    const currentTime = Date.parse(current.savedAt || "");
+    const nextTime = Date.parse(item.savedAt || "");
+    if (!Number.isFinite(currentTime) || nextTime >= currentTime) {
+      bySession[item.sessionKey] = item;
+    }
+  });
+  return Object.values(bySession)
+    .sort((a, b) => {
+      const aTime = Date.parse(a.savedAt || "");
+      const bTime = Date.parse(b.savedAt || "");
+      if (Number.isFinite(aTime) && Number.isFinite(bTime)) {
+        return bTime - aTime;
+      }
+      return String(b.savedAt || "").localeCompare(String(a.savedAt || ""));
+    })
+    .slice(0, 365);
+}
+
+async function pushLocalHistoryToCloud() {
+  if (!cloudState.client || !cloudState.user) {
+    return;
+  }
+  const source = Array.isArray(state.history) ? state.history : [];
+  const rows = source
+    .filter((item) => item && typeof item.sessionKey === "string" && item.sessionKey)
+    .map((item) => summaryToCloudRow(item, cloudState.user.id));
+  if (rows.length === 0) {
+    return;
+  }
+
+  const chunkSize = 100;
+  for (let i = 0; i < rows.length; i += chunkSize) {
+    const chunk = rows.slice(i, i + chunkSize);
+    const { error } = await cloudState.client
+      .from(CLOUD_SUMMARY_TABLE)
+      .upsert(chunk, { onConflict: "user_id,session_key" });
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+}
+
+async function pullCloudHistory() {
+  if (!cloudState.client || !cloudState.user) {
+    return [];
+  }
+  const { data, error } = await cloudState.client
+    .from(CLOUD_SUMMARY_TABLE)
+    .select("*")
+    .eq("user_id", cloudState.user.id)
+    .order("saved_at", { ascending: false })
+    .limit(365);
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.map((row) => cloudRowToSummary(row));
+}
+
+async function syncCloudSummaries({ pushLocalFirst = true } = {}) {
+  if (!cloudState.client || !cloudState.user) {
+    cloudState.message = "로그인 후 동기화할 수 있어.";
+    renderAuth();
+    return;
+  }
+  if (cloudState.syncing) {
+    return;
+  }
+  cloudState.syncing = true;
+  cloudState.message = "클라우드 동기화 중...";
+  renderAuth();
+
+  try {
+    if (pushLocalFirst) {
+      await pushLocalHistoryToCloud();
+    }
+    const remoteSummaries = await pullCloudHistory();
+    const localSummaries = Array.isArray(state.history) ? state.history : [];
+    state.history = mergeSummaryLists(localSummaries, remoteSummaries);
+    state.cloudLastSyncedAt = new Date().toISOString();
+    persistState();
+    renderHistory();
+    renderAnalytics();
+    cloudState.message = `클라우드 동기화 완료 (${state.history.length}건)`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "알 수 없는 오류";
+    cloudState.message = `동기화 실패: ${message}`;
+  } finally {
+    cloudState.syncing = false;
+    renderAuth();
+  }
+}
+
+async function upsertSummaryToCloud(summary) {
+  if (!cloudState.client || !cloudState.user) {
+    return;
+  }
+  const row = summaryToCloudRow(summary, cloudState.user.id);
+  const { error } = await cloudState.client
+    .from(CLOUD_SUMMARY_TABLE)
+    .upsert(row, { onConflict: "user_id,session_key" });
+  if (error) {
+    cloudState.message = `클라우드 저장 실패: ${error.message}`;
+    renderAuth();
+    return;
+  }
+  state.cloudLastSyncedAt = new Date().toISOString();
+  persistState();
+  if (cloudState.message && cloudState.message.includes("실패")) {
+    cloudState.message = "클라우드 저장 재시도 성공";
+  }
+  renderAuth();
+}
+
 function buildCurrentSummary() {
   const session = getCurrentSession();
   return {
@@ -1043,6 +1382,9 @@ function saveCurrentSummary({ manual = false, auto = false } = {}) {
     ui.saveMessage.textContent = "오늘 요약을 저장했어.";
   } else if (auto) {
     ui.saveMessage.textContent = `운동 완료 기록 자동 저장됨 (${summary.date})`;
+  }
+  if (cloudState.user) {
+    void upsertSummaryToCloud(summary);
   }
   renderHistory();
   renderAnalytics();
@@ -1839,6 +2181,7 @@ function createInitialState() {
   return {
     selectedDay: null,
     analyticsScope: "week",
+    cloudLastSyncedAt: null,
     currentSessionKey: null,
     sessions: {},
     history: [],
@@ -1858,6 +2201,7 @@ function normalizeLoadedState(parsed) {
 
   initial.selectedDay = typeof parsed.selectedDay === "string" ? parsed.selectedDay : null;
   initial.analyticsScope = ANALYTICS_SCOPES.includes(parsed.analyticsScope) ? parsed.analyticsScope : "week";
+  initial.cloudLastSyncedAt = typeof parsed.cloudLastSyncedAt === "string" ? parsed.cloudLastSyncedAt : null;
   initial.currentSessionKey = typeof parsed.currentSessionKey === "string" ? parsed.currentSessionKey : null;
 
   if (isPlainObject(parsed.sessions)) {

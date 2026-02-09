@@ -16,6 +16,13 @@
       <p id="todayLabel" class="chip"></p>
       <button id="resetSessionBtn" class="btn secondary">오늘 기록 초기화</button>
     </div>
+    <div class="auth-actions">
+      <p id="authStatus" class="chip">클라우드: 미설정</p>
+      <button id="authLoginBtn" class="btn ghost">로그인</button>
+      <button id="authLogoutBtn" class="btn ghost">로그아웃</button>
+      <button id="cloudSyncBtn" class="btn ghost">클라우드 동기화</button>
+    </div>
+    <p id="authMessage" class="muted auth-message"></p>
   </header>
 
   <main class="layout">
@@ -212,6 +219,8 @@
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
