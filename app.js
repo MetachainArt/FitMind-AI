@@ -389,6 +389,8 @@ const ui = {
   authPasswordInput: document.getElementById("authPasswordInput"),
   authLoginBtn: document.getElementById("authLoginBtn"),
   authSignupBtn: document.getElementById("authSignupBtn"),
+  authGoogleBtn: document.getElementById("authGoogleBtn"),
+  authKakaoBtn: document.getElementById("authKakaoBtn"),
   authLogoutBtn: document.getElementById("authLogoutBtn"),
   cloudSyncBtn: document.getElementById("cloudSyncBtn"),
   authMessage: document.getElementById("authMessage"),
@@ -462,6 +464,7 @@ const cloudState = {
   enabled: false,
   syncing: false,
   loginSubmitting: false,
+  redirectUrl: "",
   message: "",
   authSubscription: null
 };
@@ -521,6 +524,14 @@ function bindEvents() {
 
   ui.authSignupBtn.addEventListener("click", () => {
     void handleCloudSignup();
+  });
+
+  ui.authGoogleBtn.addEventListener("click", () => {
+    void handleOAuthLogin("google");
+  });
+
+  ui.authKakaoBtn.addEventListener("click", () => {
+    void handleOAuthLogin("kakao");
   });
 
   ui.authLogoutBtn.addEventListener("click", () => {
@@ -884,7 +895,7 @@ function renderHeader() {
 }
 
 function renderAuth() {
-  if (!ui.authStatus || !ui.authLoginBtn || !ui.authSignupBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
+  if (!ui.authStatus || !ui.authLoginBtn || !ui.authSignupBtn || !ui.authGoogleBtn || !ui.authKakaoBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
     return;
   }
 
@@ -899,6 +910,8 @@ function renderAuth() {
     }
     ui.authLoginBtn.disabled = true;
     ui.authSignupBtn.disabled = true;
+    ui.authGoogleBtn.disabled = true;
+    ui.authKakaoBtn.disabled = true;
     ui.authLogoutBtn.disabled = true;
     ui.cloudSyncBtn.disabled = true;
     if (!cloudState.message) {
@@ -925,12 +938,18 @@ function renderAuth() {
   }
   ui.authLoginBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
   ui.authSignupBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
+  ui.authGoogleBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
+  ui.authKakaoBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
   if (cloudState.loginSubmitting) {
     ui.authLoginBtn.textContent = "처리중...";
     ui.authSignupBtn.textContent = "처리중...";
+    ui.authGoogleBtn.textContent = "처리중...";
+    ui.authKakaoBtn.textContent = "처리중...";
   } else {
     ui.authLoginBtn.textContent = "로그인";
     ui.authSignupBtn.textContent = "회원가입";
+    ui.authGoogleBtn.textContent = "구글 로그인";
+    ui.authKakaoBtn.textContent = "카카오 로그인";
   }
   ui.authLogoutBtn.disabled = !cloudState.user;
   ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
@@ -1140,6 +1159,7 @@ async function initSupabaseCloud() {
   const config = readSupabaseConfig();
   if (!config) {
     cloudState.enabled = false;
+    cloudState.redirectUrl = "";
     cloudState.message = "Supabase 미설정";
     renderAuth();
     return;
@@ -1159,6 +1179,7 @@ async function initSupabaseCloud() {
     }
   });
   cloudState.enabled = true;
+  cloudState.redirectUrl = config.redirectUrl || window.location.origin;
   cloudState.message = "";
   const callbackState = readAuthCallbackState();
   if (callbackState.error) {
@@ -1196,6 +1217,39 @@ async function initSupabaseCloud() {
     cloudState.message = "로그인하면 기록이 클라우드에 저장됩니다.";
     renderAuth();
   }
+}
+
+async function handleOAuthLogin(provider) {
+  if (!cloudState.enabled || !cloudState.client) {
+    cloudState.message = "Supabase가 설정되지 않았어.";
+    renderAuth();
+    return;
+  }
+  if (cloudState.user) {
+    cloudState.message = "이미 로그인되어 있어.";
+    renderAuth();
+    return;
+  }
+  const providerName = provider === "google" ? "구글" : "카카오";
+  cloudState.loginSubmitting = true;
+  cloudState.message = `${providerName} 로그인으로 이동 중...`;
+  renderAuth();
+
+  const { error } = await cloudState.client.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: cloudState.redirectUrl || window.location.origin
+    }
+  });
+
+  cloudState.loginSubmitting = false;
+  if (error) {
+    cloudState.message = `${providerName} 로그인 실패: ${error.message}`;
+    renderAuth();
+    return;
+  }
+  cloudState.message = `${providerName} 로그인 화면으로 이동합니다.`;
+  renderAuth();
 }
 
 async function handleCloudLogin() {
