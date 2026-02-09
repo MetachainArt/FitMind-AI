@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>핏마인드 짐 루틴</title>
+  <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero reveal">
+    <p class="eyebrow">FitMind Gym Routine</p>
+    <h1>핏마인드 짐 루틴</h1>
+    <p class="subtitle">좋아, 오늘도 검색 없이 루틴 완주하자.</p>
+    <div class="hero-actions">
+      <p id="todayLabel" class="chip"></p>
+      <button id="resetSessionBtn" class="btn secondary">오늘 기록 초기화</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel reveal">
+      <h2>오늘 루틴</h2>
+      <div id="dayTabs" class="day-tabs" aria-label="요일 선택"></div>
+
+      <div class="day-meta">
+        <p id="dayTitle" class="day-title"></p>
+        <p id="dayFocus" class="focus-copy"></p>
+        <p id="dayTrainingFocus" class="muted"></p>
+      </div>
+
+      <div class="mini-grid">
+        <article class="mini-card">
+          <h3>워밍업</h3>
+          <p id="warmupMain"></p>
+          <p id="warmupTime" class="muted"></p>
+        </article>
+        <article class="mini-card">
+          <h3>유산소</h3>
+          <p id="cardioMain"></p>
+          <p id="cardioTime" class="muted"></p>
+        </article>
+      </div>
+
+      <h3 class="section-title">오늘 순서</h3>
+      <ul id="exerciseQueue" class="queue" aria-live="polite"></ul>
+
+      <section class="routine-editor" aria-label="Routine editor">
+        <div class="editor-head">
+          <h3 class="section-title">Routine Editor</h3>
+          <button id="resetDayPlanBtn" class="btn ghost small" type="button">Reset Day</button>
+        </div>
+
+        <label for="editorExerciseSelect" class="editor-label">Exercise</label>
+        <select id="editorExerciseSelect" class="editor-input"></select>
+
+        <label for="editorExerciseName" class="editor-label">Name</label>
+        <input
+          id="editorExerciseName"
+          class="editor-input"
+          type="text"
+          maxlength="80"
+          placeholder="e.g. Leg Press"
+        >
+
+        <label for="editorRestSec" class="editor-label">Rest (sec)</label>
+        <input id="editorRestSec" class="editor-input" type="number" min="0" max="600" step="5" value="75">
+
+        <label for="editorSets" class="editor-label">Sets (one line each)</label>
+        <textarea
+          id="editorSets"
+          class="editor-input editor-sets"
+          rows="5"
+          placeholder="50kg x12&#10;50kg x12&#10;45kg x10"
+        ></textarea>
+
+        <div class="editor-actions">
+          <button id="saveExerciseBtn" class="btn secondary" type="button">Save</button>
+          <button id="addExerciseBtn" class="btn primary" type="button">Add</button>
+          <button id="deleteExerciseBtn" class="btn ghost danger" type="button">Delete</button>
+        </div>
+        <p id="editorMessage" class="muted editor-message"></p>
+      </section>
+    </section>
+
+    <section class="panel focus-panel reveal">
+      <h2>현재 운동</h2>
+      <p id="currentExerciseTitle" class="exercise-title"></p>
+      <p id="currentExerciseTarget" class="exercise-target"></p>
+      <p id="coachMessage" class="coach-message">좋아, 시작해보자.</p>
+
+      <ul id="targetSetList" class="set-list"></ul>
+
+      <div class="set-controls">
+        <button id="completeSetBtn" class="btn primary">세트 완료</button>
+        <button id="markExerciseDoneBtn" class="btn ghost">운동 완료 처리</button>
+      </div>
+
+      <div class="rest-box">
+        <p>휴식 타이머 <strong id="restTimerText">--:--</strong></p>
+        <div class="rest-actions">
+          <button id="timerToggleBtn" class="btn secondary">일시정지</button>
+          <button id="timerSkipBtn" class="btn ghost">휴식 건너뛰기</button>
+        </div>
+      </div>
+
+      <div class="guide-grid">
+        <article class="guide-card">
+          <h3>운동방법</h3>
+          <p id="guideHowTo"></p>
+        </article>
+        <article class="guide-card">
+          <h3>기구 설명</h3>
+          <p id="guideMachine"></p>
+        </article>
+        <article class="guide-card">
+          <h3>공 운동방법</h3>
+          <p id="guideBall"></p>
+        </article>
+        <article class="guide-card warning">
+          <h3>주의 포인트</h3>
+          <p id="guideSafety"></p>
+          <p id="guideMistake" class="muted"></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel summary-panel reveal">
+      <h2>진행 요약</h2>
+      <div class="stats">
+        <article class="stat-card">
+          <p class="stat-label">완주율</p>
+          <p id="completionRate" class="stat-value">0%</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">완료 운동</p>
+          <p id="exerciseDoneCount" class="stat-value">0/0</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">완료 세트</p>
+          <p id="setDoneCount" class="stat-value">0/0</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">운동 중 검색</p>
+          <p id="searchCount" class="stat-value">0회</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">운동 시간</p>
+          <p id="elapsedTime" class="stat-value">00:00</p>
+        </article>
+      </div>
+
+      <div class="timer-actions">
+        <button id="workoutTimerToggleBtn" class="btn secondary">운동 시간 시작</button>
+        <button id="workoutTimerResetBtn" class="btn ghost">시간 초기화</button>
+      </div>
+
+      <button id="searchHitBtn" class="btn ghost full">운동 중 검색했어요 +1</button>
+
+      <label for="anxietyRange" class="range-label">
+        기구 사용 불안도
+        <strong id="anxietyValue">3/5</strong>
+      </label>
+      <input id="anxietyRange" type="range" min="1" max="5" value="3">
+
+      <button id="saveSummaryBtn" class="btn primary full">오늘 요약 저장</button>
+      <p id="saveMessage" class="muted"></p>
+
+      <h3 class="section-title">최근 기록</h3>
+      <ul id="historyList" class="history-list"></ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
