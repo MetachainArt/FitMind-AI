@@ -176,6 +176,33 @@
       <button id="saveSummaryBtn" class="btn primary full">오늘 요약 저장</button>
       <p id="saveMessage" class="muted"></p>
 
+      <section class="analytics-box" aria-label="기록 분석">
+        <h3 class="section-title">기록 분석</h3>
+        <div id="analyticsTabs" class="analytics-tabs"></div>
+        <p id="analyticsPeriodLabel" class="muted analytics-period"></p>
+
+        <div class="analytics-stats">
+          <article class="stat-card">
+            <p class="stat-label">운동일수</p>
+            <p id="analyticsWorkoutDays" class="stat-value">0일</p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">저장 횟수</p>
+            <p id="analyticsSessionCount" class="stat-value">0회</p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">총 운동시간</p>
+            <p id="analyticsTotalTime" class="stat-value">00:00</p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">평균 완주율</p>
+            <p id="analyticsAvgCompletion" class="stat-value">0%</p>
+          </article>
+        </div>
+
+        <ul id="analyticsList" class="history-list analytics-list"></ul>
+      </section>
+
       <h3 class="section-title">최근 기록</h3>
       <ul id="historyList" class="history-list"></ul>
     </section>

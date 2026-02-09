@@ -43,6 +43,8 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
 };
 
+const ANALYTICS_SCOPES = ["day", "week", "month"];
+
 function exercise({
   id,
   name,
@@ -422,6 +424,13 @@ const ui = {
   anxietyValue: document.getElementById("anxietyValue"),
   saveSummaryBtn: document.getElementById("saveSummaryBtn"),
   saveMessage: document.getElementById("saveMessage"),
+  analyticsTabs: document.getElementById("analyticsTabs"),
+  analyticsPeriodLabel: document.getElementById("analyticsPeriodLabel"),
+  analyticsWorkoutDays: document.getElementById("analyticsWorkoutDays"),
+  analyticsSessionCount: document.getElementById("analyticsSessionCount"),
+  analyticsTotalTime: document.getElementById("analyticsTotalTime"),
+  analyticsAvgCompletion: document.getElementById("analyticsAvgCompletion"),
+  analyticsList: document.getElementById("analyticsList"),
   historyList: document.getElementById("historyList"),
   editorExerciseSelect: document.getElementById("editorExerciseSelect"),
   editorExerciseName: document.getElementById("editorExerciseName"),
@@ -437,6 +446,7 @@ const ui = {
 
 const state = loadState();
 let selectedDay = selectInitialDay();
+let analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
 let restTimer = {
   intervalId: null,
   remainingSec: 0,
@@ -452,6 +462,7 @@ bootstrap();
 
 function bootstrap() {
   normalizeCustomPlans();
+  state.analyticsScope = analyticsScope;
   ensureSession(selectedDay);
   restoreWorkoutTimerIfNeeded();
   bindEvents();
@@ -544,6 +555,10 @@ function bindEvents() {
     }
     session.updatedAt = new Date().toISOString();
     persistState();
+    const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
+    if (isAllDone) {
+      saveCurrentSummary({ auto: true });
+    }
     startRestTimer(active.restSec);
     renderAll();
   });
@@ -560,6 +575,10 @@ function bindEvents() {
     session.updatedAt = new Date().toISOString();
     moveActiveToNextIncomplete();
     persistState();
+    const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
+    if (isAllDone) {
+      saveCurrentSummary({ auto: true });
+    }
     renderAll();
     announce("운동 완료 처리했어. 다음 운동으로 이어가자.");
   });
@@ -626,31 +645,28 @@ function bindEvents() {
   });
 
   ui.saveSummaryBtn.addEventListener("click", () => {
-    const session = getCurrentSession();
-    const summary = {
-      sessionKey: session.sessionKey,
-      date: getTodayDateString(),
-      dayCode: selectedDay,
-      completionRate: getCompletionRate(),
-      exerciseDone: getCompletedExerciseCount(),
-      exerciseTotal: getCurrentPlan().exercises.length,
-      setDone: getDoneSetCount(),
-      setTotal: getTotalSetCount(),
-      searchCount: session.searchCount,
-      workoutElapsedSec: getWorkoutElapsedSec(session),
-      anxietyScore: session.anxietyScore,
-      savedAt: new Date().toISOString()
-    };
-
-    state.history = (state.history || []).filter((entry) => entry.sessionKey !== summary.sessionKey);
-    state.history.unshift(summary);
-    state.history = state.history.slice(0, 20);
-    session.lastSavedAt = summary.savedAt;
-    session.updatedAt = summary.savedAt;
-    persistState();
-    ui.saveMessage.textContent = "오늘 요약을 저장했어.";
-    renderHistory();
+    saveCurrentSummary({ manual: true });
   });
+
+  if (ui.analyticsTabs) {
+    ui.analyticsTabs.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const scope = target.dataset.analyticsScope;
+      if (!scope || !ANALYTICS_SCOPES.includes(scope)) {
+        return;
+      }
+      if (scope === analyticsScope) {
+        return;
+      }
+      analyticsScope = scope;
+      state.analyticsScope = scope;
+      persistState();
+      renderAnalytics();
+    });
+  }
 
   ui.resetSessionBtn.addEventListener("click", () => {
     const ok = window.confirm("현재 요일의 오늘 기록을 초기화할까요?");
@@ -818,6 +834,7 @@ function renderAll() {
   renderRoutineEditor();
   renderCurrentExercise();
   renderSummary();
+  renderAnalytics();
   renderHistory();
   renderTimer();
 }
@@ -980,6 +997,219 @@ function renderSummary() {
   }
   ui.anxietyRange.value = String(session.anxietyScore);
   ui.anxietyValue.textContent = `${session.anxietyScore}/5`;
+}
+
+function buildCurrentSummary() {
+  const session = getCurrentSession();
+  return {
+    sessionKey: session.sessionKey,
+    date: getTodayDateString(),
+    dayCode: selectedDay,
+    completionRate: getCompletionRate(),
+    exerciseDone: getCompletedExerciseCount(),
+    exerciseTotal: getCurrentPlan().exercises.length,
+    setDone: getDoneSetCount(),
+    setTotal: getTotalSetCount(),
+    searchCount: session.searchCount,
+    workoutElapsedSec: getWorkoutElapsedSec(session),
+    anxietyScore: session.anxietyScore,
+    savedAt: new Date().toISOString()
+  };
+}
+
+function upsertHistorySummary(summary) {
+  if (!Array.isArray(state.history)) {
+    state.history = [];
+  }
+  state.history = state.history.filter((entry) => entry.sessionKey !== summary.sessionKey);
+  state.history.unshift(summary);
+  state.history = state.history.slice(0, 365);
+}
+
+function saveCurrentSummary({ manual = false, auto = false } = {}) {
+  const summary = buildCurrentSummary();
+  const hasProgress = summary.setDone > 0 || summary.workoutElapsedSec > 0 || summary.searchCount > 0;
+  if (auto && !hasProgress) {
+    return null;
+  }
+
+  upsertHistorySummary(summary);
+  const session = getCurrentSession();
+  session.lastSavedAt = summary.savedAt;
+  session.updatedAt = summary.savedAt;
+  persistState();
+
+  if (manual) {
+    ui.saveMessage.textContent = "오늘 요약을 저장했어.";
+  } else if (auto) {
+    ui.saveMessage.textContent = `운동 완료 기록 자동 저장됨 (${summary.date})`;
+  }
+  renderHistory();
+  renderAnalytics();
+  return summary;
+}
+
+function isDateKey(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function parseDateKey(value) {
+  if (!isDateKey(value)) {
+    return null;
+  }
+  const [year, month, day] = value.split("-").map((item) => Number(item));
+  return new Date(year, month - 1, day);
+}
+
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getWeekStartDate(date) {
+  const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = weekStart.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  weekStart.setDate(weekStart.getDate() + diff);
+  return weekStart;
+}
+
+function getPeriodKeyByScope(dateKey, scope) {
+  const date = parseDateKey(dateKey);
+  if (!date) {
+    return null;
+  }
+  if (scope === "day") {
+    return dateKey;
+  }
+  if (scope === "week") {
+    return toDateKey(getWeekStartDate(date));
+  }
+  if (scope === "month") {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+  return dateKey;
+}
+
+function formatPeriodLabel(periodKey, scope) {
+  if (scope === "day") {
+    return `${periodKey} 일별`;
+  }
+  if (scope === "week") {
+    const start = parseDateKey(periodKey);
+    if (!start) {
+      return `${periodKey} 주별`;
+    }
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    end.setDate(end.getDate() + 6);
+    return `${periodKey} 주별 (${toDateKey(start)}~${toDateKey(end)})`;
+  }
+  if (scope === "month") {
+    return `${periodKey} 월별`;
+  }
+  return periodKey;
+}
+
+function aggregateHistoryByScope(scope) {
+  const source = Array.isArray(state.history) ? state.history : [];
+  const grouped = {};
+
+  source.forEach((item) => {
+    const dateKey = isDateKey(item.date) ? item.date : "";
+    if (!dateKey) {
+      return;
+    }
+    const periodKey = getPeriodKeyByScope(dateKey, scope);
+    if (!periodKey) {
+      return;
+    }
+    if (!grouped[periodKey]) {
+      grouped[periodKey] = {
+        periodKey,
+        sessionCount: 0,
+        workoutSec: 0,
+        completionSum: 0,
+        completionCount: 0,
+        workoutDateMap: {}
+      };
+    }
+
+    const target = grouped[periodKey];
+    target.sessionCount += 1;
+    target.workoutDateMap[dateKey] = true;
+    const elapsed = Number(item.workoutElapsedSec);
+    if (Number.isFinite(elapsed)) {
+      target.workoutSec += Math.max(0, Math.floor(elapsed));
+    }
+    const completion = Number(item.completionRate);
+    if (Number.isFinite(completion)) {
+      target.completionSum += completion;
+      target.completionCount += 1;
+    }
+  });
+
+  return Object.values(grouped)
+    .map((item) => {
+      return {
+        periodKey: item.periodKey,
+        sessionCount: item.sessionCount,
+        workoutDays: Object.keys(item.workoutDateMap).length,
+        workoutSec: item.workoutSec,
+        avgCompletion: item.completionCount > 0 ? Math.round(item.completionSum / item.completionCount) : 0
+      };
+    })
+    .sort((a, b) => b.periodKey.localeCompare(a.periodKey));
+}
+
+function renderAnalyticsTabs() {
+  const labelByScope = {
+    day: "일별",
+    week: "주별",
+    month: "월별"
+  };
+  ui.analyticsTabs.innerHTML = ANALYTICS_SCOPES.map((scope) => {
+    const activeClass = scope === analyticsScope ? "active" : "";
+    return `<button class="btn ghost analytics-tab-btn ${activeClass}" data-analytics-scope="${scope}">${labelByScope[scope]}</button>`;
+  }).join("");
+}
+
+function renderAnalytics() {
+  if (!ui.analyticsTabs || !ui.analyticsList) {
+    return;
+  }
+
+  renderAnalyticsTabs();
+  const groups = aggregateHistoryByScope(analyticsScope);
+  const currentPeriodKey = getPeriodKeyByScope(getTodayDateString(), analyticsScope);
+  const current = groups.find((item) => item.periodKey === currentPeriodKey) || {
+    periodKey: currentPeriodKey || "-",
+    sessionCount: 0,
+    workoutDays: 0,
+    workoutSec: 0,
+    avgCompletion: 0
+  };
+
+  ui.analyticsPeriodLabel.textContent = `현재 기준: ${formatPeriodLabel(current.periodKey, analyticsScope)}`;
+  ui.analyticsWorkoutDays.textContent = `${current.workoutDays}일`;
+  ui.analyticsSessionCount.textContent = `${current.sessionCount}회`;
+  ui.analyticsTotalTime.textContent = toDurationClock(current.workoutSec);
+  ui.analyticsAvgCompletion.textContent = `${current.avgCompletion}%`;
+
+  if (groups.length === 0) {
+    ui.analyticsList.innerHTML = `<li class="history-empty">기록이 없어서 아직 집계를 만들 수 없어. 먼저 오늘 요약 저장을 눌러줘.</li>`;
+    return;
+  }
+
+  ui.analyticsList.innerHTML = groups.slice(0, 8).map((item) => {
+    return `
+      <li class="history-item">
+        <strong>${escapeHtml(formatPeriodLabel(item.periodKey, analyticsScope))}</strong><br>
+        운동일수 ${item.workoutDays}일 | 저장 ${item.sessionCount}회 | 운동시간 ${toDurationClock(item.workoutSec)} | 평균 완주율 ${item.avgCompletion}%
+      </li>
+    `;
+  }).join("");
 }
 
 function renderHistory() {
@@ -1608,6 +1838,7 @@ function getCurrentSession() {
 function createInitialState() {
   return {
     selectedDay: null,
+    analyticsScope: "week",
     currentSessionKey: null,
     sessions: {},
     history: [],
@@ -1626,6 +1857,7 @@ function normalizeLoadedState(parsed) {
   }
 
   initial.selectedDay = typeof parsed.selectedDay === "string" ? parsed.selectedDay : null;
+  initial.analyticsScope = ANALYTICS_SCOPES.includes(parsed.analyticsScope) ? parsed.analyticsScope : "week";
   initial.currentSessionKey = typeof parsed.currentSessionKey === "string" ? parsed.currentSessionKey : null;
 
   if (isPlainObject(parsed.sessions)) {
