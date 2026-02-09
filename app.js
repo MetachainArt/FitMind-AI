@@ -370,6 +370,7 @@ const ui = {
   currentExerciseTarget: document.getElementById("currentExerciseTarget"),
   coachMessage: document.getElementById("coachMessage"),
   targetSetList: document.getElementById("targetSetList"),
+  startWorkoutBtn: document.getElementById("startWorkoutBtn"),
   completeSetBtn: document.getElementById("completeSetBtn"),
   markExerciseDoneBtn: document.getElementById("markExerciseDoneBtn"),
   restTimerText: document.getElementById("restTimerText"),
@@ -473,6 +474,22 @@ function bindEvents() {
     announce("좋아, 이 운동부터 바로 진행하자.");
   });
 
+  ui.startWorkoutBtn.addEventListener("click", () => {
+    const plan = getCurrentPlan();
+    const allDone = getCompletedExerciseCount() >= plan.exercises.length;
+    if (allDone) {
+      announce("오늘 루틴은 이미 완료됐어. 필요하면 시간 초기화 후 다시 시작해.");
+      return;
+    }
+    if (workoutTimer.running) {
+      announce("이미 운동 진행 중이야. 세트 완료를 눌러 계속 진행하자.");
+      return;
+    }
+    startWorkoutTimer();
+    renderSummary();
+    announce("운동 시작. 1세트 후 '세트 완료' 버튼을 눌러줘.");
+  });
+
   ui.completeSetBtn.addEventListener("click", () => {
     const active = getActiveExercise();
     if (!active) {
@@ -549,10 +566,10 @@ function bindEvents() {
   ui.workoutTimerToggleBtn.addEventListener("click", () => {
     if (workoutTimer.running) {
       pauseWorkoutTimer();
-      announce("운동 시간 측정을 잠깐 멈췄어.");
+      announce("타이머를 잠깐 멈췄어.");
     } else {
       startWorkoutTimer();
-      announce("좋아, 운동 시간 측정 시작.");
+      announce("타이머 시작. 세트 완료 버튼으로 진행해.");
     }
     renderSummary();
   });
@@ -876,11 +893,15 @@ function renderCurrentExercise() {
     ui.guideBall.textContent = "짐볼 코어 스트레칭 2세트를 추가하면 회복에 좋아.";
     ui.guideSafety.textContent = "무리해서 추가 세트를 더 하지 말고 회복에 집중해.";
     ui.guideMistake.textContent = "다음 운동 전, 통증이 남으면 강도를 조정해.";
+    ui.startWorkoutBtn.disabled = true;
+    ui.startWorkoutBtn.textContent = "운동 완료";
     ui.completeSetBtn.disabled = true;
     ui.markExerciseDoneBtn.disabled = true;
     return;
   }
 
+  ui.startWorkoutBtn.disabled = workoutTimer.running;
+  ui.startWorkoutBtn.textContent = workoutTimer.running ? "운동 진행중" : "운동 시작";
   ui.completeSetBtn.disabled = false;
   ui.markExerciseDoneBtn.disabled = false;
   ui.currentExerciseTitle.textContent = active.name;
@@ -918,7 +939,14 @@ function renderSummary() {
   ui.setDoneCount.textContent = `${setDone}/${setTotal}`;
   ui.searchCount.textContent = `${session.searchCount}회`;
   ui.elapsedTime.textContent = toDurationClock(getWorkoutElapsedSec(session));
-  ui.workoutTimerToggleBtn.textContent = workoutTimer.running ? "운동 시간 일시정지" : "운동 시간 시작";
+  ui.workoutTimerToggleBtn.textContent = workoutTimer.running ? "타이머 일시정지" : "타이머 시작";
+  if (exerciseDone >= exerciseTotal) {
+    ui.startWorkoutBtn.disabled = true;
+    ui.startWorkoutBtn.textContent = "운동 완료";
+  } else {
+    ui.startWorkoutBtn.disabled = workoutTimer.running;
+    ui.startWorkoutBtn.textContent = workoutTimer.running ? "운동 진행중" : "운동 시작";
+  }
   ui.anxietyRange.value = String(session.anxietyScore);
   ui.anxietyValue.textContent = `${session.anxietyScore}/5`;
 }
