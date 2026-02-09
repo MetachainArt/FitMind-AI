@@ -459,6 +459,9 @@ const cloudState = {
   user: null,
   enabled: false,
   syncing: false,
+  loginSubmitting: false,
+  loginCooldownUntilMs: 0,
+  loginCooldownTimerId: null,
   message: "",
   authSubscription: null
 };
@@ -883,6 +886,7 @@ function renderAuth() {
 
   if (!cloudState.enabled) {
     ui.authStatus.textContent = "클라우드: 미설정";
+    ui.authLoginBtn.textContent = "로그인";
     if (ui.authEmailInput) {
       ui.authEmailInput.disabled = true;
     }
@@ -908,7 +912,15 @@ function renderAuth() {
       ui.authEmailInput.value = cloudState.user.email;
     }
   }
-  ui.authLoginBtn.disabled = Boolean(cloudState.user);
+  const cooldownSec = getLoginCooldownSeconds();
+  ui.authLoginBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting || cooldownSec > 0;
+  if (cloudState.loginSubmitting) {
+    ui.authLoginBtn.textContent = "로그인 요청중...";
+  } else if (cooldownSec > 0 && !cloudState.user) {
+    ui.authLoginBtn.textContent = `로그인 (${cooldownSec}s)`;
+  } else {
+    ui.authLoginBtn.textContent = "로그인";
+  }
   ui.authLogoutBtn.disabled = !cloudState.user;
   ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
   if (cloudState.message) {
@@ -1084,6 +1096,47 @@ function readSupabaseConfig() {
   return { url, anonKey, redirectUrl };
 }
 
+function getLoginCooldownSeconds() {
+  const remainMs = Math.max(0, cloudState.loginCooldownUntilMs - Date.now());
+  return Math.ceil(remainMs / 1000);
+}
+
+function ensureLoginCooldownTicker() {
+  if (cloudState.loginCooldownTimerId) {
+    return;
+  }
+  cloudState.loginCooldownTimerId = window.setInterval(() => {
+    if (getLoginCooldownSeconds() <= 0) {
+      window.clearInterval(cloudState.loginCooldownTimerId);
+      cloudState.loginCooldownTimerId = null;
+    }
+    renderAuth();
+  }, 1000);
+}
+
+function setLoginCooldown(seconds) {
+  const sec = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+  if (sec <= 0) {
+    cloudState.loginCooldownUntilMs = 0;
+    if (cloudState.loginCooldownTimerId) {
+      window.clearInterval(cloudState.loginCooldownTimerId);
+      cloudState.loginCooldownTimerId = null;
+    }
+    return;
+  }
+  cloudState.loginCooldownUntilMs = Date.now() + sec * 1000;
+  ensureLoginCooldownTicker();
+}
+
+function parseAuthCooldownSeconds(message) {
+  const text = String(message || "");
+  const matched = text.match(/after\s+(\d+)\s+seconds?/i);
+  if (matched && Number.isFinite(Number(matched[1]))) {
+    return Number(matched[1]);
+  }
+  return 0;
+}
+
 function readAuthCallbackState() {
   const hashRaw = window.location.hash.startsWith("#")
     ? window.location.hash.slice(1)
@@ -1182,6 +1235,13 @@ async function handleCloudLogin() {
     return;
   }
 
+  const cooldownSec = getLoginCooldownSeconds();
+  if (cooldownSec > 0) {
+    cloudState.message = `보안 제한으로 ${cooldownSec}초 후 다시 시도해줘.`;
+    renderAuth();
+    return;
+  }
+
   const inputEmail = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
   const email = inputEmail || String(window.prompt("Supabase 로그인 이메일을 입력해 주세요.") || "").trim();
   if (!email) {
@@ -1193,6 +1253,7 @@ async function handleCloudLogin() {
     return;
   }
 
+  cloudState.loginSubmitting = true;
   cloudState.message = "로그인 링크 전송 중...";
   renderAuth();
   const redirectTo = String(window.FITMIND_SUPABASE_REDIRECT_URL || window.location.origin).trim();
@@ -1202,14 +1263,22 @@ async function handleCloudLogin() {
       emailRedirectTo: redirectTo
     }
   });
+  cloudState.loginSubmitting = false;
   if (error) {
-    cloudState.message = `로그인 실패: ${error.message}`;
+    const waitSec = parseAuthCooldownSeconds(error.message);
+    if (waitSec > 0) {
+      setLoginCooldown(waitSec);
+      cloudState.message = `보안 제한으로 ${waitSec}초 후 다시 시도해줘.`;
+    } else {
+      cloudState.message = `로그인 실패: ${error.message}`;
+    }
     renderAuth();
     return;
   }
   if (ui.authEmailInput) {
     ui.authEmailInput.value = email;
   }
+  setLoginCooldown(8);
   cloudState.message = "메일로 로그인 링크를 보냈어. 메일에서 링크를 열어 완료해줘.";
   renderAuth();
 }
@@ -1218,6 +1287,8 @@ async function handleCloudLogout() {
   if (!cloudState.client) {
     return;
   }
+  cloudState.loginSubmitting = false;
+  setLoginCooldown(0);
   const { error } = await cloudState.client.auth.signOut();
   if (error) {
     cloudState.message = `로그아웃 실패: ${error.message}`;
