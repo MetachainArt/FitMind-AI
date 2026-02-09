@@ -631,11 +631,11 @@ function bindEvents() {
   });
 
   ui.addSetRowBtn.addEventListener("click", () => {
-    const currentSets = readEditorSetValues({ includeEmpty: true });
-    const nextSets = currentSets.length ? currentSets : [""];
-    nextSets.push("");
+    const currentSets = readEditorSetRows({ includeEmpty: true });
+    const nextSets = currentSets.length ? currentSets : [{ load: "", reps: "" }];
+    nextSets.push({ load: "", reps: "" });
     renderEditorSetRows(nextSets);
-    const lastInput = ui.editorSetRows.querySelector(`[data-set-input-index="${nextSets.length - 1}"]`);
+    const lastInput = ui.editorSetRows.querySelector(`[data-set-load-index="${nextSets.length - 1}"]`);
     if (lastInput instanceof HTMLInputElement) {
       lastInput.focus();
     }
@@ -651,7 +651,7 @@ function bindEvents() {
     if (!Number.isInteger(removeIndex)) {
       return;
     }
-    const currentSets = readEditorSetValues({ includeEmpty: true });
+    const currentSets = readEditorSetRows({ includeEmpty: true });
     if (currentSets.length <= 1) {
       return;
     }
@@ -1256,21 +1256,60 @@ function getCurrentPlan() {
   return getPlanByDay(selectedDay);
 }
 
+function splitSetTarget(setText) {
+  const raw = String(setText || "").trim();
+  if (!raw) {
+    return { load: "", reps: "" };
+  }
+  const matched = raw.match(/^(.*?)\s*[xX×]\s*(.+)$/);
+  if (!matched) {
+    return { load: "", reps: raw };
+  }
+  return {
+    load: matched[1].trim(),
+    reps: matched[2].trim()
+  };
+}
+
+function composeSetTarget(load, reps) {
+  const cleanLoad = String(load || "").trim();
+  const cleanReps = String(reps || "").trim();
+  if (!cleanReps) {
+    return "";
+  }
+  return cleanLoad ? `${cleanLoad} x${cleanReps}` : cleanReps;
+}
+
 function renderEditorSetRows(sets) {
   const normalizedSets = Array.isArray(sets) && sets.length
-    ? sets.map((entry) => String(entry))
-    : [""];
+    ? sets.map((entry) => {
+      if (isPlainObject(entry)) {
+        return {
+          load: String(entry.load || ""),
+          reps: String(entry.reps || "")
+        };
+      }
+      return splitSetTarget(entry);
+    })
+    : [{ load: "", reps: "" }];
   const canRemove = normalizedSets.length > 1;
-  ui.editorSetRows.innerHTML = normalizedSets.map((setText, index) => {
+  ui.editorSetRows.innerHTML = normalizedSets.map((setRow, index) => {
     return `
       <div class="editor-set-row">
         <span class="editor-set-index">${index + 1}세트</span>
         <input
           class="editor-input"
           type="text"
-          data-set-input-index="${index}"
-          value="${escapeHtml(setText)}"
-          placeholder="예: 50kg x12"
+          data-set-load-index="${index}"
+          value="${escapeHtml(setRow.load)}"
+          placeholder="중량/BW"
+        >
+        <input
+          class="editor-input editor-set-reps"
+          type="text"
+          data-set-reps-index="${index}"
+          value="${escapeHtml(setRow.reps)}"
+          placeholder="횟수"
         >
         <button
           class="btn ghost small"
@@ -1283,30 +1322,42 @@ function renderEditorSetRows(sets) {
   }).join("");
 }
 
-function readEditorSetValues({ includeEmpty = false } = {}) {
-  const setInputs = Array.from(ui.editorSetRows.querySelectorAll("[data-set-input-index]"));
-  const rawValues = setInputs.map((input) => {
-    if (!(input instanceof HTMLInputElement)) {
-      return "";
-    }
-    return input.value;
+function readEditorSetRows({ includeEmpty = false } = {}) {
+  const loadInputs = Array.from(ui.editorSetRows.querySelectorAll("[data-set-load-index]"));
+  const repsInputs = Array.from(ui.editorSetRows.querySelectorAll("[data-set-reps-index]"));
+  const rows = loadInputs.map((loadInput, index) => {
+    const repsInput = repsInputs[index];
+    const loadValue = loadInput instanceof HTMLInputElement ? loadInput.value.trim() : "";
+    const repsValue = repsInput instanceof HTMLInputElement ? repsInput.value.trim() : "";
+    return {
+      load: loadValue,
+      reps: repsValue
+    };
   });
   if (includeEmpty) {
-    return rawValues;
+    return rows;
   }
-  return rawValues.map((value) => value.trim()).filter(Boolean);
+  return rows.filter((row) => row.load || row.reps);
 }
 
 function readEditorDraft() {
   const name = (ui.editorExerciseName.value || "").trim();
   const rawRestSec = Number(ui.editorRestSec.value);
-  const sets = readEditorSetValues();
+  const setRows = readEditorSetRows({ includeEmpty: true });
+  const filledRows = setRows.filter((row) => row.load || row.reps);
+  const invalidRowIndex = filledRows.findIndex((row) => !row.reps);
+  const sets = filledRows
+    .map((row) => composeSetTarget(row.load, row.reps))
+    .filter(Boolean);
 
   if (!name) {
     return { error: "운동 이름을 입력해 주세요." };
   }
   if (!Number.isFinite(rawRestSec)) {
     return { error: "휴식 시간(초)을 숫자로 입력해 주세요." };
+  }
+  if (invalidRowIndex >= 0) {
+    return { error: `${invalidRowIndex + 1}세트 횟수를 입력해 주세요.` };
   }
   if (sets.length === 0) {
     return { error: "세트를 하나 이상 입력해 주세요." };
