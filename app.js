@@ -26,6 +26,8 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "lying-leg-curl": { howTo: "라잉 레그컬 운동방법", machine: "라잉 레그컬 기구 사용법" },
   "standing-calf-raise": { howTo: "스탠딩 카프레이즈 운동방법", machine: "카프레이즈 머신 사용법" },
   "lat-pulldown": { howTo: "랫풀다운 운동방법", machine: "랫풀다운 기구 사용법" },
+  "assisted-pull-up": { howTo: "어시스트 풀업 머신 운동방법", machine: "어시스트 풀업 머신 사용법" },
+  "negative-pull-up-deadhang": { howTo: "네거티브 풀업 데드행 운동방법", machine: "철봉 턱걸이 보조 운동" },
   "seated-row": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
   "barbell-curl": { howTo: "바벨 컬 운동방법", machine: "바벨 컬 그립 사용법" },
   "hammer-curl": { howTo: "해머 컬 운동방법", machine: "덤벨 해머 컬 자세" },
@@ -103,8 +105,8 @@ const ROUTINE_PLAN = {
   },
   TUE: {
     dayLabel: "TUE",
-    theme: "등 · 이두 · 복근",
-    trainingFocus: "팔이 얇은 체형 보완을 위해 등 당기기와 이두 볼륨을 확보.",
+    theme: "등 · 풀업 입문 · 이두 · 복근",
+    trainingFocus: "팔이 얇은 체형 보완과 턱걸이 1개 달성을 위해 등 당기기와 보조 풀업을 함께 진행.",
     warmupMain: "밴드 로우 + 어깨 가동성",
     warmupTime: "5-7분",
     warmupNote: "하체 운동 다음날 조깅은 속도 욕심 내지 말고 회복을 우선해.",
@@ -113,6 +115,17 @@ const ROUTINE_PLAN = {
     cardioPlan: "근력 전에는 가벼운 관절 워밍업만 진행.",
     exercises: [
       exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({
+        id: "assisted-pull-up",
+        name: "턱걸이 입문: 어시스트 풀업 머신/밴드 풀업",
+        sets: ["보조 크게 3-5회", "보조 크게 3-5회", "보조 크게 3-5회"],
+        restSec: 120,
+        howTo: "가슴을 살짝 들고 어깨를 귀에서 멀리 내린 뒤, 턱보다 가슴을 바에 가까이 보낸다는 느낌으로 당겨.",
+        machine: "어시스트 풀업 머신이 있으면 체중을 많이 보조하는 무게부터 시작해. 없으면 밴드나 발 받침으로 도움을 받아.",
+        ball: "기구가 없으면 스미스머신 낮은 바에서 인버티드 로우 3세트로 대체해.",
+        safety: "반동으로 뛰어오르지 말고 어깨 앞쪽 통증이 있으면 즉시 중단해.",
+        mistake: "목만 빼서 턱을 넘기려 하면 등이 아니라 목과 팔꿈치에 부담이 커져."
+      }),
       exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
       exercise({ id: "machine-row", name: "머신 로우 (Machine Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 80 }),
       exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
@@ -162,8 +175,8 @@ const ROUTINE_PLAN = {
   },
   FRI: {
     dayLabel: "FRI",
-    theme: "등 · 팔 볼륨 · 복근",
-    trainingFocus: "등과 팔을 한 번 더 자극해 얇은 팔과 상체 볼륨을 보완.",
+    theme: "등 · 풀업 보강 · 팔 볼륨 · 복근",
+    trainingFocus: "등과 팔을 한 번 더 자극하고, 턱걸이 0개에서 1개로 가는 내려오기/매달리기 힘을 만든다.",
     warmupMain: "가벼운 풀다운 + 팔꿈치/손목 가동",
     warmupTime: "5-7분",
     warmupNote: "팔 운동은 반동보다 느린 내림 동작을 우선해.",
@@ -172,6 +185,17 @@ const ROUTINE_PLAN = {
     cardioPlan: "근력 회복이 떨어지면 금요일 팔 세트를 1세트 줄여.",
     exercises: [
       exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["12회", "12회", "12회"], restSec: 85 }),
+      exercise({
+        id: "negative-pull-up-deadhang",
+        name: "턱걸이 입문: 네거티브 풀업 + 데드행",
+        sets: ["천천히 내려오기 3회", "천천히 내려오기 3회", "데드행 15-30초"],
+        restSec: 120,
+        howTo: "박스나 발판을 밟고 위 자세에서 시작해 3-5초 동안 천천히 내려와. 마지막 세트는 어깨를 내린 상태로 매달려 버텨.",
+        machine: "철봉, 스미스머신 바, 풀업 스테이션을 사용해. 발판 높이는 점프하지 않아도 위 자세에 닿는 정도가 좋아.",
+        ball: "철봉이 부담되면 랫풀다운을 천천히 내리는 템포 3세트로 대체해.",
+        safety: "어깨가 귀 쪽으로 으쓱 올라가거나 팔꿈치 통증이 있으면 시간을 줄여.",
+        mistake: "버티려고 몸을 비틀거나 떨어지듯 내려오면 턱걸이 힘보다 관절 부담이 커져."
+      }),
       exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["12회", "12회", "12회"], restSec: 85 }),
       exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
@@ -741,6 +765,9 @@ function getExerciseIcon(exercise) {
   }
   if (fullText.includes("hip") || fullText.includes("glute") || fullText.includes("thrust")) {
     return "🍑";
+  }
+  if (fullText.includes("pull-up") || fullText.includes("pullup") || fullText.includes("풀업") || fullText.includes("턱걸이")) {
+    return "🧗";
   }
   if (fullText.includes("lat") || fullText.includes("row") || fullText.includes("pulldown")) {
     return "🪢";
