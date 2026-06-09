@@ -16,18 +16,6 @@
       <p id="todayLabel" class="chip"></p>
       <button id="resetSessionBtn" class="btn secondary">오늘 기록 초기화</button>
     </div>
-    <div class="auth-actions">
-      <p id="authStatus" class="chip">클라우드: 미설정</p>
-      <input id="authEmailInput" class="editor-input auth-email-input" type="email" placeholder="로그인 이메일">
-      <input id="authPasswordInput" class="editor-input auth-password-input" type="password" placeholder="비밀번호">
-      <button id="authLoginBtn" class="btn ghost">로그인</button>
-      <button id="authSignupBtn" class="btn ghost">회원가입</button>
-      <button id="authGoogleBtn" class="btn ghost">구글 로그인</button>
-      <button id="authKakaoBtn" class="btn ghost">카카오 로그인</button>
-      <button id="authLogoutBtn" class="btn ghost">로그아웃</button>
-      <button id="cloudSyncBtn" class="btn ghost">클라우드 동기화</button>
-    </div>
-    <p id="authMessage" class="muted auth-message"></p>
   </header>
 
   <main class="layout">
@@ -218,14 +206,58 @@
       <h3 class="section-title">최근 기록</h3>
       <ul id="historyList" class="history-list"></ul>
     </section>
+
+    <section class="panel nutrition-panel reveal" aria-label="식단과 체크 기준">
+      <h2>6km 조깅 반영 식단</h2>
+      <div class="safety-notice" role="note">
+        <strong>안전 기준</strong>
+        <p>질환, 약물 복용, 흉통, 어지러움, 관절 통증이 있으면 운동량을 줄이고 전문가 상담을 우선하세요. 2주 이상 피로가 누적되거나 근력이 떨어지면 조깅 속도와 하체 세트를 낮추고 저녁 탄수화물을 보충하세요.</p>
+      </div>
+      <div class="nutrition-grid">
+        <article class="nutrition-card">
+          <h3>아침</h3>
+          <ul>
+            <li>삶은 계란 2개</li>
+            <li>바나나 1개 + 사과 2쪽</li>
+            <li>두유 250ml</li>
+            <li>조깅 후 힘이 빠지면 프로틴 반 스쿱 또는 그릭요거트 추가</li>
+          </ul>
+        </article>
+        <article class="nutrition-card">
+          <h3>점심</h3>
+          <ul>
+            <li>일반식 유지</li>
+            <li>밥 반 공기-1공기</li>
+            <li>단백질 손바닥 1.5-2개</li>
+            <li>채소 두 주먹</li>
+          </ul>
+        </article>
+        <article class="nutrition-card">
+          <h3>저녁</h3>
+          <ul>
+            <li>프로틴 30g + 바나나 1개</li>
+            <li>닭가슴살 100-150g 또는 두부/생선/계란 추가</li>
+            <li>채소 1-2가지</li>
+            <li>월/목/토 하체 운동일에는 고구마 1개 또는 밥 반 공기 추가</li>
+          </ul>
+        </article>
+        <article class="nutrition-card highlight">
+          <h3>체크 기준</h3>
+          <ul>
+            <li>주당 체중 감량은 0.3-0.7kg이면 충분</li>
+            <li>허리둘레를 주 1회 기록</li>
+            <li>하체 피로가 심하면 하체 운동을 1세트씩 줄이기</li>
+            <li>2주 이상 피곤하고 근력이 떨어지면 저녁 탄수화물 추가</li>
+          </ul>
+        </article>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="supabase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

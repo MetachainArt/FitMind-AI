@@ -1,20 +1,22 @@
-"use strict";
+﻿"use strict";
 
 const WEEKDAYS = [
   { code: "MON", short: "월", title: "월요일" },
   { code: "TUE", short: "화", title: "화요일" },
   { code: "WED", short: "수", title: "수요일" },
   { code: "THU", short: "목", title: "목요일" },
-  { code: "FRI", short: "금", title: "금요일" }
+  { code: "FRI", short: "금", title: "금요일" },
+  { code: "SAT", short: "토", title: "토요일" }
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
+const PLAN_VERSION = "daily_6km_strength_v1";
 const DEFAULT_EXERCISE_GUIDE = {
-  howTo: "Control the tempo and keep each rep strict.",
-  machine: "Align seat and pads so joint axis matches machine axis.",
-  ball: "If machine is busy, use dumbbells or bands with similar motion.",
-  safety: "If pain is sharp, stop and reduce load immediately.",
-  mistake: "Using momentum instead of target-muscle tension."
+  howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
+  machine: "좌석, 패드, 손잡이를 몸에 먼저 맞춘 뒤 관절이 편한 범위에서 시작해.",
+  ball: "기구가 비어 있지 않으면 덤벨, 밴드, 짐볼로 같은 부위를 가볍게 대체해.",
+  safety: "날카로운 통증, 어지러움, 자세 붕괴가 있으면 즉시 무게를 낮추거나 중단해.",
+  mistake: "무게 욕심으로 반동을 쓰면 목표 근육 자극보다 관절 부담이 커져."
 };
 
 const EXERCISE_VIDEO_QUERY_OVERRIDES = {
@@ -40,11 +42,23 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "shoulder-press": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
   "lateral-raise": { howTo: "레터럴 레이즈 운동방법", machine: "덤벨 레터럴 레이즈 자세" },
   "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
-  "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
+  "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
+  "machine-row": { howTo: "머신 로우 운동방법", machine: "머신 로우 기구 사용법" },
+  "high-foot-leg-press": { howTo: "레그프레스 발 높게 운동방법", machine: "레그프레스 기구 사용법" },
+  "face-pull": { howTo: "페이스풀 운동방법", machine: "케이블 페이스풀 사용법" },
+  "push-up-db-press": { howTo: "푸시업 덤벨 프레스 운동방법", machine: "덤벨 프레스 자세" },
+  "deadbug": { howTo: "데드버그 운동방법", machine: "데드버그 코어 운동" },
+  "leg-press-sat": { howTo: "레그프레스 운동방법", machine: "레그프레스 기구 사용법" },
+  "chest-press-sat": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 머신 사용법" },
+  "seated-row-sat": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
+  "shoulder-press-sat": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
+  "lateral-raise-sat": { howTo: "레터럴 레이즈 운동방법", machine: "덤벨 레터럴 레이즈 자세" },
+  "hip-abduction-sat": { howTo: "힙 어브덕션 운동방법", machine: "힙 어브덕션 머신 사용법" },
+  "cable-crunch-sat": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
+  "russian-twist-sat": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
 };
 
 const ANALYTICS_SCOPES = ["day", "week", "month"];
-const CLOUD_SUMMARY_TABLE = "fitmind_workout_summaries";
 
 function exercise({
   id,
@@ -57,326 +71,130 @@ function exercise({
   safety,
   mistake
 }) {
-  return { id, name, sets, restSec, howTo, machine, ball, safety, mistake };
+  const item = { id, name, sets, restSec, howTo, machine, ball, safety, mistake };
+  fillGuideDefaults(item);
+  return item;
 }
 
 const ROUTINE_PLAN = {
   MON: {
     dayLabel: "MON",
-    theme: "Lower Body & Glutes",
-    trainingFocus: "Training Focus: Legs, Glutes, Fat burn",
-    warmupMain: "Dynamic warm-up (hip/ankle/knee)",
-    warmupTime: "5 min",
-    warmupNote: "가볍게 관절 풀기 + 엉덩이 활성화",
-    cardioMain: "Incline Walk 5.8~6.3 km/h",
-    cardioTime: "40 min",
-    cardioPlan: "0-5' 6% -> 5-15' 8% -> 15-30' 10% -> 30-35' 8% -> 35-40' 6%",
+    theme: "하체 전면 · 엉덩이 · 복근",
+    trainingFocus: "아침 6km 조깅은 고정. 헬스장에서는 근력 65-70분 + 복근 8-10분.",
+    warmupMain: "고관절/무릎/발목 워밍업",
+    warmupTime: "5-7분",
+    warmupNote: "하체 첫날은 무릎 정렬과 엉덩이 활성화를 먼저 잡아.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "대화 가능한 강도로 조깅. 하체 피로가 심하면 조깅 속도를 낮춰.",
     exercises: [
-      exercise({
-        id: "leg-press",
-        name: "레그프레스 (Leg Press)",
-        sets: ["50kg x12", "50kg x12", "50kg x12", "50kg x12"],
-        restSec: 90,
-        howTo: "발은 골반 너비로 두고, 내릴 때 2초, 밀 때 1초로 일정하게 진행해.",
-        machine: "등받이를 고정하고 허리가 뜨지 않게 밀착. 발판은 발 중앙으로 눌러.",
-        ball: "대체: 짐볼 월 스쿼트 12회 x 3세트.",
-        safety: "무릎을 끝까지 잠그지 말고 발끝과 무릎 방향을 맞춰.",
-        mistake: "반동으로 빠르게 밀면 무릎과 허리에 부담이 커져."
-      }),
-      exercise({
-        id: "hip-abduction",
-        name: "힙 어브덕션 (Hip Abduction, 벌리기)",
-        sets: ["35kg x15", "35kg x15", "35kg x15"],
-        restSec: 70,
-        howTo: "허리를 세우고 무릎으로 바깥쪽을 밀어 엉덩이 옆쪽을 조여.",
-        machine: "등받이에 밀착하고 패드 위치를 무릎 바깥에 맞춘 뒤 가동범위를 일정하게 유지.",
-        ball: "대체: 미니밴드 사이드 스텝 15회 x 3세트.",
-        safety: "반동 없이 천천히 벌리고 모아. 허리 과신전 금지.",
-        mistake: "상체를 흔들어 밀면 중둔근 자극이 줄어."
-      }),
-      exercise({
-        id: "hip-adduction",
-        name: "힙 어덕션 (Hip Adduction, 조이기)",
-        sets: ["30kg x15", "30kg x15", "30kg x15"],
-        restSec: 70,
-        howTo: "골반을 고정하고 허벅지 안쪽 힘으로 패드를 조여.",
-        machine: "등을 붙이고 좌석 깊이를 맞춘 뒤 양쪽 다리 각도를 대칭으로 유지.",
-        ball: "대체: 짐볼/요가볼 무릎 사이 조이기 15회 x 3세트.",
-        safety: "사타구니 통증이 있으면 가동범위를 줄여서 진행.",
-        mistake: "힘으로 빠르게 닫으면 내전근 긴장만 올라가고 자극이 분산돼."
-      }),
-      exercise({
-        id: "lying-leg-curl",
-        name: "라잉 레그컬 (Lying Leg Curl)",
-        sets: ["25kg x12", "25kg x12", "25kg x12"],
-        restSec: 75,
-        howTo: "발목 패드를 뒤꿈치 위에 맞추고 햄스트링 수축에 집중해.",
-        machine: "무릎 축과 기계 회전축을 일치시키고 배를 벤치에 붙여.",
-        ball: "대체: 짐볼 햄스트링 컬 12회 x 3세트.",
-        safety: "허리를 과하게 꺾지 말고 천천히 내려와.",
-        mistake: "엉덩이가 들리면 햄스트링 자극이 줄어들어."
-      }),
-      exercise({
-        id: "standing-calf-raise",
-        name: "스탠딩 카프레이즈 (Standing Calf Raise)",
-        sets: ["BW x20", "BW x20", "BW x20", "BW x20"],
-        restSec: 60,
-        howTo: "발끝으로 천천히 올라가서 1초 정지, 천천히 내려와.",
-        machine: "어깨 패드를 안정적으로 고정하고 발의 앞쪽만 발판에 올려.",
-        ball: "대체: 짐볼 벽 짚고 단일 다리 카프레이즈 15회 x 3세트.",
-        safety: "발목을 바깥으로 꺾지 말고 정면을 유지해.",
-        mistake: "반동만 쓰면 종아리 자극이 약해져."
-      })
+      exercise({ id: "leg-press", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 105 }),
+      exercise({ id: "squat-machine", name: "스쿼트 머신 (Squat Machine)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 105 }),
+      exercise({ id: "leg-extension", name: "레그 익스텐션 (Leg Extension)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 75 }),
+      exercise({ id: "hip-abduction", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "standing-calf-raise", name: "카프레이즈 (Calf Raise)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
+      exercise({ id: "cable-crunch", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
     ]
   },
   TUE: {
     dayLabel: "TUE",
-    theme: "Back & Arms",
-    trainingFocus: "Training Focus: Back, Biceps, Fat loss",
-    warmupMain: "Band row + shoulder mobility",
-    warmupTime: "5 min",
-    warmupNote: "등/어깨 관절 가동 + 등 활성화",
-    cardioMain: "Incline Walk 6.0~6.5 km/h",
-    cardioTime: "40 min",
-    cardioPlan: "0-5' 6% -> 5-10' 8% -> 10-20' 10% -> 20-30' 12%(힘들면 10%) -> 30-35' 8% -> 35-40' 6%",
+    theme: "등 · 이두 · 복근",
+    trainingFocus: "팔이 얇은 체형 보완을 위해 등 당기기와 이두 볼륨을 확보.",
+    warmupMain: "밴드 로우 + 어깨 가동성",
+    warmupTime: "5-7분",
+    warmupNote: "하체 운동 다음날 조깅은 속도 욕심 내지 말고 회복을 우선해.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "근력 전에는 가벼운 관절 워밍업만 진행.",
     exercises: [
-      exercise({
-        id: "lat-pulldown",
-        name: "랫풀다운 (Lat Pulldown)",
-        sets: ["45kg x12", "45kg x12", "45kg x12", "45kg x12"],
-        restSec: 90,
-        howTo: "가슴을 살짝 세우고 팔꿈치를 아래로 당겨 광배 수축을 느껴.",
-        machine: "무릎 패드로 하체를 고정하고 바는 어깨보다 약간 넓게 잡아.",
-        ball: "대체: 짐볼 랫 풀오버 12회 x 3세트.",
-        safety: "목 뒤로 당기지 말고 쇄골 앞쪽으로 당겨.",
-        mistake: "상체를 과하게 젖히면 허리에 부담이 생겨."
-      }),
-      exercise({
-        id: "seated-row",
-        name: "시티드 로우 (Seated Row)",
-        sets: ["40kg x12", "40kg x12", "40kg x12"],
-        restSec: 80,
-        howTo: "당길 때 어깨를 내리고, 끝지점에서 날개뼈를 모아.",
-        machine: "손잡이 높이는 명치 라인, 발판은 무릎이 살짝 굽혀지는 위치.",
-        ball: "대체: 밴드 로우 또는 짐볼 체스트서포트 로우 12회 x 3세트.",
-        safety: "허리를 둥글게 말지 말고 중립 유지.",
-        mistake: "팔로만 당기면 등 자극이 줄어들어."
-      }),
-      exercise({
-        id: "barbell-curl",
-        name: "바벨 컬 (Barbell Curl)",
-        sets: ["25kg x10", "25kg x10", "25kg x10"],
-        restSec: 70,
-        howTo: "팔꿈치는 몸통 옆에 고정하고, 위에서 1초 멈춰.",
-        machine: "기구 없음. 손목이 꺾이지 않게 바를 균등하게 잡아.",
-        ball: "대체: 짐볼 시팅 덤벨 컬 12회 x 3세트.",
-        safety: "허리 반동을 줄이고 코어 힘으로 버텨.",
-        mistake: "몸을 젖혀서 들면 이두에 집중이 흐려져."
-      }),
-      exercise({
-        id: "hammer-curl",
-        name: "해머 컬 (Hammer Curl)",
-        sets: ["12kg x12", "12kg x12", "12kg x12"],
-        restSec: 70,
-        howTo: "엄지 위로 향한 그립으로 팔꿈치를 고정해 천천히 들어.",
-        machine: "기구 없음. 덤벨 시작 위치는 허벅지 옆.",
-        ball: "대체: 짐볼 시팅 해머 컬 12회 x 3세트.",
-        safety: "손목을 꺾지 말고 중립 유지.",
-        mistake: "무게 욕심으로 템포가 빨라지면 자극이 사라져."
-      }),
-      exercise({
-        id: "triceps-pushdown",
-        name: "트라이셉스 푸시다운 (Triceps Pushdown)",
-        sets: ["35kg x12", "35kg x12", "35kg x12"],
-        restSec: 70,
-        howTo: "팔꿈치 고정, 아래에서 1초 멈추고 천천히 복귀.",
-        machine: "케이블 높이는 상단, 손잡이는 손목이 편한 타입 선택.",
-        ball: "대체: 짐볼 오버헤드 트라이셉 익스텐션 12회 x 3세트.",
-        safety: "어깨가 말리지 않게 가슴을 펴.",
-        mistake: "팔꿈치가 앞뒤로 흔들리면 삼두 집중이 깨져."
-      })
+      exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "machine-row", name: "머신 로우 (Machine Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 80 }),
+      exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
+      exercise({ id: "hammer-curl", name: "해머 컬 (Hammer Curl)", sets: ["12회", "12회", "12회"], restSec: 70 }),
+      exercise({ id: "hanging-leg-raise", name: "복근: 행잉 레그레이즈 (Hanging Leg Raise)", sets: ["8-12회", "8-12회", "8-12회"], restSec: 70 })
     ]
   },
   WED: {
     dayLabel: "WED",
-    theme: "Abs & Cardio",
-    trainingFocus: "Training Focus: Belly fat destruction",
-    warmupMain: "Easy walk + trunk activation",
-    warmupTime: "5 min",
-    warmupNote: "복압/호흡 잡고 코어 깨우기",
-    cardioMain: "Incline Walk 5.8~6.2 km/h",
-    cardioTime: "40 min",
-    cardioPlan: "0-5' 6% -> 5-25' 10% 유지 -> 25-35' 12%(심박 과하면 10%) -> 35-40' 6%",
+    theme: "가슴 · 어깨 · 삼두 · 복근",
+    trainingFocus: "상체 밀기 운동으로 가슴/어깨/삼두 근육량을 만든다.",
+    warmupMain: "밴드 풀어파트 + 가벼운 프레스",
+    warmupTime: "5-7분",
+    warmupNote: "어깨가 말리지 않게 견갑을 먼저 안정화해.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "마운틴/경사 걷기는 제외. 근력운동 품질에 집중.",
     exercises: [
-      exercise({
-        id: "hanging-leg-raise",
-        name: "행잉 레그레이즈 (Hanging Leg Raise)",
-        sets: ["10", "10", "10"],
-        restSec: 75,
-        howTo: "골반을 말아 올린다는 느낌으로 다리를 들어.",
-        machine: "철봉/딥스 스테이션에서 어깨를 끌어내리고 버텨.",
-        ball: "대체: 짐볼 니턱 12회 x 3세트.",
-        safety: "상체 흔들림을 최소화하고 반동 금지.",
-        mistake: "다리만 드는 동작으로 끝내면 복부 개입이 약해져."
-      }),
-      exercise({
-        id: "cable-crunch",
-        name: "케이블 크런치 (Cable Crunch)",
-        sets: ["15", "15", "15"],
-        restSec: 60,
-        howTo: "갈비뼈를 골반 쪽으로 접는 느낌으로 말아 내려와.",
-        machine: "케이블 로프를 머리 옆에 고정하고 무릎 고정.",
-        ball: "대체: 짐볼 크런치 15회 x 3세트.",
-        safety: "허리를 꺾지 말고 복부 수축으로만 움직여.",
-        mistake: "팔 힘으로 당기면 복부 자극이 떨어져."
-      }),
-      exercise({
-        id: "plank",
-        name: "플랭크 (Plank)",
-        sets: ["60s", "60s", "60s"],
-        restSec: 60,
-        howTo: "머리-골반-발뒤꿈치가 일직선. 배꼽을 끌어당겨 유지해.",
-        machine: "기구 없음. 팔꿈치는 어깨 아래 정렬.",
-        ball: "대체: 짐볼 플랭크 30~45초 x 3세트.",
-        safety: "허리가 꺼지지 않게 엉덩이를 살짝 말아.",
-        mistake: "버티는 시간만 늘리면 자세가 먼저 무너져."
-      })
+      exercise({ id: "chest-press", name: "체스트 프레스 (Chest Press)", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 90 }),
+      exercise({ id: "shoulder-press", name: "숄더 프레스 (Shoulder Press)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 90 }),
+      exercise({ id: "lateral-raise", name: "레터럴 레이즈 (Lateral Raise)", sets: ["12-15회", "12-15회", "12-15회", "12-15회"], restSec: 70 }),
+      exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 70 }),
+      exercise({ id: "push-up-db-press", name: "푸시업 또는 덤벨 프레스", sets: ["10-12회", "10-12회", "10-12회"], restSec: 75 }),
+      exercise({ id: "russian-twist", name: "복근: 러시안 트위스트 (Russian Twist)", sets: ["20회", "20회", "20회"], restSec: 60 }),
+      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
     ]
   },
   THU: {
     dayLabel: "THU",
-    theme: "Legs Volume",
-    trainingFocus: "Training Focus: Thighs, Glutes",
-    warmupMain: "Lower-body prep (glute bridge/air squat)",
-    warmupTime: "5 min",
-    warmupNote: "무릎/고관절 안정화 위주",
-    cardioMain: "Incline Walk 5.8~6.3 km/h",
-    cardioTime: "40 min",
-    cardioPlan: "0-5' 6% -> 5-20' 8% -> 20-30' 10% -> 30-35' 8% -> 35-40' 6%",
+    theme: "하체 후면 · 허벅지 보강 · 복근",
+    trainingFocus: "햄스트링/엉덩이/허벅지 보강. 피로가 심하면 하체 세트 1개씩 감량.",
+    warmupMain: "글루트 브릿지 + 에어 스쿼트",
+    warmupTime: "5-7분",
+    warmupNote: "조깅으로 다리가 무거우면 첫 운동 무게를 낮춰 시작해.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "하체 후면 운동일이므로 운동 후 정리 스트레칭을 충분히.",
     exercises: [
-      exercise({
-        id: "squat-machine",
-        name: "스쿼트 머신 (Squat Machine)",
-        sets: ["40kg x10", "40kg x10", "40kg x10", "40kg x10"],
-        restSec: 90,
-        howTo: "발은 어깨너비, 엉덩이를 뒤로 보내며 내려갔다가 밀어 올려.",
-        machine: "어깨 패드 높이를 맞추고 발 위치를 너무 앞뒤로 치우치지 않게.",
-        ball: "대체: 짐볼 월 스쿼트 12회 x 3세트.",
-        safety: "무릎이 안쪽으로 붕괴되지 않게 집중해.",
-        mistake: "상체가 과하게 숙여지면 허리 부담이 커져."
-      }),
-      exercise({
-        id: "leg-extension",
-        name: "레그 익스텐션 (Leg Extension)",
-        sets: ["35kg x12", "35kg x12", "35kg x12"],
-        restSec: 75,
-        howTo: "정점에서 1초 멈추고 천천히 내려와 전면 허벅지에 집중.",
-        machine: "무릎 축 정렬, 패드는 발목 위에 고정.",
-        ball: "대체: 짐볼 스쿼트 홀드 30초 x 3세트.",
-        safety: "무릎 통증이 느껴지면 가동범위를 줄여.",
-        mistake: "다리를 툭 차듯 올리면 관절 부담이 커져."
-      }),
-      exercise({
-        id: "leg-curl-seated",
-        name: "레그 컬 (Leg Curl)",
-        sets: ["30kg x12", "30kg x12", "30kg x12"],
-        restSec: 75,
-        howTo: "햄스트링 수축을 느끼며 끝점에서 짧게 멈춰.",
-        machine: "좌석 깊이와 발목 패드 위치를 먼저 맞춰.",
-        ball: "대체: 짐볼 햄스트링 컬 12회 x 3세트.",
-        safety: "허벅지가 들리지 않게 고정해.",
-        mistake: "빠르게 반동으로 움직이면 자극이 분산돼."
-      }),
-      exercise({
-        id: "hip-thrust",
-        name: "힙 쓰러스트 (Hip Thrust)",
-        sets: ["40kg x12", "40kg x12", "40kg x12"],
-        restSec: 90,
-        howTo: "상단에서 엉덩이를 꽉 조이고 1초 멈춰.",
-        machine: "등 상단은 벤치에 고정, 발은 무릎 90도 근처.",
-        ball: "대체: 짐볼 글루트 브릿지 15회 x 3세트.",
-        safety: "허리를 꺾지 말고 골반 후방경사를 만들어.",
-        mistake: "목을 과하게 젖히면 코어가 풀려."
-      }),
-      exercise({
-        id: "calf-press",
-        name: "카프 프레스 (Calf Press)",
-        sets: ["40kg x20", "40kg x20", "40kg x20", "40kg x20"],
-        restSec: 60,
-        howTo: "종아리 수축을 느끼며 짧게 멈춘 뒤 천천히 내려.",
-        machine: "발 앞꿈치 중심으로 발판에 위치해 가동범위를 확보.",
-        ball: "대체: 짐볼 벽 짚고 카프레이즈 20회 x 3세트.",
-        safety: "발목이 꺾이지 않게 정렬 유지.",
-        mistake: "너무 짧은 가동범위로 하면 자극이 줄어."
-      })
+      exercise({ id: "hip-thrust", name: "힙 쓰러스트 (Hip Thrust)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 105 }),
+      exercise({ id: "leg-curl-seated", name: "레그컬 (Leg Curl)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 85 }),
+      exercise({ id: "high-foot-leg-press", name: "레그프레스 발 높게", sets: ["12회", "12회", "12회"], restSec: 90 }),
+      exercise({ id: "hip-adduction", name: "힙 어덕션 (Hip Adduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "calf-press", name: "카프 프레스 (Calf Press)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
+      exercise({ id: "cable-crunch", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
     ]
   },
   FRI: {
     dayLabel: "FRI",
-    theme: "Chest, Shoulders & Abs",
-    trainingFocus: "Training Focus: Upper body, Core",
-    warmupMain: "Shoulder warm-up (band pull-apart/light press)",
-    warmupTime: "5 min",
-    warmupNote: "어깨 가동 + 가슴/견갑 안정",
-    cardioMain: "Incline Walk 6.0~6.5 km/h",
-    cardioTime: "40 min",
-    cardioPlan: "0-5' 6% -> 5-15' 8% -> 15-25' 10% -> 25-35' 12% -> 35-40' 6%",
+    theme: "등 · 팔 볼륨 · 복근",
+    trainingFocus: "등과 팔을 한 번 더 자극해 얇은 팔과 상체 볼륨을 보완.",
+    warmupMain: "가벼운 풀다운 + 팔꿈치/손목 가동",
+    warmupTime: "5-7분",
+    warmupNote: "팔 운동은 반동보다 느린 내림 동작을 우선해.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "근력 회복이 떨어지면 금요일 팔 세트를 1세트 줄여.",
     exercises: [
-      exercise({
-        id: "chest-press",
-        name: "체스트 프레스 (Chest Press)",
-        sets: ["40kg x12", "40kg x12", "40kg x12", "40kg x12"],
-        restSec: 90,
-        howTo: "가슴을 펴고 손잡이를 밀 때 팔꿈치를 완전히 잠그지 않아.",
-        machine: "시트 높이는 손잡이가 가슴 중앙에 오도록 맞춰.",
-        ball: "대체: 짐볼 푸시업 10~12회 x 3세트.",
-        safety: "어깨가 으쓱 올라가지 않게 내려 고정해.",
-        mistake: "반동으로 밀면 가슴 자극보다 관절 부담이 커져."
-      }),
-      exercise({
-        id: "shoulder-press",
-        name: "숄더 프레스 (Shoulder Press)",
-        sets: ["25kg x10", "25kg x10", "25kg x10"],
-        restSec: 85,
-        howTo: "팔꿈치는 손목 아래, 밀어 올릴 때 코어를 단단히 유지.",
-        machine: "좌석 높이는 손잡이가 턱~귀 라인에서 시작하도록.",
-        ball: "대체: 짐볼 시팅 덤벨 프레스 10~12회 x 3세트.",
-        safety: "허리를 과신전하지 말고 갈비뼈를 닫아.",
-        mistake: "목 앞으로 밀면 어깨 전면에 과부하가 와."
-      }),
-      exercise({
-        id: "lateral-raise",
-        name: "레터럴 레이즈 (Lateral Raise)",
-        sets: ["8kg x15", "8kg x15", "8kg x15"],
-        restSec: 70,
-        howTo: "팔꿈치를 살짝 굽힌 상태로 어깨높이까지만 들어.",
-        machine: "덤벨 사용. 손목과 팔꿈치 높이를 일정하게 유지.",
-        ball: "대체: 짐볼 시팅 레터럴 레이즈 15회 x 3세트.",
-        safety: "승모로 들지 말고 어깨 측면으로 들어올려.",
-        mistake: "팔을 너무 높이 들면 어깨 충돌 위험이 커져."
-      }),
-      exercise({
-        id: "cable-crunch-fri",
-        name: "케이블 크런치 (Cable Crunch)",
-        sets: ["15", "15", "15"],
-        restSec: 60,
-        howTo: "복부를 둥글게 말며 천천히 수축해.",
-        machine: "케이블 로프를 머리 옆에 고정하고 코어 유지.",
-        ball: "대체: 짐볼 크런치 15회 x 3세트.",
-        safety: "목을 당기지 말고 시선은 바닥 전방.",
-        mistake: "허리만 접으면 복부 자극이 약해져."
-      }),
-      exercise({
-        id: "russian-twist",
-        name: "러시안 트위스트 (Russian Twist)",
-        sets: ["20", "20", "20"],
-        restSec: 60,
-        howTo: "상체를 길게 세운 채 몸통 회전으로 좌우를 터치해.",
-        machine: "기구 없음. 필요하면 가벼운 플레이트 사용.",
-        ball: "짐볼 활용: 짐볼 잡고 좌우 회전 20회 x 3세트.",
-        safety: "허리 통증 시 가동범위를 줄이고 천천히.",
-        mistake: "팔만 흔들면 복사근 자극이 줄어."
-      })
+      exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["12회", "12회", "12회"], restSec: 85 }),
+      exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["12회", "12회", "12회"], restSec: 85 }),
+      exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
+      exercise({ id: "hammer-curl", name: "해머 컬 (Hammer Curl)", sets: ["12회", "12회", "12회"], restSec: 70 }),
+      exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
+      exercise({ id: "hanging-leg-raise", name: "복근: 행잉 레그레이즈 (Hanging Leg Raise)", sets: ["8-12회", "8-12회", "8-12회"], restSec: 70 })
+    ]
+  },
+  SAT: {
+    dayLabel: "SAT",
+    theme: "전신 보강 · 약점 개선 · 복근",
+    trainingFocus: "한 주 마무리 전신 보강. 피곤하면 무게보다 자세와 완주율을 우선.",
+    warmupMain: "전신 관절 가동 + 가벼운 머신 1세트",
+    warmupTime: "5-7분",
+    warmupNote: "월-금 피로가 쌓였다면 모든 운동을 1세트씩 줄여도 좋아.",
+    cardioMain: "아침 6km 조깅 기준",
+    cardioTime: "헬스장 추가 유산소 없음",
+    cardioPlan: "일요일도 조깅한다면 아주 천천히 회복 조깅으로 둬.",
+    exercises: [
+      exercise({ id: "leg-press-sat", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "chest-press-sat", name: "체스트 프레스 (Chest Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "seated-row-sat", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "shoulder-press-sat", name: "숄더 프레스 (Shoulder Press)", sets: ["10회", "10회", "10회"], restSec: 85 }),
+      exercise({ id: "lateral-raise-sat", name: "레터럴 레이즈 (Lateral Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "cable-crunch-sat", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "russian-twist-sat", name: "복근: 러시안 트위스트 (Russian Twist)", sets: ["20회", "20회", "20회"], restSec: 60 })
     ]
   }
 };
@@ -384,16 +202,6 @@ const ROUTINE_PLAN = {
 const ui = {
   todayLabel: document.getElementById("todayLabel"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
-  authStatus: document.getElementById("authStatus"),
-  authEmailInput: document.getElementById("authEmailInput"),
-  authPasswordInput: document.getElementById("authPasswordInput"),
-  authLoginBtn: document.getElementById("authLoginBtn"),
-  authSignupBtn: document.getElementById("authSignupBtn"),
-  authGoogleBtn: document.getElementById("authGoogleBtn"),
-  authKakaoBtn: document.getElementById("authKakaoBtn"),
-  authLogoutBtn: document.getElementById("authLogoutBtn"),
-  cloudSyncBtn: document.getElementById("cloudSyncBtn"),
-  authMessage: document.getElementById("authMessage"),
   dayTabs: document.getElementById("dayTabs"),
   dayTitle: document.getElementById("dayTitle"),
   dayFocus: document.getElementById("dayFocus"),
@@ -455,19 +263,9 @@ const ui = {
   editorMessage: document.getElementById("editorMessage")
 };
 
-const state = loadState();
+let state = loadState();
 let selectedDay = selectInitialDay();
 let analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
-const cloudState = {
-  client: null,
-  user: null,
-  enabled: false,
-  syncing: false,
-  loginSubmitting: false,
-  redirectUrl: "",
-  message: "",
-  authSubscription: null
-};
 let restTimer = {
   intervalId: null,
   remainingSec: 0,
@@ -482,14 +280,10 @@ let editorSelectedExerciseId = null;
 bootstrap();
 
 function bootstrap() {
-  normalizeCustomPlans();
-  state.analyticsScope = analyticsScope;
-  ensureSession(selectedDay);
-  restoreWorkoutTimerIfNeeded();
+  prepareLoadedState();
   bindEvents();
   renderAll();
   announce("좋아, 오늘 순서대로 하나씩 진행해보자.");
-  void initSupabaseCloud();
 }
 
 function bindEvents() {
@@ -516,30 +310,6 @@ function bindEvents() {
     ui.saveMessage.textContent = "";
     renderAll();
     announce(`좋아, ${weekdayByCode(code).title} 루틴으로 바꿨어.`);
-  });
-
-  ui.authLoginBtn.addEventListener("click", () => {
-    void handleCloudLogin();
-  });
-
-  ui.authSignupBtn.addEventListener("click", () => {
-    void handleCloudSignup();
-  });
-
-  ui.authGoogleBtn.addEventListener("click", () => {
-    void handleOAuthLogin("google");
-  });
-
-  ui.authKakaoBtn.addEventListener("click", () => {
-    void handleOAuthLogin("kakao");
-  });
-
-  ui.authLogoutBtn.addEventListener("click", () => {
-    void handleCloudLogout();
-  });
-
-  ui.cloudSyncBtn.addEventListener("click", () => {
-    void syncCloudSummaries({ pushLocalFirst: true });
   });
 
   ui.exerciseQueue.addEventListener("click", (event) => {
@@ -874,7 +644,6 @@ function bindEvents() {
 
 function renderAll() {
   renderHeader();
-  renderAuth();
   renderDayTabs();
   renderDayInfo();
   renderQueue();
@@ -889,109 +658,9 @@ function renderAll() {
 function renderHeader() {
   const weekday = weekdayByCode(selectedDay);
   const dateLabel = formatDateLabel(new Date());
-  const isWeekend = !["MON", "TUE", "WED", "THU", "FRI"].includes(getTodayCode());
-  const weekendHint = isWeekend ? " | 주말이라 월요일 루틴을 기본 추천 중" : "";
+  const isSunday = new Date().getDay() === 0;
+  const weekendHint = isSunday ? " | 일요일은 회복일이라 월요일 루틴을 기본 추천 중" : "";
   ui.todayLabel.textContent = `${dateLabel} | 선택 루틴: ${weekday.title}${weekendHint}`;
-}
-
-function setAuthSignedInView(isSignedIn) {
-  if (ui.authEmailInput) {
-    ui.authEmailInput.hidden = isSignedIn;
-  }
-  if (ui.authPasswordInput) {
-    ui.authPasswordInput.hidden = isSignedIn;
-  }
-  if (ui.authLoginBtn) {
-    ui.authLoginBtn.hidden = isSignedIn;
-  }
-  if (ui.authSignupBtn) {
-    ui.authSignupBtn.hidden = isSignedIn;
-  }
-  if (ui.authGoogleBtn) {
-    ui.authGoogleBtn.hidden = isSignedIn;
-  }
-  if (ui.authKakaoBtn) {
-    ui.authKakaoBtn.hidden = isSignedIn;
-  }
-  if (ui.authLogoutBtn) {
-    ui.authLogoutBtn.hidden = !isSignedIn;
-  }
-  if (ui.cloudSyncBtn) {
-    ui.cloudSyncBtn.hidden = !isSignedIn;
-  }
-}
-
-function renderAuth() {
-  if (!ui.authStatus || !ui.authLoginBtn || !ui.authSignupBtn || !ui.authGoogleBtn || !ui.authKakaoBtn || !ui.authLogoutBtn || !ui.cloudSyncBtn || !ui.authMessage) {
-    return;
-  }
-
-  if (!cloudState.enabled) {
-    setAuthSignedInView(false);
-    ui.authStatus.textContent = "클라우드: 미설정";
-    ui.authLoginBtn.textContent = "로그인";
-    if (ui.authEmailInput) {
-      ui.authEmailInput.disabled = true;
-    }
-    if (ui.authPasswordInput) {
-      ui.authPasswordInput.disabled = true;
-    }
-    ui.authLoginBtn.disabled = true;
-    ui.authSignupBtn.disabled = true;
-    ui.authGoogleBtn.disabled = true;
-    ui.authKakaoBtn.disabled = true;
-    ui.authLogoutBtn.disabled = true;
-    ui.cloudSyncBtn.disabled = true;
-    if (!cloudState.message) {
-      ui.authMessage.textContent = "Supabase URL/Anon Key를 설정하면 로그인과 클라우드 저장이 켜집니다.";
-      return;
-    }
-    ui.authMessage.textContent = cloudState.message;
-    return;
-  }
-
-  const email = cloudState.user?.email || "";
-  const identity = email || "로그인됨";
-  const isSignedIn = Boolean(cloudState.user);
-  setAuthSignedInView(isSignedIn);
-  ui.authStatus.textContent = cloudState.user
-    ? `클라우드: ${identity}`
-    : "클라우드: 로그아웃";
-  if (ui.authEmailInput) {
-    ui.authEmailInput.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-    if (cloudState.user?.email) {
-      ui.authEmailInput.value = cloudState.user.email;
-    }
-  }
-  if (ui.authPasswordInput) {
-    ui.authPasswordInput.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-  }
-  ui.authLoginBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-  ui.authSignupBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-  ui.authGoogleBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-  ui.authKakaoBtn.disabled = Boolean(cloudState.user) || cloudState.loginSubmitting;
-  if (cloudState.loginSubmitting) {
-    ui.authLoginBtn.textContent = "처리중...";
-    ui.authSignupBtn.textContent = "처리중...";
-    ui.authGoogleBtn.textContent = "처리중...";
-    ui.authKakaoBtn.textContent = "처리중...";
-  } else {
-    ui.authLoginBtn.textContent = "로그인";
-    ui.authSignupBtn.textContent = "회원가입";
-    ui.authGoogleBtn.textContent = "구글 로그인";
-    ui.authKakaoBtn.textContent = "카카오 로그인";
-  }
-  ui.authLogoutBtn.disabled = !cloudState.user;
-  ui.cloudSyncBtn.disabled = !cloudState.user || cloudState.syncing;
-  if (cloudState.message) {
-    ui.authMessage.textContent = cloudState.message;
-    return;
-  }
-  if (state.cloudLastSyncedAt && cloudState.user) {
-    ui.authMessage.textContent = `마지막 동기화: ${formatDateLabel(new Date(state.cloudLastSyncedAt))}`;
-    return;
-  }
-  ui.authMessage.textContent = "";
 }
 
 function getExerciseIcon(exercise) {
@@ -1178,431 +847,6 @@ function renderSummary() {
   ui.anxietyValue.textContent = `${session.anxietyScore}/5`;
 }
 
-function readSupabaseConfig() {
-  const url = String(window.FITMIND_SUPABASE_URL || "").trim();
-  const anonKey = String(window.FITMIND_SUPABASE_ANON_KEY || "").trim();
-  const redirectUrl = String(window.FITMIND_SUPABASE_REDIRECT_URL || window.location.origin).trim();
-  if (!url || !anonKey) {
-    return null;
-  }
-  return { url, anonKey, redirectUrl };
-}
-
-function readAuthCallbackState() {
-  const hashRaw = window.location.hash.startsWith("#")
-    ? window.location.hash.slice(1)
-    : window.location.hash;
-  const hashParams = new URLSearchParams(hashRaw);
-  const queryParams = new URLSearchParams(window.location.search);
-
-  const error = hashParams.get("error_description")
-    || hashParams.get("error")
-    || queryParams.get("error_description")
-    || queryParams.get("error");
-  const hasAuthPayload = hashParams.has("access_token")
-    || hashParams.has("refresh_token")
-    || queryParams.has("code");
-  return {
-    error: error ? decodeURIComponent(String(error)) : "",
-    hasAuthPayload
-  };
-}
-
-function cleanupAuthCallbackUrl() {
-  const callbackState = readAuthCallbackState();
-  if (!callbackState.hasAuthPayload && !callbackState.error) {
-    return;
-  }
-  const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-  window.history.replaceState({}, document.title, cleanUrl);
-}
-
-async function initSupabaseCloud() {
-  const config = readSupabaseConfig();
-  if (!config) {
-    cloudState.enabled = false;
-    cloudState.redirectUrl = "";
-    cloudState.message = "Supabase 미설정";
-    renderAuth();
-    return;
-  }
-  if (!window.supabase || typeof window.supabase.createClient !== "function") {
-    cloudState.enabled = false;
-    cloudState.message = "Supabase SDK 로드 실패";
-    renderAuth();
-    return;
-  }
-
-  cloudState.client = window.supabase.createClient(config.url, config.anonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  });
-  cloudState.enabled = true;
-  cloudState.redirectUrl = config.redirectUrl || window.location.origin;
-  cloudState.message = "";
-  const callbackState = readAuthCallbackState();
-  if (callbackState.error) {
-    cloudState.message = `로그인 콜백 오류: ${callbackState.error}`;
-  }
-  renderAuth();
-
-  const { data, error } = await cloudState.client.auth.getSession();
-  if (error) {
-    cloudState.message = `세션 확인 실패: ${error.message}`;
-    renderAuth();
-    return;
-  }
-  cloudState.user = data?.session?.user || null;
-  renderAuth();
-
-  const { data: authData } = cloudState.client.auth.onAuthStateChange((event, session) => {
-    cloudState.user = session?.user || null;
-    if (event === "SIGNED_OUT") {
-      cloudState.message = "로그아웃됨";
-    } else if (event === "SIGNED_IN") {
-      cloudState.message = "로그인 상태 동기화됨";
-      cleanupAuthCallbackUrl();
-    }
-    renderAuth();
-    if (event === "SIGNED_IN" && cloudState.user) {
-      void syncCloudSummaries({ pushLocalFirst: true });
-    }
-  });
-  cloudState.authSubscription = authData?.subscription || null;
-
-  if (cloudState.user) {
-    await syncCloudSummaries({ pushLocalFirst: true });
-  } else {
-    cloudState.message = "로그인하면 기록이 클라우드에 저장됩니다.";
-    renderAuth();
-  }
-}
-
-async function handleOAuthLogin(provider) {
-  if (!cloudState.enabled || !cloudState.client) {
-    cloudState.message = "Supabase가 설정되지 않았어.";
-    renderAuth();
-    return;
-  }
-  if (cloudState.user) {
-    cloudState.message = "이미 로그인되어 있어.";
-    renderAuth();
-    return;
-  }
-  const providerName = provider === "google" ? "구글" : "카카오";
-  cloudState.loginSubmitting = true;
-  cloudState.message = `${providerName} 로그인으로 이동 중...`;
-  renderAuth();
-
-  const { error } = await cloudState.client.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: cloudState.redirectUrl || window.location.origin
-    }
-  });
-
-  cloudState.loginSubmitting = false;
-  if (error) {
-    cloudState.message = `${providerName} 로그인 실패: ${error.message}`;
-    renderAuth();
-    return;
-  }
-  cloudState.message = `${providerName} 로그인 화면으로 이동합니다.`;
-  renderAuth();
-}
-
-async function handleCloudLogin() {
-  if (!cloudState.enabled || !cloudState.client) {
-    cloudState.message = "Supabase가 설정되지 않았어.";
-    renderAuth();
-    return;
-  }
-
-  const inputEmail = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
-  const email = inputEmail || String(window.prompt("이메일을 입력해 주세요.") || "").trim();
-  const password = ui.authPasswordInput ? String(ui.authPasswordInput.value || "") : "";
-  if (!email) {
-    cloudState.message = "이메일을 입력해 주세요.";
-    renderAuth();
-    return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    cloudState.message = "이메일 형식이 올바르지 않아.";
-    renderAuth();
-    return;
-  }
-  if (!password) {
-    cloudState.message = "비밀번호를 입력해 주세요.";
-    renderAuth();
-    return;
-  }
-
-  cloudState.loginSubmitting = true;
-  cloudState.message = "로그인 중...";
-  renderAuth();
-  const { error } = await cloudState.client.auth.signInWithPassword({
-    email: email.trim(),
-    password
-  });
-  cloudState.loginSubmitting = false;
-  if (error) {
-    cloudState.message = `로그인 실패: ${error.message}`;
-    renderAuth();
-    return;
-  }
-  if (ui.authEmailInput) {
-    ui.authEmailInput.value = email;
-  }
-  if (ui.authPasswordInput) {
-    ui.authPasswordInput.value = "";
-  }
-  cloudState.message = "로그인 성공";
-  renderAuth();
-  await syncCloudSummaries({ pushLocalFirst: true });
-}
-
-async function handleCloudSignup() {
-  if (!cloudState.enabled || !cloudState.client) {
-    cloudState.message = "Supabase가 설정되지 않았어.";
-    renderAuth();
-    return;
-  }
-
-  const email = ui.authEmailInput ? String(ui.authEmailInput.value || "").trim() : "";
-  const password = ui.authPasswordInput ? String(ui.authPasswordInput.value || "") : "";
-  if (!email) {
-    cloudState.message = "이메일을 입력해 주세요.";
-    renderAuth();
-    return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    cloudState.message = "이메일 형식이 올바르지 않아.";
-    renderAuth();
-    return;
-  }
-  if (!password || password.length < 6) {
-    cloudState.message = "비밀번호는 6자 이상으로 입력해 주세요.";
-    renderAuth();
-    return;
-  }
-
-  cloudState.loginSubmitting = true;
-  cloudState.message = "회원가입 처리 중...";
-  renderAuth();
-  const { data, error } = await cloudState.client.auth.signUp({
-    email,
-    password
-  });
-  cloudState.loginSubmitting = false;
-  if (error) {
-    cloudState.message = `회원가입 실패: ${error.message}`;
-    renderAuth();
-    return;
-  }
-
-  const hasSession = Boolean(data?.session);
-  if (hasSession) {
-    cloudState.user = data?.session?.user || null;
-    cloudState.message = "회원가입 및 로그인 완료";
-    if (ui.authPasswordInput) {
-      ui.authPasswordInput.value = "";
-    }
-    renderAuth();
-    await syncCloudSummaries({ pushLocalFirst: true });
-    return;
-  }
-
-  cloudState.message = "회원가입 완료. 이메일 인증 후 로그인해 주세요.";
-  renderAuth();
-}
-
-async function handleCloudLogout() {
-  if (!cloudState.client) {
-    return;
-  }
-  cloudState.loginSubmitting = false;
-  const { error } = await cloudState.client.auth.signOut();
-  if (error) {
-    cloudState.message = `로그아웃 실패: ${error.message}`;
-  } else {
-    cloudState.user = null;
-    if (ui.authEmailInput) {
-      ui.authEmailInput.value = "";
-    }
-    if (ui.authPasswordInput) {
-      ui.authPasswordInput.value = "";
-    }
-    cloudState.message = "로그아웃됨";
-  }
-  renderAuth();
-}
-
-function summaryToCloudRow(summary, userId) {
-  const dateKey = isDateKey(summary?.date) ? summary.date : getTodayDateString();
-  return {
-    user_id: userId,
-    session_key: String(summary?.sessionKey || `${dateKey}_MON`),
-    summary_date: dateKey,
-    day_code: String(summary?.dayCode || "MON"),
-    completion_rate: Number.isFinite(Number(summary?.completionRate)) ? Number(summary.completionRate) : 0,
-    exercise_done: Number.isFinite(Number(summary?.exerciseDone)) ? Number(summary.exerciseDone) : 0,
-    exercise_total: Number.isFinite(Number(summary?.exerciseTotal)) ? Number(summary.exerciseTotal) : 0,
-    set_done: Number.isFinite(Number(summary?.setDone)) ? Number(summary.setDone) : 0,
-    set_total: Number.isFinite(Number(summary?.setTotal)) ? Number(summary.setTotal) : 0,
-    search_count: Number.isFinite(Number(summary?.searchCount)) ? Number(summary.searchCount) : 0,
-    workout_elapsed_sec: Number.isFinite(Number(summary?.workoutElapsedSec)) ? Number(summary.workoutElapsedSec) : 0,
-    anxiety_score: Number.isFinite(Number(summary?.anxietyScore)) ? Number(summary.anxietyScore) : 3,
-    saved_at: typeof summary?.savedAt === "string" ? summary.savedAt : new Date().toISOString()
-  };
-}
-
-function cloudRowToSummary(row) {
-  return {
-    sessionKey: String(row.session_key || ""),
-    date: String(row.summary_date || ""),
-    dayCode: String(row.day_code || "MON"),
-    completionRate: Number.isFinite(Number(row.completion_rate)) ? Number(row.completion_rate) : 0,
-    exerciseDone: Number.isFinite(Number(row.exercise_done)) ? Number(row.exercise_done) : 0,
-    exerciseTotal: Number.isFinite(Number(row.exercise_total)) ? Number(row.exercise_total) : 0,
-    setDone: Number.isFinite(Number(row.set_done)) ? Number(row.set_done) : 0,
-    setTotal: Number.isFinite(Number(row.set_total)) ? Number(row.set_total) : 0,
-    searchCount: Number.isFinite(Number(row.search_count)) ? Number(row.search_count) : 0,
-    workoutElapsedSec: Number.isFinite(Number(row.workout_elapsed_sec)) ? Number(row.workout_elapsed_sec) : 0,
-    anxietyScore: Number.isFinite(Number(row.anxiety_score)) ? Number(row.anxiety_score) : 3,
-    savedAt: typeof row.saved_at === "string" ? row.saved_at : new Date().toISOString()
-  };
-}
-
-function mergeSummaryLists(listA, listB) {
-  const bySession = {};
-  [...listA, ...listB].forEach((item) => {
-    if (!item || typeof item.sessionKey !== "string" || !item.sessionKey) {
-      return;
-    }
-    const current = bySession[item.sessionKey];
-    if (!current) {
-      bySession[item.sessionKey] = item;
-      return;
-    }
-    const currentTime = Date.parse(current.savedAt || "");
-    const nextTime = Date.parse(item.savedAt || "");
-    if (!Number.isFinite(currentTime) || nextTime >= currentTime) {
-      bySession[item.sessionKey] = item;
-    }
-  });
-  return Object.values(bySession)
-    .sort((a, b) => {
-      const aTime = Date.parse(a.savedAt || "");
-      const bTime = Date.parse(b.savedAt || "");
-      if (Number.isFinite(aTime) && Number.isFinite(bTime)) {
-        return bTime - aTime;
-      }
-      return String(b.savedAt || "").localeCompare(String(a.savedAt || ""));
-    })
-    .slice(0, 365);
-}
-
-async function pushLocalHistoryToCloud() {
-  if (!cloudState.client || !cloudState.user) {
-    return;
-  }
-  const source = Array.isArray(state.history) ? state.history : [];
-  const rows = source
-    .filter((item) => item && typeof item.sessionKey === "string" && item.sessionKey)
-    .map((item) => summaryToCloudRow(item, cloudState.user.id));
-  if (rows.length === 0) {
-    return;
-  }
-
-  const chunkSize = 100;
-  for (let i = 0; i < rows.length; i += chunkSize) {
-    const chunk = rows.slice(i, i + chunkSize);
-    const { error } = await cloudState.client
-      .from(CLOUD_SUMMARY_TABLE)
-      .upsert(chunk, { onConflict: "user_id,session_key" });
-    if (error) {
-      throw new Error(error.message);
-    }
-  }
-}
-
-async function pullCloudHistory() {
-  if (!cloudState.client || !cloudState.user) {
-    return [];
-  }
-  const { data, error } = await cloudState.client
-    .from(CLOUD_SUMMARY_TABLE)
-    .select("*")
-    .eq("user_id", cloudState.user.id)
-    .order("saved_at", { ascending: false })
-    .limit(365);
-  if (error) {
-    throw new Error(error.message);
-  }
-  if (!Array.isArray(data)) {
-    return [];
-  }
-  return data.map((row) => cloudRowToSummary(row));
-}
-
-async function syncCloudSummaries({ pushLocalFirst = true } = {}) {
-  if (!cloudState.client || !cloudState.user) {
-    cloudState.message = "로그인 후 동기화할 수 있어.";
-    renderAuth();
-    return;
-  }
-  if (cloudState.syncing) {
-    return;
-  }
-  cloudState.syncing = true;
-  cloudState.message = "클라우드 동기화 중...";
-  renderAuth();
-
-  try {
-    if (pushLocalFirst) {
-      await pushLocalHistoryToCloud();
-    }
-    const remoteSummaries = await pullCloudHistory();
-    const localSummaries = Array.isArray(state.history) ? state.history : [];
-    state.history = mergeSummaryLists(localSummaries, remoteSummaries);
-    state.cloudLastSyncedAt = new Date().toISOString();
-    persistState();
-    renderHistory();
-    renderAnalytics();
-    cloudState.message = `클라우드 동기화 완료 (${state.history.length}건)`;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "알 수 없는 오류";
-    cloudState.message = `동기화 실패: ${message}`;
-  } finally {
-    cloudState.syncing = false;
-    renderAuth();
-  }
-}
-
-async function upsertSummaryToCloud(summary) {
-  if (!cloudState.client || !cloudState.user) {
-    return;
-  }
-  const row = summaryToCloudRow(summary, cloudState.user.id);
-  const { error } = await cloudState.client
-    .from(CLOUD_SUMMARY_TABLE)
-    .upsert(row, { onConflict: "user_id,session_key" });
-  if (error) {
-    cloudState.message = `클라우드 저장 실패: ${error.message}`;
-    renderAuth();
-    return;
-  }
-  state.cloudLastSyncedAt = new Date().toISOString();
-  persistState();
-  if (cloudState.message && cloudState.message.includes("실패")) {
-    cloudState.message = "클라우드 저장 재시도 성공";
-  }
-  renderAuth();
-}
-
 function buildCurrentSummary() {
   const session = getCurrentSession();
   return {
@@ -1644,12 +888,9 @@ function saveCurrentSummary({ manual = false, auto = false } = {}) {
   persistState();
 
   if (manual) {
-    ui.saveMessage.textContent = "오늘 요약을 저장했어.";
+    ui.saveMessage.textContent = "오늘 요약을 이 기기에 저장했어.";
   } else if (auto) {
-    ui.saveMessage.textContent = `운동 완료 기록 자동 저장됨 (${summary.date})`;
-  }
-  if (cloudState.user) {
-    void upsertSummaryToCloud(summary);
+    ui.saveMessage.textContent = `운동 완료 기록 이 기기에 저장됨 (${summary.date})`;
   }
   renderHistory();
   renderAnalytics();
@@ -1828,10 +1069,13 @@ function renderHistory() {
   ui.historyList.innerHTML = history.map((item) => {
     const weekday = weekdayByCode(item.dayCode);
     const elapsedSec = Number.isFinite(item.workoutElapsedSec) ? item.workoutElapsedSec : 0;
+    const completionRate = Number.isFinite(Number(item.completionRate)) ? Number(item.completionRate) : 0;
+    const searchCount = Number.isFinite(Number(item.searchCount)) ? Number(item.searchCount) : 0;
+    const anxietyScore = Number.isFinite(Number(item.anxietyScore)) ? Number(item.anxietyScore) : 3;
     return `
       <li class="history-item">
-        <strong>${item.date} ${weekday.short}</strong><br>
-        완주율 ${item.completionRate}% | 운동시간 ${toDurationClock(elapsedSec)} | 검색 ${item.searchCount}회 | 불안도 ${item.anxietyScore}/5
+        <strong>${escapeHtml(item.date || "")} ${escapeHtml(weekday.short)}</strong><br>
+        완주율 ${completionRate}% | 운동시간 ${toDurationClock(elapsedSec)} | 검색 ${searchCount}회 | 불안도 ${anxietyScore}/5
       </li>
     `;
   }).join("");
@@ -2444,9 +1688,9 @@ function getCurrentSession() {
 
 function createInitialState() {
   return {
+    planVersion: PLAN_VERSION,
     selectedDay: null,
     analyticsScope: "week",
-    cloudLastSyncedAt: null,
     currentSessionKey: null,
     sessions: {},
     history: [],
@@ -2465,8 +1709,8 @@ function normalizeLoadedState(parsed) {
   }
 
   initial.selectedDay = typeof parsed.selectedDay === "string" ? parsed.selectedDay : null;
+  initial.planVersion = PLAN_VERSION;
   initial.analyticsScope = ANALYTICS_SCOPES.includes(parsed.analyticsScope) ? parsed.analyticsScope : "week";
-  initial.cloudLastSyncedAt = typeof parsed.cloudLastSyncedAt === "string" ? parsed.cloudLastSyncedAt : null;
   initial.currentSessionKey = typeof parsed.currentSessionKey === "string" ? parsed.currentSessionKey : null;
 
   if (isPlainObject(parsed.sessions)) {
@@ -2507,6 +1751,16 @@ function persistState() {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function prepareLoadedState() {
+  selectedDay = selectInitialDay();
+  analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
+  normalizeCustomPlans();
+  state.analyticsScope = analyticsScope;
+  editorSelectedExerciseId = null;
+  ensureSession(selectedDay);
+  restoreWorkoutTimerIfNeeded();
+}
+
 function selectInitialDay() {
   if (state.selectedDay && ROUTINE_PLAN[state.selectedDay]) {
     return state.selectedDay;
@@ -2530,6 +1784,9 @@ function getTodayCode() {
   }
   if (day === 5) {
     return "FRI";
+  }
+  if (day === 6) {
+    return "SAT";
   }
   return "MON";
 }

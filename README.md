@@ -1,34 +1,25 @@
 # FitMind Gym Routine
 
-검색 없이 바로 운동하려고 만든 개인 루틴 웹앱입니다.
+검색 없이 바로 운동하려고 만든 개인 루틴 웹앱입니다. 현재 기본 루틴은 매일 아침 6km 조깅을 고정 유산소로 보고, 헬스장에서는 추가 유산소 없이 월-토 6일 근력운동과 복근운동을 진행하도록 구성되어 있습니다.
 
 ## 실행 방법
 1. `c:\MyApp\FitMind AI\index.html` 파일을 브라우저로 열기
-2. 요일 선택 후 운동 진행
+2. 월-토 요일 선택 후 운동 진행
 3. `세트 완료` 버튼으로 세트 누적
 4. 휴식 타이머 확인 후 다음 세트 진행
 5. 운동 종료 후 `오늘 요약 저장`
 
-## Supabase 로그인 + 클라우드 저장 설정
-1. Supabase 프로젝트 생성
-2. Supabase SQL Editor에서 `supabase/setup.sql` 실행
-3. `supabase-config.example.js`를 참고해서 `supabase-config.js` 값 입력
-4. 배포 환경(Vercel)에서도 동일하게 `supabase-config.js` 반영
-5. 앱 상단 `로그인` 버튼으로 이메일 로그인 후 `클라우드 동기화` 실행
-
-`supabase-config.js` 예시:
-```js
-window.FITMIND_SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
-window.FITMIND_SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-window.FITMIND_SUPABASE_REDIRECT_URL = "https://fitmind.dmssolution.co.kr";
-```
-
-주의:
-- `ANON KEY`는 공개 키라 프론트엔드에서 사용 가능하지만, `SERVICE ROLE KEY`는 절대 넣지 마세요.
-- 로그인 완료 후 기록은 `fitmind_workout_summaries` 테이블에 사용자별로 저장됩니다.
+## 저장 방식
+- 현재 버전은 로그인/회원가입/카카오 로그인을 제공하지 않습니다.
+- 운동 기록은 브라우저의 LocalStorage에만 저장됩니다.
+- 같은 기기와 같은 브라우저에서 다시 열면 최근 기록과 분석을 이어서 볼 수 있습니다.
 
 ## 포함 기능
-- 루틴 순서 자동 진행 (MON~FRI)
+- 루틴 순서 자동 진행 (MON~SAT)
+- 아침 6km 조깅을 반영한 헬스장 추가 유산소 제외 루틴
+- 마른비만 개선을 위한 하체/상체 분할 + 복근 포함 루틴
+- 아침/점심/저녁 식단 가이드와 체크 기준 패널
+- 과훈련/통증/질환 관련 안전 기준 안내
 - 운동 가이드 카드
   - 운동방법
   - 기구 설명
@@ -37,5 +28,4 @@ window.FITMIND_SUPABASE_REDIRECT_URL = "https://fitmind.dmssolution.co.kr";
 - 세트 완료 및 휴식 타이머
 - 완주율/검색 횟수/불안도 기록
 - 최근 기록 저장(LocalStorage)
-- Supabase 로그인 + 클라우드 동기화
 - 일별/주별/월별 기록 집계
