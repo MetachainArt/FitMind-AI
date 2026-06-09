@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>핏마인드 짐 루틴</title>
   <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
-  <link rel="stylesheet" href="styles.css?v=f9ed813-local-only">
+  <link rel="stylesheet" href="styles.css?v=inbody-monthly-v1">
 </head>
 <body>
   <header class="hero reveal">
@@ -252,12 +252,72 @@
         </article>
       </div>
     </section>
+
+    <section class="panel inbody-panel reveal" aria-label="월간 인바디 체크">
+      <h2>월간 인바디 체크</h2>
+      <div class="safety-notice" role="note">
+        <strong>한 달에 한 번만 점검</strong>
+        <p>인바디 JPG는 이 기기에만 저장됩니다. 이미지를 자동 판독하지는 않으니 체중, 골격근량, 체지방률 같은 핵심 수치를 직접 입력하면 지난 기록과 비교해 운동·식단 조정안을 만들어줍니다.</p>
+      </div>
+
+      <div class="inbody-grid">
+        <form class="inbody-form" id="inbodyForm">
+          <label class="editor-label" for="inbodyDateInput">측정일</label>
+          <input id="inbodyDateInput" class="editor-input" type="date">
+
+          <label class="editor-label" for="inbodyImageInput">인바디 JPG/PNG</label>
+          <input id="inbodyImageInput" class="editor-input file-input" type="file" accept="image/jpeg,image/png">
+
+          <div class="inbody-field-grid">
+            <label class="editor-label" for="inbodyWeightInput">체중 kg
+              <input id="inbodyWeightInput" class="editor-input" type="number" min="30" max="200" step="0.1" placeholder="78.0">
+            </label>
+            <label class="editor-label" for="inbodyMuscleInput">골격근량 kg
+              <input id="inbodyMuscleInput" class="editor-input" type="number" min="10" max="80" step="0.1" placeholder="예: 28.5">
+            </label>
+            <label class="editor-label" for="inbodyBodyFatInput">체지방률 %
+              <input id="inbodyBodyFatInput" class="editor-input" type="number" min="3" max="60" step="0.1" placeholder="예: 27.0">
+            </label>
+            <label class="editor-label" for="inbodyVisceralInput">내장지방 레벨
+              <input id="inbodyVisceralInput" class="editor-input" type="number" min="1" max="30" step="1" placeholder="선택">
+            </label>
+            <label class="editor-label" for="inbodyWaistInput">허리둘레 cm
+              <input id="inbodyWaistInput" class="editor-input" type="number" min="40" max="160" step="0.1" placeholder="선택">
+            </label>
+          </div>
+
+          <label class="editor-label" for="inbodyMemoInput">메모</label>
+          <textarea id="inbodyMemoInput" class="editor-input inbody-memo" maxlength="220" placeholder="컨디션, 식단 변화, 조깅 피로감 등을 짧게 적어두세요."></textarea>
+
+          <div class="inbody-actions">
+            <button id="saveInbodyBtn" class="btn primary" type="submit">인바디 기록 저장</button>
+            <button id="clearInbodyImageBtn" class="btn ghost" type="button">선택 이미지 제거</button>
+          </div>
+          <p id="inbodyMessage" class="muted editor-message"></p>
+        </form>
+
+        <div class="inbody-result">
+          <div class="inbody-preview-box">
+            <img id="inbodyPreview" class="inbody-preview" alt="저장된 인바디 이미지 미리보기">
+            <p id="inbodyPreviewEmpty" class="history-empty">아직 저장된 인바디 이미지가 없습니다.</p>
+          </div>
+
+          <article class="inbody-recommendation" aria-live="polite">
+            <h3 class="section-title">이번 달 조정안</h3>
+            <ul id="inbodyRecommendationList"></ul>
+          </article>
+
+          <h3 class="section-title">최근 인바디 기록</h3>
+          <ul id="inbodyHistoryList" class="history-list"></ul>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="app.js?v=f9ed813-local-only"></script>
+  <script src="app.js?v=inbody-monthly-v1"></script>
 </body>
 </html>

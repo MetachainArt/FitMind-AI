@@ -59,6 +59,10 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
 };
 
 const ANALYTICS_SCOPES = ["day", "week", "month"];
+const INBODY_MAX_RECORDS = 12;
+const INBODY_MAX_IMAGE_RECORDS = 6;
+const INBODY_IMAGE_MAX_EDGE = 900;
+const INBODY_IMAGE_QUALITY = 0.72;
 
 function exercise({
   id,
@@ -260,7 +264,23 @@ const ui = {
   addExerciseBtn: document.getElementById("addExerciseBtn"),
   deleteExerciseBtn: document.getElementById("deleteExerciseBtn"),
   resetDayPlanBtn: document.getElementById("resetDayPlanBtn"),
-  editorMessage: document.getElementById("editorMessage")
+  editorMessage: document.getElementById("editorMessage"),
+  inbodyForm: document.getElementById("inbodyForm"),
+  inbodyDateInput: document.getElementById("inbodyDateInput"),
+  inbodyImageInput: document.getElementById("inbodyImageInput"),
+  inbodyWeightInput: document.getElementById("inbodyWeightInput"),
+  inbodyMuscleInput: document.getElementById("inbodyMuscleInput"),
+  inbodyBodyFatInput: document.getElementById("inbodyBodyFatInput"),
+  inbodyVisceralInput: document.getElementById("inbodyVisceralInput"),
+  inbodyWaistInput: document.getElementById("inbodyWaistInput"),
+  inbodyMemoInput: document.getElementById("inbodyMemoInput"),
+  saveInbodyBtn: document.getElementById("saveInbodyBtn"),
+  clearInbodyImageBtn: document.getElementById("clearInbodyImageBtn"),
+  inbodyMessage: document.getElementById("inbodyMessage"),
+  inbodyPreview: document.getElementById("inbodyPreview"),
+  inbodyPreviewEmpty: document.getElementById("inbodyPreviewEmpty"),
+  inbodyRecommendationList: document.getElementById("inbodyRecommendationList"),
+  inbodyHistoryList: document.getElementById("inbodyHistoryList")
 };
 
 let state = loadState();
@@ -276,6 +296,7 @@ let workoutTimer = {
   running: false
 };
 let editorSelectedExerciseId = null;
+let pendingInbodyImageDataUrl = "";
 
 bootstrap();
 
@@ -640,6 +661,52 @@ function bindEvents() {
     setEditorMessage("기본 루틴으로 되돌렸어요.");
     announce("이 요일 루틴을 기본값으로 되돌렸어.");
   });
+
+  if (ui.inbodyImageInput) {
+    ui.inbodyImageInput.addEventListener("change", async () => {
+      const file = ui.inbodyImageInput.files && ui.inbodyImageInput.files[0];
+      if (!file) {
+        pendingInbodyImageDataUrl = "";
+        renderInbodyPreview(getLatestInbodyImage());
+        return;
+      }
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        ui.inbodyMessage.textContent = "JPG 또는 PNG 파일만 넣을 수 있어요.";
+        ui.inbodyImageInput.value = "";
+        pendingInbodyImageDataUrl = "";
+        return;
+      }
+      ui.inbodyMessage.textContent = "이미지를 저장하기 좋게 줄이는 중...";
+      try {
+        pendingInbodyImageDataUrl = await compressImageFile(file);
+        renderInbodyPreview(pendingInbodyImageDataUrl);
+        ui.inbodyMessage.textContent = "이미지 준비 완료. 수치를 입력하고 저장해 주세요.";
+      } catch (_error) {
+        pendingInbodyImageDataUrl = "";
+        ui.inbodyImageInput.value = "";
+        renderInbodyPreview(getLatestInbodyImage());
+        ui.inbodyMessage.textContent = "이미지를 읽지 못했어요. 다른 JPG/PNG로 다시 시도해 주세요.";
+      }
+    });
+  }
+
+  if (ui.clearInbodyImageBtn) {
+    ui.clearInbodyImageBtn.addEventListener("click", () => {
+      pendingInbodyImageDataUrl = "";
+      if (ui.inbodyImageInput) {
+        ui.inbodyImageInput.value = "";
+      }
+      renderInbodyPreview(getLatestInbodyImage());
+      ui.inbodyMessage.textContent = "선택한 이미지를 제거했어요. 저장된 기록은 그대로 둡니다.";
+    });
+  }
+
+  if (ui.inbodyForm) {
+    ui.inbodyForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveInbodyRecord();
+    });
+  }
 }
 
 function renderAll() {
@@ -652,6 +719,7 @@ function renderAll() {
   renderSummary();
   renderAnalytics();
   renderHistory();
+  renderInbodyPanel();
   renderTimer();
 }
 
@@ -1079,6 +1147,298 @@ function renderHistory() {
       </li>
     `;
   }).join("");
+}
+
+function renderInbodyPanel() {
+  if (!ui.inbodyHistoryList || !ui.inbodyRecommendationList) {
+    return;
+  }
+  if (ui.inbodyDateInput && !ui.inbodyDateInput.value) {
+    ui.inbodyDateInput.value = getTodayDateString();
+  }
+
+  state.inbodyRecords = trimInbodyRecords(state.inbodyRecords || []);
+  const records = getSortedInbodyRecords();
+  renderInbodyPreview(pendingInbodyImageDataUrl || getLatestInbodyImage());
+  renderInbodyRecommendations(records);
+  renderInbodyHistory(records);
+}
+
+function renderInbodyPreview(imageDataUrl) {
+  if (!ui.inbodyPreview || !ui.inbodyPreviewEmpty) {
+    return;
+  }
+  if (imageDataUrl) {
+    ui.inbodyPreview.src = imageDataUrl;
+    ui.inbodyPreview.hidden = false;
+    ui.inbodyPreviewEmpty.hidden = true;
+    return;
+  }
+  ui.inbodyPreview.removeAttribute("src");
+  ui.inbodyPreview.hidden = true;
+  ui.inbodyPreviewEmpty.hidden = false;
+}
+
+function renderInbodyRecommendations(records) {
+  const messages = buildInbodyRecommendations(records);
+  ui.inbodyRecommendationList.innerHTML = messages
+    .map((message) => `<li>${escapeHtml(message)}</li>`)
+    .join("");
+}
+
+function renderInbodyHistory(records) {
+  if (records.length === 0) {
+    ui.inbodyHistoryList.innerHTML = `<li class="history-empty">아직 인바디 기록이 없습니다. 한 달에 한 번 측정 후 JPG와 수치를 저장해 주세요.</li>`;
+    return;
+  }
+
+  ui.inbodyHistoryList.innerHTML = records.slice(0, 6).map((record) => {
+    const parts = [];
+    if (Number.isFinite(record.weightKg)) {
+      parts.push(`체중 ${formatMetric(record.weightKg)}kg`);
+    }
+    if (Number.isFinite(record.muscleKg)) {
+      parts.push(`골격근량 ${formatMetric(record.muscleKg)}kg`);
+    }
+    if (Number.isFinite(record.bodyFatPercent)) {
+      parts.push(`체지방률 ${formatMetric(record.bodyFatPercent)}%`);
+    }
+    if (Number.isFinite(record.visceralFatLevel)) {
+      parts.push(`내장지방 ${Math.round(record.visceralFatLevel)}레벨`);
+    }
+    if (Number.isFinite(record.waistCm)) {
+      parts.push(`허리 ${formatMetric(record.waistCm)}cm`);
+    }
+    const imageLabel = record.imageDataUrl ? " | 이미지 저장됨" : "";
+    const memo = record.memo ? `<br><span class="muted">${escapeHtml(record.memo)}</span>` : "";
+    return `
+      <li class="history-item">
+        <strong>${escapeHtml(record.date || "")}</strong>${imageLabel}<br>
+        ${escapeHtml(parts.join(" | ") || "수치 미입력")}
+        ${memo}
+      </li>
+    `;
+  }).join("");
+}
+
+function saveInbodyRecord() {
+  const date = ui.inbodyDateInput.value || getTodayDateString();
+  if (!isDateKey(date)) {
+    ui.inbodyMessage.textContent = "측정일을 올바르게 선택해 주세요.";
+    return;
+  }
+
+  const record = {
+    id: `inbody_${date}_${Date.now().toString(36)}`,
+    date,
+    weightKg: readOptionalNumber(ui.inbodyWeightInput),
+    muscleKg: readOptionalNumber(ui.inbodyMuscleInput),
+    bodyFatPercent: readOptionalNumber(ui.inbodyBodyFatInput),
+    visceralFatLevel: readOptionalNumber(ui.inbodyVisceralInput),
+    waistCm: readOptionalNumber(ui.inbodyWaistInput),
+    memo: (ui.inbodyMemoInput.value || "").trim().slice(0, 220),
+    imageDataUrl: pendingInbodyImageDataUrl || "",
+    createdAt: new Date().toISOString()
+  };
+
+  const hasMetrics = [
+    record.weightKg,
+    record.muscleKg,
+    record.bodyFatPercent,
+    record.visceralFatLevel,
+    record.waistCm
+  ].some((value) => Number.isFinite(value));
+  if (!hasMetrics && !record.imageDataUrl) {
+    ui.inbodyMessage.textContent = "이미지나 핵심 수치 중 하나는 넣어 주세요.";
+    return;
+  }
+
+  const nextRecords = (state.inbodyRecords || []).filter((item) => item.date !== record.date);
+  nextRecords.unshift(record);
+  state.inbodyRecords = trimInbodyRecords(nextRecords);
+
+  let saved = persistState();
+  if (!saved && record.imageDataUrl) {
+    record.imageDataUrl = "";
+    state.inbodyRecords = trimInbodyRecords(state.inbodyRecords);
+    saved = persistState();
+    ui.inbodyMessage.textContent = saved
+      ? "브라우저 저장공간이 부족해 수치만 저장했어요. 이미지는 더 작은 파일로 다시 시도해 주세요."
+      : "브라우저 저장공간이 부족해 저장하지 못했어요. 오래된 기록을 정리해야 합니다.";
+  } else {
+    ui.inbodyMessage.textContent = saved
+      ? "인바디 기록 저장 완료. 이번 달 조정안을 업데이트했어요."
+      : "브라우저 저장공간이 부족해 저장하지 못했어요.";
+  }
+
+  if (saved) {
+    pendingInbodyImageDataUrl = "";
+    if (ui.inbodyImageInput) {
+      ui.inbodyImageInput.value = "";
+    }
+    renderInbodyPanel();
+    announce("인바디 기록을 저장하고 조정안을 업데이트했어.");
+  }
+}
+
+function buildInbodyRecommendations(records) {
+  if (records.length === 0) {
+    return [
+      "한 달에 한 번 같은 시간대에 측정해 주세요. 첫 기록을 저장하면 다음 달부터 변화량을 비교합니다.",
+      "JPG만으로 자동 판독하지 않습니다. 체중, 골격근량, 체지방률을 입력해야 조정안이 정확해집니다."
+    ];
+  }
+
+  const latest = records[0];
+  const previous = records[1] || null;
+  const messages = [];
+
+  if (!hasCoreInbodyMetrics(latest)) {
+    messages.push("이미지는 저장됐어요. 체중, 골격근량, 체지방률을 입력하면 운동·식단 조정안을 더 정확하게 만들 수 있습니다.");
+    messages.push("현재는 기존 6km 조깅 + 월-토 근력 루틴을 유지하고, 저녁 단백질은 빼지 마세요.");
+    return messages;
+  }
+
+  if (previous && hasCoreInbodyMetrics(previous)) {
+    const weightDiff = latest.weightKg - previous.weightKg;
+    const muscleDiff = latest.muscleKg - previous.muscleKg;
+    const fatDiff = latest.bodyFatPercent - previous.bodyFatPercent;
+
+    if (muscleDiff <= -0.5) {
+      messages.push("골격근량이 줄었습니다. 조깅 속도를 낮추고 저녁에 닭가슴살/두부/생선과 하체 운동일 탄수화물을 반드시 넣으세요.");
+    }
+    if (fatDiff >= 1) {
+      messages.push("체지방률이 올랐습니다. 저녁 바나나+프로틴만으로 끝내기보다 단백질 식품과 채소를 고정하고, 음료·간식·야식을 먼저 줄이세요.");
+    }
+    if (weightDiff <= -2 && muscleDiff < 0) {
+      messages.push("한 달 감량 속도가 빠르고 근육도 줄었습니다. 감량보다 근손실 방지가 우선이라 저녁 탄수화물을 조금 늘리세요.");
+    }
+    if (muscleDiff >= 0.3 && fatDiff <= -0.5) {
+      messages.push("좋은 방향입니다. 현재 루틴을 유지하고 주요 머신 중량만 아주 천천히 올리세요.");
+    }
+    if (Math.abs(weightDiff) < 0.5 && fatDiff > 0 && muscleDiff <= 0) {
+      messages.push("체중은 비슷한데 체지방이 늘고 근육이 정체입니다. 금요일 팔 볼륨과 월/목 하체 세트 품질을 우선 확인하세요.");
+    }
+  } else {
+    messages.push("첫 인바디 기준선을 저장했습니다. 다음 달부터 체중보다 골격근량과 체지방률 변화로 조정합니다.");
+  }
+
+  if (Number.isFinite(latest.bodyFatPercent) && latest.bodyFatPercent >= 25) {
+    messages.push("마른비만 개선 단계입니다. 헬스장 추가 유산소는 넣지 말고 근력운동 완주율과 저녁 단백질을 우선하세요.");
+  }
+  if (Number.isFinite(latest.muscleKg) && latest.muscleKg < 30) {
+    messages.push("골격근량을 더 올려야 합니다. 등·하체 운동에서 마지막 2회가 힘든 무게를 기록하고, 매주 한 종목만 소폭 증가시키세요.");
+  }
+  if (Number.isFinite(latest.visceralFatLevel) && latest.visceralFatLevel >= 10) {
+    messages.push("내장지방 레벨이 높습니다. 음주·야식·단 음료를 우선 줄이고, 복통이나 대사질환 이력이 있으면 전문가 상담을 권장합니다.");
+  }
+  if (Number.isFinite(latest.waistCm) && latest.waistCm >= 90) {
+    messages.push("허리둘레가 높습니다. 체중보다 주 1회 허리둘레 감소와 하체/등 중량 유지 여부를 더 중요하게 보세요.");
+  }
+
+  messages.push("이 조정안은 의료 판단이 아니라 운동·식단 기록 보조입니다. 통증, 어지러움, 과피로가 있으면 강도를 낮추세요.");
+  return dedupeMessages(messages).slice(0, 7);
+}
+
+function hasCoreInbodyMetrics(record) {
+  return Boolean(record)
+    && Number.isFinite(record.weightKg)
+    && Number.isFinite(record.muscleKg)
+    && Number.isFinite(record.bodyFatPercent);
+}
+
+function dedupeMessages(messages) {
+  return Array.from(new Set(messages.filter(Boolean)));
+}
+
+function getSortedInbodyRecords() {
+  return (state.inbodyRecords || [])
+    .filter((record) => isPlainObject(record))
+    .map(normalizeInbodyRecord)
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+}
+
+function normalizeInbodyRecord(record) {
+  return {
+    id: typeof record.id === "string" ? record.id : `inbody_${Date.now().toString(36)}`,
+    date: isDateKey(record.date) ? record.date : getTodayDateString(),
+    weightKg: normalizeOptionalNumber(record.weightKg),
+    muscleKg: normalizeOptionalNumber(record.muscleKg),
+    bodyFatPercent: normalizeOptionalNumber(record.bodyFatPercent),
+    visceralFatLevel: normalizeOptionalNumber(record.visceralFatLevel),
+    waistCm: normalizeOptionalNumber(record.waistCm),
+    memo: typeof record.memo === "string" ? record.memo.slice(0, 220) : "",
+    imageDataUrl: typeof record.imageDataUrl === "string" && record.imageDataUrl.startsWith("data:image/") ? record.imageDataUrl : "",
+    createdAt: typeof record.createdAt === "string" ? record.createdAt : new Date().toISOString()
+  };
+}
+
+function trimInbodyRecords(records) {
+  const normalized = (Array.isArray(records) ? records : [])
+    .filter((record) => isPlainObject(record))
+    .map(normalizeInbodyRecord)
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))
+    .slice(0, INBODY_MAX_RECORDS);
+
+  return normalized.map((record, index) => {
+    if (index >= INBODY_MAX_IMAGE_RECORDS) {
+      return { ...record, imageDataUrl: "" };
+    }
+    return record;
+  });
+}
+
+function getLatestInbodyImage() {
+  const found = getSortedInbodyRecords().find((record) => record.imageDataUrl);
+  return found ? found.imageDataUrl : "";
+}
+
+function readOptionalNumber(input) {
+  if (!input) {
+    return null;
+  }
+  const raw = String(input.value || "").trim();
+  if (!raw) {
+    return null;
+  }
+  return normalizeOptionalNumber(raw);
+}
+
+function normalizeOptionalNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Number(number.toFixed(1)) : null;
+}
+
+function formatMetric(value) {
+  return Number.isFinite(value) ? value.toFixed(1).replace(/\.0$/, "") : "-";
+}
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("file_read_failed"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("image_decode_failed"));
+      image.onload = () => {
+        const scale = Math.min(1, INBODY_IMAGE_MAX_EDGE / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          reject(new Error("canvas_failed"));
+          return;
+        }
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", INBODY_IMAGE_QUALITY));
+      };
+      image.src = String(reader.result || "");
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function renderTimer() {
@@ -1694,7 +2054,8 @@ function createInitialState() {
     currentSessionKey: null,
     sessions: {},
     history: [],
-    customPlans: {}
+    customPlans: {},
+    inbodyRecords: []
   };
 }
 
@@ -1728,6 +2089,10 @@ function normalizeLoadedState(parsed) {
       .map((entry) => ({ ...entry }));
   }
 
+  if (Array.isArray(parsed.inbodyRecords)) {
+    initial.inbodyRecords = trimInbodyRecords(parsed.inbodyRecords);
+  }
+
   if (isPlainObject(parsed.customPlans)) {
     initial.customPlans = { ...parsed.customPlans };
   }
@@ -1748,7 +2113,12 @@ function loadState() {
 }
 
 function persistState() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (_error) {
+    return false;
+  }
 }
 
 function prepareLoadedState() {
