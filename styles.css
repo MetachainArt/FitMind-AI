@@ -780,6 +780,68 @@ input[type="range"] {
   font-size: 13px;
 }
 
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.priority-card {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  padding: var(--space-3);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.priority-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--accent-blue);
+}
+
+.priority-card.visceral::before {
+  background: var(--accent-amber);
+}
+
+.priority-card.abs::before {
+  background: var(--accent-green);
+}
+
+.priority-card.pullup::before {
+  background: var(--accent-blue);
+}
+
+.priority-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.priority-card h3 {
+  margin: var(--space-2) 0 var(--space-2);
+  color: #1f2a44;
+  font-size: 15px;
+}
+
+.priority-card p {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+}
+
 .nutrition-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1035,6 +1097,10 @@ input[type="range"] {
 
   .nutrition-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .priority-grid {
+    grid-template-columns: 1fr;
   }
 
   .inbody-grid {

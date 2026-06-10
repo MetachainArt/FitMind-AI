@@ -28,6 +28,7 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "lat-pulldown": { howTo: "랫풀다운 운동방법", machine: "랫풀다운 기구 사용법" },
   "assisted-pull-up": { howTo: "어시스트 풀업 머신 운동방법", machine: "어시스트 풀업 머신 사용법" },
   "negative-pull-up-deadhang": { howTo: "네거티브 풀업 데드행 운동방법", machine: "철봉 턱걸이 보조 운동" },
+  "scapular-pull-up-deadhang": { howTo: "스캐풀라 풀업 데드행 운동방법", machine: "철봉 매달리기 턱걸이 보조" },
   "seated-row": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
   "barbell-curl": { howTo: "바벨 컬 운동방법", machine: "바벨 컬 그립 사용법" },
   "hammer-curl": { howTo: "해머 컬 운동방법", machine: "덤벨 해머 컬 자세" },
@@ -206,8 +207,8 @@ const ROUTINE_PLAN = {
   },
   SAT: {
     dayLabel: "SAT",
-    theme: "전신 보강 · 약점 개선 · 복근",
-    trainingFocus: "한 주 마무리 전신 보강. 피곤하면 무게보다 자세와 완주율을 우선.",
+    theme: "전신 보강 · 풀업 기술 · 복근",
+    trainingFocus: "내장지방 관리는 완주율, 풀업은 짧은 기술 연습, 복근은 케이블 크런치와 회전 자극으로 마무리.",
     warmupMain: "전신 관절 가동 + 가벼운 머신 1세트",
     warmupTime: "5-7분",
     warmupNote: "월-금 피로가 쌓였다면 모든 운동을 1세트씩 줄여도 좋아.",
@@ -218,6 +219,17 @@ const ROUTINE_PLAN = {
       exercise({ id: "leg-press-sat", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
       exercise({ id: "chest-press-sat", name: "체스트 프레스 (Chest Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
       exercise({ id: "seated-row-sat", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({
+        id: "scapular-pull-up-deadhang",
+        name: "풀업 보강: 스캐풀라 풀업 + 데드행",
+        sets: ["어깨 내리기 8회", "어깨 내리기 8회", "데드행 20-30초"],
+        restSec: 90,
+        howTo: "팔을 편 채 매달려 어깨를 귀에서 멀리 내렸다가 천천히 풀어. 팔꿈치를 굽히지 말고 등으로 몸을 살짝 들어올리는 느낌만 익혀.",
+        machine: "풀업 바나 어시스트 풀업 머신 손잡이를 사용해. 발이 바닥에 닿아도 괜찮으니 어깨 위치를 먼저 익혀.",
+        ball: "철봉이 없으면 랫풀다운에서 팔을 편 상태로 견갑만 내리는 연습 2세트로 대체해.",
+        safety: "손아귀가 먼저 풀리거나 어깨 앞쪽이 찌르면 즉시 내려와.",
+        mistake: "팔 힘으로 당기려고 팔꿈치를 굽히면 스캐풀라 연습이 아니라 불완전한 턱걸이가 돼."
+      }),
       exercise({ id: "shoulder-press-sat", name: "숄더 프레스 (Shoulder Press)", sets: ["10회", "10회", "10회"], restSec: 85 }),
       exercise({ id: "lateral-raise-sat", name: "레터럴 레이즈 (Lateral Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
@@ -1311,7 +1323,7 @@ function saveInbodyRecord() {
 function buildInbodyRecommendations(records) {
   if (records.length === 0) {
     return [
-      "한 달에 한 번 같은 시간대에 측정해 주세요. 첫 기록을 저장하면 다음 달부터 변화량을 비교합니다.",
+      "한 달에 한 번 같은 시간대에 측정해 주세요. 첫 기록을 저장하면 다음 달부터 내장지방, 허리둘레, 골격근량 변화를 우선 비교합니다.",
       "JPG만으로 자동 판독하지 않습니다. 체중, 골격근량, 체지방률을 입력해야 조정안이 정확해집니다."
     ];
   }
@@ -1347,21 +1359,22 @@ function buildInbodyRecommendations(records) {
       messages.push("체중은 비슷한데 체지방이 늘고 근육이 정체입니다. 금요일 팔 볼륨과 월/목 하체 세트 품질을 우선 확인하세요.");
     }
   } else {
-    messages.push("첫 인바디 기준선을 저장했습니다. 다음 달부터 체중보다 골격근량과 체지방률 변화로 조정합니다.");
+    messages.push("첫 인바디 기준선을 저장했습니다. 다음 달부터 체중보다 내장지방, 허리둘레, 골격근량 변화를 우선해서 조정합니다.");
   }
 
+  if (Number.isFinite(latest.visceralFatLevel) && latest.visceralFatLevel >= 10) {
+    messages.push("내장지방 레벨이 높습니다. 최우선은 야식·음주·단 음료 줄이기와 저녁 단백질+채소 고정입니다. 복통이나 대사질환 이력이 있으면 전문가 상담을 권장합니다.");
+  }
+  if (Number.isFinite(latest.waistCm) && latest.waistCm >= 90) {
+    messages.push("허리둘레가 높습니다. 체중보다 주 1회 허리둘레 감소와 하체/등 중량 유지 여부를 더 중요하게 보세요.");
+  }
   if (Number.isFinite(latest.bodyFatPercent) && latest.bodyFatPercent >= 25) {
     messages.push("마른비만 개선 단계입니다. 헬스장 추가 유산소는 넣지 말고 근력운동 완주율과 저녁 단백질을 우선하세요.");
   }
   if (Number.isFinite(latest.muscleKg) && latest.muscleKg < 30) {
     messages.push("골격근량을 더 올려야 합니다. 등·하체 운동에서 마지막 2회가 힘든 무게를 기록하고, 매주 한 종목만 소폭 증가시키세요.");
   }
-  if (Number.isFinite(latest.visceralFatLevel) && latest.visceralFatLevel >= 10) {
-    messages.push("내장지방 레벨이 높습니다. 음주·야식·단 음료를 우선 줄이고, 복통이나 대사질환 이력이 있으면 전문가 상담을 권장합니다.");
-  }
-  if (Number.isFinite(latest.waistCm) && latest.waistCm >= 90) {
-    messages.push("허리둘레가 높습니다. 체중보다 주 1회 허리둘레 감소와 하체/등 중량 유지 여부를 더 중요하게 보세요.");
-  }
+  messages.push("복근운동은 코어와 복근 모양을 만드는 역할입니다. 내장지방 감소는 식단, 6km 조깅, 전신 근력운동 완주가 같이 맞아야 합니다.");
 
   messages.push("이 조정안은 의료 판단이 아니라 운동·식단 기록 보조입니다. 통증, 어지러움, 과피로가 있으면 강도를 낮추세요.");
   return dedupeMessages(messages).slice(0, 7);
