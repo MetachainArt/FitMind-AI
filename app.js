@@ -66,6 +66,28 @@ const INBODY_MAX_RECORDS = 12;
 const INBODY_MAX_IMAGE_RECORDS = 6;
 const INBODY_IMAGE_MAX_EDGE = 900;
 const INBODY_IMAGE_QUALITY = 0.72;
+const FIT_GOALS = ["체중감량", "근육증가", "체력향상", "복근강화", "건강관리"];
+const FIT_DAY_PARTS = ["하체", "등", "가슴/어깨", "하체 후면", "전신", "복근"];
+const DEFAULT_GENERATOR_TEMPLATES = {
+  exercises: [
+    { id: "tpl-squat", name: "스쿼트 또는 레그프레스", part: "하체", place: ["헬스장", "집"], equipment: ["머신", "덤벨", "맨몸"], goals: ["체중감량", "근육증가", "건강관리"], avoid: ["무릎"] },
+    { id: "tpl-hip-hinge", name: "힙힌지/루마니안 데드리프트", part: "하체 후면", place: ["헬스장", "집"], equipment: ["덤벨", "바벨", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
+    { id: "tpl-lat-pull", name: "랫풀다운 또는 밴드 풀다운", part: "등", place: ["헬스장", "집"], equipment: ["머신", "밴드"], goals: ["근육증가", "풀업", "건강관리"], avoid: ["어깨"] },
+    { id: "tpl-row", name: "시티드 로우 또는 덤벨 로우", part: "등", place: ["헬스장", "집"], equipment: ["머신", "덤벨", "밴드"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
+    { id: "tpl-push", name: "체스트 프레스 또는 푸시업", part: "가슴/어깨", place: ["헬스장", "집", "야외"], equipment: ["머신", "덤벨", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
+    { id: "tpl-shoulder", name: "숄더 프레스", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["덤벨", "머신"], goals: ["근육증가"], avoid: ["어깨"] },
+    { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
+    { id: "tpl-cable-crunch", name: "케이블 크런치 또는 크런치", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "맨몸"], goals: ["복근강화"], avoid: ["허리"] },
+    { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
+    { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
+  ],
+  meals: [
+    { id: "meal-normal", name: "일반식 균형형", preference: "일반식", items: ["아침: 계란 2개 + 과일 + 두유", "점심: 밥 반-1공기 + 단백질 반찬 + 채소", "저녁: 닭가슴살/생선/두부 + 채소 + 고구마 소량"], note: "일반식을 유지하되 단백질과 채소를 먼저 고정합니다." },
+    { id: "meal-protein", name: "고단백 근육형", preference: "고단백", items: ["아침: 그릭요거트 + 계란 + 과일", "점심: 밥 + 살코기/생선 + 채소", "저녁: 단백질 30g + 닭가슴살/두부 + 채소"], note: "매 끼니 단백질을 분산해서 근손실을 줄입니다." },
+    { id: "meal-diet", name: "다이어트식 감량형", preference: "다이어트식", items: ["아침: 계란 + 두유 + 과일 소량", "점심: 일반식에서 밥은 반 공기", "저녁: 단백질 식품 + 채소, 하체 운동일만 탄수화물 소량"], note: "감량 중에도 저녁 단백질은 빼지 않습니다." },
+    { id: "meal-vegan", name: "채식 단백질형", preference: "채식", items: ["아침: 두유 + 두부/콩류 + 과일", "점심: 잡곡밥 + 콩/두부/템페 + 채소", "저녁: 두부/콩고기 + 채소 + 고구마 소량"], note: "채식에서는 두부, 콩류, 두유로 단백질을 확보합니다." }
+  ]
+};
 
 function exercise({
   id,
@@ -316,7 +338,44 @@ const ui = {
   inbodyPreview: document.getElementById("inbodyPreview"),
   inbodyPreviewEmpty: document.getElementById("inbodyPreviewEmpty"),
   inbodyRecommendationList: document.getElementById("inbodyRecommendationList"),
-  inbodyHistoryList: document.getElementById("inbodyHistoryList")
+  inbodyHistoryList: document.getElementById("inbodyHistoryList"),
+  generatorForm: document.getElementById("generatorForm"),
+  fitTimeInput: document.getElementById("fitTimeInput"),
+  fitHeightInput: document.getElementById("fitHeightInput"),
+  fitWeightInput: document.getElementById("fitWeightInput"),
+  fitAgeInput: document.getElementById("fitAgeInput"),
+  fitSexSelect: document.getElementById("fitSexSelect"),
+  fitExperienceSelect: document.getElementById("fitExperienceSelect"),
+  fitPlaceSelect: document.getElementById("fitPlaceSelect"),
+  fitDietSelect: document.getElementById("fitDietSelect"),
+  fitGoalOptions: document.getElementById("fitGoalOptions"),
+  fitEquipmentInput: document.getElementById("fitEquipmentInput"),
+  fitInjuryInput: document.getElementById("fitInjuryInput"),
+  fitAllergyInput: document.getElementById("fitAllergyInput"),
+  saveGeneratedPlanBtn: document.getElementById("saveGeneratedPlanBtn"),
+  generatorMessage: document.getElementById("generatorMessage"),
+  generatedPlanResult: document.getElementById("generatedPlanResult"),
+  savedGeneratedPlansList: document.getElementById("savedGeneratedPlansList"),
+  goalTemplateForm: document.getElementById("goalTemplateForm"),
+  templateGoalName: document.getElementById("templateGoalName"),
+  goalTemplateList: document.getElementById("goalTemplateList"),
+  exerciseTemplateForm: document.getElementById("exerciseTemplateForm"),
+  exerciseTemplateId: document.getElementById("exerciseTemplateId"),
+  templateExerciseName: document.getElementById("templateExerciseName"),
+  templateExercisePart: document.getElementById("templateExercisePart"),
+  templateExercisePlace: document.getElementById("templateExercisePlace"),
+  templateExerciseEquipment: document.getElementById("templateExerciseEquipment"),
+  templateExerciseGoals: document.getElementById("templateExerciseGoals"),
+  templateExerciseAvoid: document.getElementById("templateExerciseAvoid"),
+  exerciseTemplateList: document.getElementById("exerciseTemplateList"),
+  mealTemplateForm: document.getElementById("mealTemplateForm"),
+  mealTemplateId: document.getElementById("mealTemplateId"),
+  templateMealName: document.getElementById("templateMealName"),
+  templateMealPreference: document.getElementById("templateMealPreference"),
+  templateMealItems: document.getElementById("templateMealItems"),
+  templateMealNote: document.getElementById("templateMealNote"),
+  mealTemplateList: document.getElementById("mealTemplateList"),
+  resetGeneratorTemplatesBtn: document.getElementById("resetGeneratorTemplatesBtn")
 };
 
 let state = loadState();
@@ -743,6 +802,102 @@ function bindEvents() {
       saveInbodyRecord();
     });
   }
+
+  if (ui.generatorForm) {
+    ui.generatorForm.addEventListener("change", enforceGoalLimit);
+    ui.generatorForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const profile = readGeneratorProfile();
+      if (profile.error) {
+        ui.generatorMessage.textContent = profile.error;
+        return;
+      }
+      state.generatedPlanDraft = generateAdaptivePlan(profile.value);
+      persistState();
+      renderGeneratorPanel();
+      ui.generatorMessage.textContent = "맞춤 운동·식단 계획을 생성했어요. 입력값을 바꾸고 다시 생성할 수 있습니다.";
+    });
+  }
+
+  if (ui.saveGeneratedPlanBtn) {
+    ui.saveGeneratedPlanBtn.addEventListener("click", () => {
+      saveGeneratedPlanDraft();
+    });
+  }
+
+  if (ui.savedGeneratedPlansList) {
+    ui.savedGeneratedPlansList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const planId = target.dataset.loadGeneratedPlan;
+      if (!planId) {
+        return;
+      }
+      const plan = (state.generatedPlans || []).find((item) => item.id === planId);
+      if (!plan) {
+        return;
+      }
+      state.generatedPlanDraft = plan;
+      persistState();
+      renderGeneratorPanel();
+      ui.generatorMessage.textContent = "저장한 맞춤 계획을 불러왔어요.";
+    });
+  }
+
+  if (ui.exerciseTemplateForm) {
+    ui.exerciseTemplateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertExerciseTemplate();
+    });
+  }
+
+  if (ui.goalTemplateForm) {
+    ui.goalTemplateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      addGoalTemplate();
+    });
+  }
+
+  if (ui.mealTemplateForm) {
+    ui.mealTemplateForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      upsertMealTemplate();
+    });
+  }
+
+  if (ui.exerciseTemplateList) {
+    ui.exerciseTemplateList.addEventListener("click", (event) => {
+      handleTemplateListClick(event, "exercise");
+    });
+  }
+
+  if (ui.goalTemplateList) {
+    ui.goalTemplateList.addEventListener("click", (event) => {
+      handleTemplateListClick(event, "goal");
+    });
+  }
+
+  if (ui.mealTemplateList) {
+    ui.mealTemplateList.addEventListener("click", (event) => {
+      handleTemplateListClick(event, "meal");
+    });
+  }
+
+  if (ui.resetGeneratorTemplatesBtn) {
+    ui.resetGeneratorTemplatesBtn.addEventListener("click", () => {
+      const ok = window.confirm("운동/식단 템플릿을 기본값으로 되돌릴까요?");
+      if (!ok) {
+        return;
+      }
+      state.generatorTemplates = cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES);
+      clearTemplateForms();
+      persistState();
+      renderGeneratorPanel();
+      ui.generatorMessage.textContent = "기본 템플릿으로 되돌렸어요.";
+    });
+  }
 }
 
 function renderAll() {
@@ -756,6 +911,7 @@ function renderAll() {
   renderAnalytics();
   renderHistory();
   renderInbodyPanel();
+  renderGeneratorPanel();
   renderTimer();
 }
 
@@ -1481,6 +1637,583 @@ function compressImageFile(file) {
   });
 }
 
+function renderGeneratorPanel() {
+  if (!ui.generatedPlanResult || !ui.savedGeneratedPlansList) {
+    return;
+  }
+  ensureGeneratorState();
+  renderGeneratorGoalOptions();
+  renderGeneratedPlanResult(state.generatedPlanDraft);
+  renderSavedGeneratedPlans();
+  renderTemplateLists();
+}
+
+function renderGeneratorGoalOptions() {
+  if (!ui.fitGoalOptions) {
+    return;
+  }
+  const current = new Set(readCheckedValues("fitGoals"));
+  if (current.size === 0 && state.generatedPlanDraft?.profile?.goals) {
+    state.generatedPlanDraft.profile.goals.forEach((goal) => current.add(goal));
+  }
+  ui.fitGoalOptions.innerHTML = state.generatorGoals.map((goal) => {
+    const checked = current.has(goal) ? "checked" : "";
+    return `<label><input type="checkbox" name="fitGoals" value="${escapeHtml(goal)}" ${checked}> ${escapeHtml(goal)}</label>`;
+  }).join("");
+}
+
+function renderGeneratedPlanResult(plan) {
+  if (!plan) {
+    ui.generatedPlanResult.innerHTML = `<p class="history-empty">입력값을 채우고 맞춤 계획 생성을 눌러주세요.</p>`;
+    return;
+  }
+
+  const scheduleHtml = plan.schedule.map((day) => {
+    const exercises = day.exercises.map((item) => {
+      return `<li>${escapeHtml(item.name)} · ${item.sets}세트 x ${escapeHtml(item.reps)} · 휴식 ${item.restSec}초</li>`;
+    }).join("");
+    return `
+      <article class="generated-day-card">
+        <h4>${escapeHtml(day.day)}요일 · ${escapeHtml(day.part)}</h4>
+        <p class="muted">${escapeHtml(day.cardio)}</p>
+        <ul>${exercises}</ul>
+      </article>
+    `;
+  }).join("");
+
+  ui.generatedPlanResult.innerHTML = `
+    <div class="generated-summary">
+      <strong>${escapeHtml(plan.title)}</strong>
+      <p>${escapeHtml(plan.explanation)}</p>
+      <p class="muted">건강 참고용 계획입니다. 통증, 어지러움, 질환 이력이 있으면 강도를 낮추고 전문가 상담을 우선하세요.</p>
+    </div>
+    <div class="generated-schedule">${scheduleHtml}</div>
+    <article class="generated-meal-card">
+      <h4>하루 식단 예시 · ${escapeHtml(plan.meal.name)}</h4>
+      <ul>${plan.meal.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <p>${escapeHtml(plan.meal.proteinNote)}</p>
+      <p class="muted">${escapeHtml(plan.meal.note)}</p>
+    </article>
+  `;
+}
+
+function renderSavedGeneratedPlans() {
+  const plans = Array.isArray(state.generatedPlans) ? state.generatedPlans : [];
+  if (plans.length === 0) {
+    ui.savedGeneratedPlansList.innerHTML = `<li class="history-empty">아직 저장한 맞춤 계획이 없습니다.</li>`;
+    return;
+  }
+  ui.savedGeneratedPlansList.innerHTML = plans.slice(0, 8).map((plan) => {
+    return `
+      <li class="history-item">
+        <strong>${escapeHtml(plan.savedLabel || plan.title || "맞춤 계획")}</strong><br>
+        ${escapeHtml((plan.profile?.goals || []).join(", "))} · ${escapeHtml((plan.profile?.days || []).join("/"))}
+        <button class="btn ghost small template-action" type="button" data-load-generated-plan="${escapeHtml(plan.id)}">보기</button>
+      </li>
+    `;
+  }).join("");
+}
+
+function renderTemplateLists() {
+  const templates = getGeneratorTemplates();
+  if (ui.goalTemplateList) {
+    ui.goalTemplateList.innerHTML = state.generatorGoals.map((goal) => {
+      return `
+        <li>
+          <span>${escapeHtml(goal)}</span>
+          <button class="btn ghost small danger" type="button" data-delete-template="${escapeHtml(goal)}">삭제</button>
+        </li>
+      `;
+    }).join("");
+  }
+  if (ui.exerciseTemplateList) {
+    ui.exerciseTemplateList.innerHTML = templates.exercises.map((item) => {
+      return `
+        <li>
+          <span>${escapeHtml(item.name)} · ${escapeHtml(item.part)} · ${escapeHtml(toCsv(item.place))}</span>
+          <button class="btn ghost small" type="button" data-edit-template="${escapeHtml(item.id)}">수정</button>
+          <button class="btn ghost small danger" type="button" data-delete-template="${escapeHtml(item.id)}">삭제</button>
+        </li>
+      `;
+    }).join("");
+  }
+  if (ui.mealTemplateList) {
+    ui.mealTemplateList.innerHTML = templates.meals.map((item) => {
+      return `
+        <li>
+          <span>${escapeHtml(item.name)} · ${escapeHtml(item.preference)}</span>
+          <button class="btn ghost small" type="button" data-edit-template="${escapeHtml(item.id)}">수정</button>
+          <button class="btn ghost small danger" type="button" data-delete-template="${escapeHtml(item.id)}">삭제</button>
+        </li>
+      `;
+    }).join("");
+  }
+}
+
+function enforceGoalLimit(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.name !== "fitGoals") {
+    return;
+  }
+  const checked = readCheckedValues("fitGoals");
+  if (checked.length <= 3) {
+    return;
+  }
+  target.checked = false;
+  ui.generatorMessage.textContent = "목표는 최대 3개까지 선택할 수 있어요.";
+}
+
+function readGeneratorProfile() {
+  const goals = readCheckedValues("fitGoals");
+  const days = readCheckedValues("fitDays");
+  const timeMin = readNumberFromInput(ui.fitTimeInput, 70);
+  const heightCm = readNumberFromInput(ui.fitHeightInput, null);
+  const weightKg = readNumberFromInput(ui.fitWeightInput, null);
+  const age = readNumberFromInput(ui.fitAgeInput, null);
+
+  if (goals.length === 0) {
+    return { error: "목표를 1개 이상 선택해 주세요." };
+  }
+  if (goals.length > 3) {
+    return { error: "목표는 최대 3개까지 선택해 주세요." };
+  }
+  if (days.length === 0) {
+    return { error: "운동 가능 요일을 1개 이상 선택해 주세요." };
+  }
+  if (!Number.isFinite(timeMin) || timeMin < 15) {
+    return { error: "하루 운동 가능 시간은 15분 이상으로 입력해 주세요." };
+  }
+
+  return {
+    value: {
+      goals,
+      days,
+      timeMin,
+      heightCm,
+      weightKg,
+      age,
+      sex: ui.fitSexSelect.value || "미입력",
+      experience: ui.fitExperienceSelect.value || "초보",
+      place: ui.fitPlaceSelect.value || "헬스장",
+      equipment: splitCsv(ui.fitEquipmentInput.value || ""),
+      injury: (ui.fitInjuryInput.value || "").trim(),
+      dietPreference: ui.fitDietSelect.value || "일반식",
+      allergies: splitCsv(ui.fitAllergyInput.value || "")
+    }
+  };
+}
+
+function generateAdaptivePlan(profile) {
+  const templates = getGeneratorTemplates();
+  const intensity = getIntensityByExperience(profile.experience);
+  const dayParts = buildDayParts(profile);
+  const schedule = profile.days.map((day, index) => {
+    const part = dayParts[index % dayParts.length];
+    const exercises = selectGeneratedExercises(part, profile, templates.exercises, intensity);
+    const cardio = getCardioPlan(profile, part);
+    return { day, part, cardio, exercises };
+  });
+  const meal = buildGeneratedMeal(profile, templates.meals);
+  const title = `${profile.goals.slice(0, 3).join(" · ")} 맞춤 ${profile.days.length}일 계획`;
+  return {
+    id: `generated_${Date.now().toString(36)}`,
+    title,
+    profile,
+    schedule,
+    meal,
+    explanation: buildGeneratedExplanation(profile),
+    createdAt: new Date().toISOString()
+  };
+}
+
+function buildDayParts(profile) {
+  if (profile.days.length <= 2) {
+    return profile.goals.includes("복근강화") ? ["전신", "복근"] : ["전신", "하체"];
+  }
+  const parts = profile.goals.includes("근육증가")
+    ? ["하체", "등", "가슴/어깨", "하체 후면", "전신"]
+    : ["전신", "하체", "등", "가슴/어깨"];
+  if (profile.goals.includes("복근강화")) {
+    parts.push("복근");
+  }
+  return parts;
+}
+
+function selectGeneratedExercises(part, profile, templates, intensity) {
+  const injuryText = `${profile.injury || ""}`.toLowerCase();
+  const place = profile.place;
+  const equipmentText = profile.equipment.join(" ").toLowerCase();
+  const placeAndInjuryPool = templates.filter((item) => {
+    const placeOk = arrayIncludes(item.place, place) || arrayIncludes(item.place, "전체");
+    const injuryOk = !item.avoid.some((tag) => tag && injuryText.includes(String(tag).toLowerCase()));
+    return placeOk && injuryOk;
+  });
+  const equipmentPool = placeAndInjuryPool.filter((item) => {
+    if (profile.equipment.length === 0 || item.equipment.length === 0) {
+      return true;
+    }
+    return item.equipment.some((tool) => {
+      const normalized = String(tool).toLowerCase();
+      return normalized === "맨몸" || equipmentText.includes(normalized);
+    });
+  });
+  const pool = equipmentPool.length ? equipmentPool : placeAndInjuryPool;
+  const partPool = pool.filter((item) => item.part === part || (part === "전신" && item.part !== "회복"));
+  const fallbackPool = pool.length ? pool : templates;
+  const targetCount = profile.timeMin < 40 ? 3 : profile.timeMin < 70 ? 4 : 5;
+  const selected = uniqueById(partPool.concat(fallbackPool))
+    .sort((a, b) => getTemplateGoalScore(b, profile.goals) - getTemplateGoalScore(a, profile.goals))
+    .slice(0, targetCount);
+
+  return selected.map((item) => {
+    const isCardio = item.part === "유산소";
+    return {
+      name: item.name,
+      sets: isCardio ? 1 : intensity.sets,
+      reps: isCardio ? getCardioDuration(profile) : intensity.reps,
+      restSec: isCardio ? 0 : intensity.restSec
+    };
+  });
+}
+
+function getTemplateGoalScore(template, goals) {
+  return normalizeStringArray(template.goals).filter((goal) => goals.includes(goal)).length;
+}
+
+function getIntensityByExperience(experience) {
+  if (experience === "고급") {
+    return { sets: 4, reps: "6-12회", restSec: 90 };
+  }
+  if (experience === "중급") {
+    return { sets: 3, reps: "8-12회", restSec: 75 };
+  }
+  return { sets: 2, reps: "10-12회", restSec: 60 };
+}
+
+function getCardioPlan(profile, part) {
+  const shouldInclude = profile.goals.some((goal) => ["체중감량", "체력향상", "건강관리"].includes(goal));
+  if (!shouldInclude) {
+    return "유산소 선택: 컨디션이 좋으면 5-10분 가볍게";
+  }
+  if (part === "하체" || part === "하체 후면") {
+    return "유산소 포함: 하체 피로를 고려해 5-10분 아주 가볍게";
+  }
+  return `유산소 포함: ${getCardioDuration(profile)} 대화 가능한 강도`;
+}
+
+function getCardioDuration(profile) {
+  if (profile.timeMin < 40) {
+    return "8-12분";
+  }
+  if (profile.timeMin < 70) {
+    return "12-18분";
+  }
+  return "15-25분";
+}
+
+function buildGeneratedMeal(profile, mealTemplates) {
+  const meal = mealTemplates.find((item) => item.preference === profile.dietPreference)
+    || mealTemplates.find((item) => item.preference === "일반식")
+    || mealTemplates[0];
+  const allergyText = profile.allergies.join(" ").toLowerCase();
+  const items = meal.items.map((item) => {
+    const hasAllergy = profile.allergies.some((tag) => tag && item.toLowerCase().includes(tag.toLowerCase()));
+    return hasAllergy ? `${item} (피해야 할 음식 확인 후 대체)` : item;
+  });
+  const proteinFactor = profile.goals.includes("근육증가") ? 1.7 : profile.goals.includes("체중감량") ? 1.5 : 1.4;
+  const proteinTarget = Number.isFinite(profile.weightKg) ? Math.round(profile.weightKg * proteinFactor) : null;
+  const allergyNote = allergyText ? ` 피해야 할 음식: ${profile.allergies.join(", ")}.` : "";
+  return {
+    name: meal.name,
+    items,
+    note: `${meal.note}${allergyNote}`,
+    proteinNote: proteinTarget
+      ? `단백질은 하루 약 ${proteinTarget}g을 목표로 끼니마다 나눠 먹는 방향을 추천합니다.`
+      : "단백질은 매 끼니 손바닥 1-2개 분량을 기준으로 잡아주세요."
+  };
+}
+
+function buildGeneratedExplanation(profile) {
+  const beginner = profile.experience === "초보" ? "초보 기준이라 실패지점까지 가지 않고 여유 2-3회를 남기도록 구성했습니다. " : "";
+  const injury = profile.injury ? `주의사항에 적은 "${profile.injury}" 부위는 관련 운동을 피하거나 강도를 낮추도록 안내했습니다. ` : "";
+  return `${beginner}${injury}${profile.place}에서 가능한 장비와 ${profile.goals.join(", ")} 목표에 맞춰 주간 스케줄과 단백질 중심 식단을 생성했습니다.`;
+}
+
+function saveGeneratedPlanDraft() {
+  if (!state.generatedPlanDraft) {
+    ui.generatorMessage.textContent = "먼저 맞춤 계획을 생성해 주세요.";
+    return;
+  }
+  if (!Array.isArray(state.generatedPlans)) {
+    state.generatedPlans = [];
+  }
+  const saved = {
+    ...state.generatedPlanDraft,
+    id: `saved_${Date.now().toString(36)}`,
+    savedAt: new Date().toISOString(),
+    savedLabel: `${formatDateLabel(new Date())} ${state.generatedPlanDraft.title}`
+  };
+  state.generatedPlans.unshift(saved);
+  state.generatedPlans = state.generatedPlans.slice(0, 12);
+  persistState();
+  renderGeneratorPanel();
+  ui.generatorMessage.textContent = "맞춤 계획을 이 기기에 저장했어요.";
+}
+
+function upsertExerciseTemplate() {
+  const name = (ui.templateExerciseName.value || "").trim();
+  const part = (ui.templateExercisePart.value || "").trim();
+  if (!name || !part) {
+    ui.generatorMessage.textContent = "운동 템플릿 이름과 부위를 입력해 주세요.";
+    return;
+  }
+  const templates = getGeneratorTemplates();
+  const id = ui.exerciseTemplateId.value || `tpl-custom-${Date.now().toString(36)}`;
+  const next = {
+    id,
+    name,
+    part,
+    place: splitCsv(ui.templateExercisePlace.value || "헬스장"),
+    equipment: splitCsv(ui.templateExerciseEquipment.value || ""),
+    goals: splitCsv(ui.templateExerciseGoals.value || ""),
+    avoid: splitCsv(ui.templateExerciseAvoid.value || "")
+  };
+  templates.exercises = templates.exercises.filter((item) => item.id !== id).concat(next);
+  state.generatorTemplates = templates;
+  clearTemplateForms();
+  persistState();
+  renderGeneratorPanel();
+  ui.generatorMessage.textContent = "운동 템플릿을 저장했어요.";
+}
+
+function upsertMealTemplate() {
+  const name = (ui.templateMealName.value || "").trim();
+  const preference = (ui.templateMealPreference.value || "").trim();
+  const items = splitCsv(ui.templateMealItems.value || "");
+  if (!name || !preference || items.length === 0) {
+    ui.generatorMessage.textContent = "식단 템플릿 이름, 선호, 항목을 입력해 주세요.";
+    return;
+  }
+  const templates = getGeneratorTemplates();
+  const id = ui.mealTemplateId.value || `meal-custom-${Date.now().toString(36)}`;
+  const next = {
+    id,
+    name,
+    preference,
+    items,
+    note: (ui.templateMealNote.value || "").trim() || "단백질과 채소를 우선합니다."
+  };
+  templates.meals = templates.meals.filter((item) => item.id !== id).concat(next);
+  state.generatorTemplates = templates;
+  clearTemplateForms();
+  persistState();
+  renderGeneratorPanel();
+  ui.generatorMessage.textContent = "식단 템플릿을 저장했어요.";
+}
+
+function addGoalTemplate() {
+  const goal = (ui.templateGoalName.value || "").trim();
+  if (!goal) {
+    ui.generatorMessage.textContent = "추가할 목표 이름을 입력해 주세요.";
+    return;
+  }
+  ensureGeneratorState();
+  if (!state.generatorGoals.includes(goal)) {
+    state.generatorGoals.push(goal);
+  }
+  ui.templateGoalName.value = "";
+  persistState();
+  renderGeneratorPanel();
+  ui.generatorMessage.textContent = "목표 템플릿을 추가했어요.";
+}
+
+function handleTemplateListClick(event, type) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+  const editId = target.dataset.editTemplate;
+  const deleteId = target.dataset.deleteTemplate;
+  if (!editId && !deleteId) {
+    return;
+  }
+  const templates = getGeneratorTemplates();
+  const key = type === "exercise" ? "exercises" : "meals";
+  if (type === "goal") {
+    if (deleteId) {
+      state.generatorGoals = state.generatorGoals.filter((goal) => goal !== deleteId);
+      if (state.generatorGoals.length === 0) {
+        state.generatorGoals = [...FIT_GOALS];
+      }
+      persistState();
+      renderGeneratorPanel();
+      ui.generatorMessage.textContent = "목표 템플릿을 삭제했어요.";
+    }
+    return;
+  }
+  if (deleteId) {
+    templates[key] = templates[key].filter((item) => item.id !== deleteId);
+    state.generatorTemplates = templates;
+    persistState();
+    renderGeneratorPanel();
+    ui.generatorMessage.textContent = "템플릿을 삭제했어요.";
+    return;
+  }
+  const item = templates[key].find((entry) => entry.id === editId);
+  if (!item) {
+    return;
+  }
+  if (type === "exercise") {
+    ui.exerciseTemplateId.value = item.id;
+    ui.templateExerciseName.value = item.name;
+    ui.templateExercisePart.value = item.part;
+    ui.templateExercisePlace.value = toCsv(item.place);
+    ui.templateExerciseEquipment.value = toCsv(item.equipment);
+    ui.templateExerciseGoals.value = toCsv(item.goals);
+    ui.templateExerciseAvoid.value = toCsv(item.avoid);
+  } else {
+    ui.mealTemplateId.value = item.id;
+    ui.templateMealName.value = item.name;
+    ui.templateMealPreference.value = item.preference;
+    ui.templateMealItems.value = toCsv(item.items);
+    ui.templateMealNote.value = item.note || "";
+  }
+  ui.generatorMessage.textContent = "템플릿을 불러왔어요. 수정 후 저장을 눌러주세요.";
+}
+
+function clearTemplateForms() {
+  if (ui.exerciseTemplateForm) {
+    ui.exerciseTemplateForm.reset();
+    ui.exerciseTemplateId.value = "";
+  }
+  if (ui.mealTemplateForm) {
+    ui.mealTemplateForm.reset();
+    ui.mealTemplateId.value = "";
+  }
+}
+
+function ensureGeneratorState() {
+  if (!isPlainObject(state.generatorTemplates)) {
+    state.generatorTemplates = cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES);
+  }
+  state.generatorTemplates = normalizeGeneratorTemplates(state.generatorTemplates);
+  if (!Array.isArray(state.generatorGoals) || state.generatorGoals.length === 0) {
+    state.generatorGoals = [...FIT_GOALS];
+  }
+  state.generatorGoals = normalizeStringArray(state.generatorGoals);
+  if (!Array.isArray(state.generatedPlans)) {
+    state.generatedPlans = [];
+  }
+}
+
+function getGeneratorTemplates() {
+  ensureGeneratorState();
+  return cloneGeneratorTemplates(state.generatorTemplates);
+}
+
+function normalizeGeneratorTemplates(raw) {
+  const fallback = cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES);
+  if (!isPlainObject(raw)) {
+    return fallback;
+  }
+  const exercises = Array.isArray(raw.exercises) ? raw.exercises.map(normalizeExerciseTemplate).filter(Boolean) : fallback.exercises;
+  const meals = Array.isArray(raw.meals) ? raw.meals.map(normalizeMealTemplate).filter(Boolean) : fallback.meals;
+  return {
+    exercises: exercises.length ? exercises : fallback.exercises,
+    meals: meals.length ? meals : fallback.meals
+  };
+}
+
+function normalizeExerciseTemplate(item) {
+  if (!isPlainObject(item) || typeof item.name !== "string" || typeof item.part !== "string") {
+    return null;
+  }
+  return {
+    id: typeof item.id === "string" ? item.id : `tpl-${Date.now().toString(36)}`,
+    name: item.name,
+    part: item.part,
+    place: normalizeStringArray(item.place),
+    equipment: normalizeStringArray(item.equipment),
+    goals: normalizeStringArray(item.goals),
+    avoid: normalizeStringArray(item.avoid)
+  };
+}
+
+function normalizeMealTemplate(item) {
+  if (!isPlainObject(item) || typeof item.name !== "string" || typeof item.preference !== "string") {
+    return null;
+  }
+  return {
+    id: typeof item.id === "string" ? item.id : `meal-${Date.now().toString(36)}`,
+    name: item.name,
+    preference: item.preference,
+    items: normalizeStringArray(item.items),
+    note: typeof item.note === "string" ? item.note : ""
+  };
+}
+
+function cloneGeneratorTemplates(templates) {
+  return {
+    exercises: (templates.exercises || []).map((item) => ({
+      ...item,
+      place: normalizeStringArray(item.place),
+      equipment: normalizeStringArray(item.equipment),
+      goals: normalizeStringArray(item.goals),
+      avoid: normalizeStringArray(item.avoid)
+    })),
+    meals: (templates.meals || []).map((item) => ({
+      ...item,
+      items: normalizeStringArray(item.items)
+    }))
+  };
+}
+
+function readCheckedValues(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((item) => item.value);
+}
+
+function readNumberFromInput(input, fallback) {
+  const raw = String(input?.value || "").trim();
+  if (!raw) {
+    return fallback;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function splitCsv(value) {
+  return String(value || "")
+    .split(/[,，\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function toCsv(value) {
+  return normalizeStringArray(value).join(", ");
+}
+
+function normalizeStringArray(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+  return splitCsv(value);
+}
+
+function arrayIncludes(list, value) {
+  return normalizeStringArray(list).includes(value);
+}
+
+function uniqueById(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
+}
+
 function renderTimer() {
   ui.restTimerText.textContent = restTimer.remainingSec > 0 ? toClock(restTimer.remainingSec) : "--:--";
   ui.timerToggleBtn.disabled = restTimer.remainingSec <= 0;
@@ -2095,7 +2828,11 @@ function createInitialState() {
     sessions: {},
     history: [],
     customPlans: {},
-    inbodyRecords: []
+    inbodyRecords: [],
+    generatedPlans: [],
+    generatedPlanDraft: null,
+    generatorGoals: [...FIT_GOALS],
+    generatorTemplates: cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES)
   };
 }
 
@@ -2133,6 +2870,26 @@ function normalizeLoadedState(parsed) {
     initial.inbodyRecords = trimInbodyRecords(parsed.inbodyRecords);
   }
 
+  if (Array.isArray(parsed.generatedPlans)) {
+    initial.generatedPlans = parsed.generatedPlans
+      .filter((entry) => isPlainObject(entry))
+      .map((entry) => ({ ...entry }))
+      .slice(0, 12);
+  }
+
+  if (isPlainObject(parsed.generatedPlanDraft)) {
+    initial.generatedPlanDraft = { ...parsed.generatedPlanDraft };
+  }
+
+  if (isPlainObject(parsed.generatorTemplates)) {
+    initial.generatorTemplates = normalizeGeneratorTemplates(parsed.generatorTemplates);
+  }
+
+  if (Array.isArray(parsed.generatorGoals)) {
+    const goals = normalizeStringArray(parsed.generatorGoals);
+    initial.generatorGoals = goals.length ? goals : [...FIT_GOALS];
+  }
+
   if (isPlainObject(parsed.customPlans)) {
     initial.customPlans = { ...parsed.customPlans };
   }
@@ -2165,6 +2922,7 @@ function prepareLoadedState() {
   selectedDay = selectInitialDay();
   analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
   normalizeCustomPlans();
+  ensureGeneratorState();
   state.analyticsScope = analyticsScope;
   editorSelectedExerciseId = null;
   ensureSession(selectedDay);

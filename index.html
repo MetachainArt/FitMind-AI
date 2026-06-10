@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>핏마인드 짐 루틴</title>
   <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
-  <link rel="stylesheet" href="styles.css?v=core-priorities-v1">
+  <link rel="stylesheet" href="styles.css?v=adaptive-generator-v1">
 </head>
 <body>
   <header class="hero reveal">
@@ -329,12 +329,149 @@
         </div>
       </div>
     </section>
+
+    <section class="panel generator-panel reveal" aria-label="맞춤 운동 식단 자동 생성">
+      <h2>맞춤 운동·식단 생성</h2>
+      <div class="safety-notice" role="note">
+        <strong>건강 참고용 AI 코치</strong>
+        <p>입력값을 바탕으로 주간 운동과 하루 식단 예시를 자동 생성합니다. 의료 진단이 아니며, 통증·질환·복용 약이 있으면 전문가 상담을 우선하세요.</p>
+      </div>
+
+      <div class="generator-grid">
+        <form id="generatorForm" class="generator-form">
+          <fieldset class="generator-fieldset">
+            <legend>목표 최대 3개</legend>
+            <div id="fitGoalOptions" class="generator-option-list"></div>
+          </fieldset>
+
+          <fieldset class="generator-fieldset">
+            <legend>운동 가능 요일</legend>
+            <label><input type="checkbox" name="fitDays" value="월"> 월</label>
+            <label><input type="checkbox" name="fitDays" value="화"> 화</label>
+            <label><input type="checkbox" name="fitDays" value="수"> 수</label>
+            <label><input type="checkbox" name="fitDays" value="목"> 목</label>
+            <label><input type="checkbox" name="fitDays" value="금"> 금</label>
+            <label><input type="checkbox" name="fitDays" value="토"> 토</label>
+            <label><input type="checkbox" name="fitDays" value="일"> 일</label>
+          </fieldset>
+
+          <div class="generator-field-grid">
+            <label class="editor-label" for="fitTimeInput">하루 운동 가능 시간
+              <input id="fitTimeInput" class="editor-input" type="number" min="15" max="180" step="5" value="70">
+            </label>
+            <label class="editor-label" for="fitHeightInput">키 cm
+              <input id="fitHeightInput" class="editor-input" type="number" min="120" max="230" step="1" placeholder="170">
+            </label>
+            <label class="editor-label" for="fitWeightInput">몸무게 kg
+              <input id="fitWeightInput" class="editor-input" type="number" min="30" max="220" step="0.1" placeholder="78">
+            </label>
+            <label class="editor-label" for="fitAgeInput">나이
+              <input id="fitAgeInput" class="editor-input" type="number" min="10" max="100" step="1" placeholder="35">
+            </label>
+            <label class="editor-label" for="fitSexSelect">성별
+              <select id="fitSexSelect" class="editor-input">
+                <option value="">선택</option>
+                <option value="남성">남성</option>
+                <option value="여성">여성</option>
+                <option value="기타">기타/미입력</option>
+              </select>
+            </label>
+            <label class="editor-label" for="fitExperienceSelect">운동 경험
+              <select id="fitExperienceSelect" class="editor-input">
+                <option value="초보">초보</option>
+                <option value="중급">중급</option>
+                <option value="고급">고급</option>
+              </select>
+            </label>
+            <label class="editor-label" for="fitPlaceSelect">운동 장소
+              <select id="fitPlaceSelect" class="editor-input">
+                <option value="헬스장">헬스장</option>
+                <option value="집">집</option>
+                <option value="야외">야외</option>
+              </select>
+            </label>
+            <label class="editor-label" for="fitDietSelect">식단 선호
+              <select id="fitDietSelect" class="editor-input">
+                <option value="일반식">일반식</option>
+                <option value="고단백">고단백</option>
+                <option value="다이어트식">다이어트식</option>
+                <option value="채식">채식</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="editor-label" for="fitEquipmentInput">사용 가능한 장비</label>
+          <textarea id="fitEquipmentInput" class="editor-input generator-textarea" placeholder="예: 덤벨, 밴드, 풀업바, 머신, 케이블"></textarea>
+
+          <label class="editor-label" for="fitInjuryInput">부상 또는 주의사항</label>
+          <textarea id="fitInjuryInput" class="editor-input generator-textarea" placeholder="예: 무릎 통증, 허리 디스크, 어깨 충돌"></textarea>
+
+          <label class="editor-label" for="fitAllergyInput">알레르기 또는 피해야 할 음식</label>
+          <textarea id="fitAllergyInput" class="editor-input generator-textarea" placeholder="예: 우유, 견과류, 밀가루, 해산물"></textarea>
+
+          <div class="generator-actions">
+            <button id="generatePlanBtn" class="btn primary" type="submit">맞춤 계획 생성</button>
+            <button id="saveGeneratedPlanBtn" class="btn secondary" type="button">생성 결과 저장</button>
+          </div>
+          <p id="generatorMessage" class="muted editor-message"></p>
+        </form>
+
+        <div class="generator-output">
+          <article class="generated-plan-box">
+            <h3 class="section-title">생성 결과</h3>
+            <div id="generatedPlanResult" class="generated-plan-result"></div>
+          </article>
+
+          <article class="generated-plan-box">
+            <h3 class="section-title">저장한 맞춤 계획</h3>
+            <ul id="savedGeneratedPlansList" class="history-list"></ul>
+          </article>
+        </div>
+      </div>
+
+      <details class="template-admin">
+        <summary>관리자 템플릿 관리</summary>
+        <div class="template-admin-grid">
+          <form id="goalTemplateForm" class="template-form">
+            <h3 class="section-title">목표 템플릿</h3>
+            <input id="templateGoalName" class="editor-input" type="text" placeholder="목표 이름 예: 풀업, 내장지방">
+            <button class="btn secondary" type="submit">목표 템플릿 추가</button>
+            <ul id="goalTemplateList" class="template-list"></ul>
+          </form>
+
+          <form id="exerciseTemplateForm" class="template-form">
+            <h3 class="section-title">운동 템플릿</h3>
+            <input id="exerciseTemplateId" type="hidden">
+            <input id="templateExerciseName" class="editor-input" type="text" placeholder="운동 이름">
+            <input id="templateExercisePart" class="editor-input" type="text" placeholder="운동 부위 예: 하체, 등, 복근">
+            <input id="templateExercisePlace" class="editor-input" type="text" placeholder="장소 예: 헬스장, 집, 야외">
+            <input id="templateExerciseEquipment" class="editor-input" type="text" placeholder="장비 예: 덤벨, 머신, 밴드">
+            <input id="templateExerciseGoals" class="editor-input" type="text" placeholder="목표 태그 예: 체중감량,근육증가">
+            <input id="templateExerciseAvoid" class="editor-input" type="text" placeholder="주의 태그 예: 무릎,허리,어깨">
+            <button class="btn secondary" type="submit">운동 템플릿 저장</button>
+            <ul id="exerciseTemplateList" class="template-list"></ul>
+          </form>
+
+          <form id="mealTemplateForm" class="template-form">
+            <h3 class="section-title">식단 템플릿</h3>
+            <input id="mealTemplateId" type="hidden">
+            <input id="templateMealName" class="editor-input" type="text" placeholder="식단 이름">
+            <input id="templateMealPreference" class="editor-input" type="text" placeholder="식단 선호 예: 일반식, 고단백">
+            <textarea id="templateMealItems" class="editor-input generator-textarea" placeholder="식단 항목을 쉼표로 입력"></textarea>
+            <input id="templateMealNote" class="editor-input" type="text" placeholder="추천 설명">
+            <button class="btn secondary" type="submit">식단 템플릿 저장</button>
+            <ul id="mealTemplateList" class="template-list"></ul>
+          </form>
+        </div>
+        <button id="resetGeneratorTemplatesBtn" class="btn ghost" type="button">기본 템플릿으로 되돌리기</button>
+      </details>
+    </section>
   </main>
 
   <footer class="footer">
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="app.js?v=core-priorities-v1"></script>
+  <script src="app.js?v=adaptive-generator-v1"></script>
 </body>
 </html>
