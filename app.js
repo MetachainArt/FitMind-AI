@@ -40,6 +40,7 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   plank: { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
   "side-plank": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   "side-plank-sat": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
+  deadbug: { howTo: "데드버그 운동방법", machine: "데드버그 코어 운동" },
   "squat-machine": { howTo: "스쿼트 머신 운동방법", machine: "스쿼트 머신 사용법" },
   "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
   "leg-curl-seated": { howTo: "시티드 레그컬 운동방법", machine: "시티드 레그컬 기구 사용법" },
@@ -79,6 +80,7 @@ const DEFAULT_GENERATOR_TEMPLATES = {
     { id: "tpl-shoulder", name: "숄더 프레스 머신", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["머신"], goals: ["근육증가"], avoid: ["어깨"] },
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
     { id: "tpl-side-plank", name: "사이드 플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["어깨"] },
+    { id: "tpl-deadbug", name: "데드버그", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: [] },
     { id: "tpl-cable-woodchop", name: "케이블 우드찹 또는 밴드 우드찹", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
@@ -165,7 +167,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "machine-row", name: "머신 로우 (Machine Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 80 }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["35-50초", "35-50초", "35-50초"], restSec: 60 })
+      exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
     ]
   },
   WED: {
@@ -222,7 +224,7 @@ const ROUTINE_PLAN = {
         restSec: 60,
         howTo: "복근 머신은 허리를 꺾지 않고 갈비뼈를 골반 쪽으로 말아내리는 느낌으로 진행해. 불편하면 플랭크로 바로 바꿔.",
         machine: "복근 크런치 머신을 사용해. 좌석과 패드를 먼저 몸에 맞춘 뒤 가벼운 무게로 시작해.",
-        ball: "복근 머신이 없으면 플랭크 3세트로 대체해.",
+        ball: "복근 머신이 없으면 데드버그 또는 플랭크 3세트로 대체해.",
         safety: "허리나 목이 아프면 무게를 낮추거나 플랭크로 바꿔.",
         mistake: "손잡이를 팔로 당기면 복근 자극이 줄고 허리 부담이 커져."
       })
