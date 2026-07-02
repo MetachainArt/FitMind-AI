@@ -33,11 +33,11 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "barbell-curl": { howTo: "바벨 컬 운동방법", machine: "바벨 컬 그립 사용법" },
   "hammer-curl": { howTo: "해머 컬 운동방법", machine: "덤벨 해머 컬 자세" },
   "triceps-pushdown": { howTo: "트라이셉스 푸시다운 운동방법", machine: "케이블 푸시다운 기구 사용법" },
-  "cable-crunch": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
-  "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
   "cable-woodchop": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
   "cable-woodchop-sat": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
   plank: { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
+  "side-plank": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
+  "side-plank-sat": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   "squat-machine": { howTo: "스쿼트 머신 운동방법", machine: "스쿼트 머신 사용법" },
   "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
   "leg-curl-seated": { howTo: "시티드 레그컬 운동방법", machine: "시티드 레그컬 기구 사용법" },
@@ -58,7 +58,6 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "shoulder-press-sat": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
   "lateral-raise-sat": { howTo: "레터럴 레이즈 운동방법", machine: "덤벨 레터럴 레이즈 자세" },
   "hip-abduction-sat": { howTo: "힙 어브덕션 운동방법", machine: "힙 어브덕션 머신 사용법" },
-  "cable-crunch-sat": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
   "russian-twist-sat": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
 };
 
@@ -78,7 +77,8 @@ const DEFAULT_GENERATOR_TEMPLATES = {
     { id: "tpl-push", name: "체스트 프레스 또는 푸시업", part: "가슴/어깨", place: ["헬스장", "집", "야외"], equipment: ["머신", "덤벨", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
     { id: "tpl-shoulder", name: "숄더 프레스", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["덤벨", "머신"], goals: ["근육증가"], avoid: ["어깨"] },
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
-    { id: "tpl-cable-crunch", name: "케이블 크런치 또는 크런치", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "맨몸"], goals: ["복근강화"], avoid: ["허리"] },
+    { id: "tpl-deadbug", name: "데드버그", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
+    { id: "tpl-side-plank", name: "사이드 플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["어깨"] },
     { id: "tpl-cable-woodchop", name: "케이블 우드찹 또는 밴드 우드찹", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
@@ -124,7 +124,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "leg-extension", name: "레그 익스텐션 (Leg Extension)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 75 }),
       exercise({ id: "hip-abduction", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "standing-calf-raise", name: "카프레이즈 (Calf Raise)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
-      exercise({ id: "cable-crunch", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 }),
       exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
     ]
   },
@@ -204,7 +204,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "high-foot-leg-press", name: "레그프레스 발 높게", sets: ["12회", "12회", "12회"], restSec: 90 }),
       exercise({ id: "hip-adduction", name: "힙 어덕션 (Hip Adduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "calf-press", name: "카프 프레스 (Calf Press)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
-      exercise({ id: "cable-crunch", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "side-plank", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 }),
       exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
     ]
   },
@@ -236,13 +236,13 @@ const ROUTINE_PLAN = {
       exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "hammer-curl", name: "해머 컬 (Hammer Curl)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "cable-crunch-fri", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 })
+      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["40-60초", "40-60초", "40-60초"], restSec: 60 })
     ]
   },
   SAT: {
     dayLabel: "SAT",
     theme: "전신 보강 · 풀업 기술 · 복근",
-    trainingFocus: "내장지방 관리는 완주율, 풀업은 짧은 기술 연습, 복근은 케이블 크런치와 회전 자극으로 마무리.",
+    trainingFocus: "내장지방 관리는 완주율, 풀업은 짧은 기술 연습, 복근은 플랭크와 회전 자극으로 마무리.",
     warmupMain: "전신 관절 가동 + 가벼운 머신 1세트",
     warmupTime: "5-7분",
     warmupNote: "월-금 피로가 쌓였다면 모든 운동을 1세트씩 줄여도 좋아.",
@@ -267,7 +267,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "shoulder-press-sat", name: "숄더 프레스 (Shoulder Press)", sets: ["10회", "10회", "10회"], restSec: 85 }),
       exercise({ id: "lateral-raise-sat", name: "레터럴 레이즈 (Lateral Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({ id: "cable-crunch-sat", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
+      exercise({ id: "side-plank-sat", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 }),
       exercise({
         id: "cable-woodchop-sat",
         name: "복근: 케이블 우드찹 (Cable Woodchop)",
