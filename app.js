@@ -10,7 +10,16 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_6km_strength_v1";
+const PLAN_VERSION = "daily_6km_strength_v2";
+const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
+const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
+const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
+const LEGACY_EXERCISE_REPLACEMENTS = {
+  MON: { "cable-crunch": "ab-crunch-machine", fallback: "ab-crunch-machine" },
+  THU: { "cable-crunch": "ab-crunch-machine-thu", fallback: "ab-crunch-machine-thu" },
+  FRI: { "cable-crunch": "plank", "cable-crunch-fri": "plank", fallback: "plank" },
+  SAT: { "cable-crunch": "side-plank-sat", "cable-crunch-sat": "side-plank-sat", fallback: "side-plank-sat" }
+};
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
   machine: "좌석, 패드, 손잡이를 몸에 먼저 맞춘 뒤 관절이 편한 범위에서 시작해.",
@@ -2160,12 +2169,20 @@ function normalizeGeneratorTemplates(raw) {
   if (!isPlainObject(raw)) {
     return fallback;
   }
-  const exercises = Array.isArray(raw.exercises) ? raw.exercises.map(normalizeExerciseTemplate).filter(Boolean) : fallback.exercises;
+  const exercises = Array.isArray(raw.exercises)
+    ? raw.exercises.map(normalizeExerciseTemplate).filter(Boolean).filter((item) => !isRetiredExerciseTemplate(item))
+    : fallback.exercises;
   const meals = Array.isArray(raw.meals) ? raw.meals.map(normalizeMealTemplate).filter(Boolean) : fallback.meals;
   return {
     exercises: exercises.length ? exercises : fallback.exercises,
     meals: meals.length ? meals : fallback.meals
   };
+}
+
+function isRetiredExerciseTemplate(item) {
+  const id = String(item?.id || "");
+  const name = String(item?.name || "");
+  return RETIRED_TEMPLATE_IDS.has(id) || RETIRED_EXERCISE_NAME_PATTERNS.some((pattern) => pattern.test(name));
 }
 
 function normalizeExerciseTemplate(item) {
@@ -2495,6 +2512,7 @@ function normalizePlanForDay(rawPlan, dayCode) {
   const source = rawPlan && typeof rawPlan === "object" ? rawPlan : {};
   const hasCustomExerciseList = Array.isArray(source.exercises);
   const sourceExercises = hasCustomExerciseList ? source.exercises : base.exercises;
+  const exercises = sourceExercises.map((item, index) => cloneExerciseItem(item, index));
 
   return {
     dayLabel: typeof source.dayLabel === "string" ? source.dayLabel : base.dayLabel,
@@ -2506,8 +2524,41 @@ function normalizePlanForDay(rawPlan, dayCode) {
     cardioMain: typeof source.cardioMain === "string" ? source.cardioMain : base.cardioMain,
     cardioTime: typeof source.cardioTime === "string" ? source.cardioTime : base.cardioTime,
     cardioPlan: typeof source.cardioPlan === "string" ? source.cardioPlan : (base.cardioPlan || ""),
-    exercises: sourceExercises.map((item, index) => cloneExerciseItem(item, index))
+    exercises: replaceRetiredExercises(exercises, dayCode)
   };
+}
+
+function replaceRetiredExercises(exercises, dayCode) {
+  const replacementMap = LEGACY_EXERCISE_REPLACEMENTS[dayCode] || {};
+  const seenIds = new Set();
+  return exercises
+    .map((item, index) => {
+      if (!isRetiredExercise(item)) {
+        return item;
+      }
+      const replacementId = replacementMap[item.id] || replacementMap.fallback || "plank";
+      const replacement = findBaseExercise(dayCode, replacementId);
+      return replacement ? cloneExerciseItem(replacement, index) : null;
+    })
+    .filter(Boolean)
+    .filter((item) => {
+      if (seenIds.has(item.id)) {
+        return false;
+      }
+      seenIds.add(item.id);
+      return true;
+    });
+}
+
+function isRetiredExercise(item) {
+  const id = String(item?.id || "");
+  const name = String(item?.name || "");
+  return RETIRED_EXERCISE_IDS.has(id) || RETIRED_EXERCISE_NAME_PATTERNS.some((pattern) => pattern.test(name));
+}
+
+function findBaseExercise(dayCode, exerciseId) {
+  const plan = ROUTINE_PLAN[dayCode] || ROUTINE_PLAN.MON;
+  return plan.exercises.find((item) => item.id === exerciseId) || null;
 }
 
 function cloneExerciseItem(item, index) {
