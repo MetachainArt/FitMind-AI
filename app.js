@@ -33,8 +33,10 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "barbell-curl": { howTo: "바벨 컬 운동방법", machine: "바벨 컬 그립 사용법" },
   "hammer-curl": { howTo: "해머 컬 운동방법", machine: "덤벨 해머 컬 자세" },
   "triceps-pushdown": { howTo: "트라이셉스 푸시다운 운동방법", machine: "케이블 푸시다운 기구 사용법" },
-  "hanging-leg-raise": { howTo: "행잉 레그레이즈 운동방법", machine: "철봉 딥스 스테이션 사용법" },
   "cable-crunch": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
+  "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
+  "cable-woodchop": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
+  "cable-woodchop-sat": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
   plank: { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
   "squat-machine": { howTo: "스쿼트 머신 운동방법", machine: "스쿼트 머신 사용법" },
   "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
@@ -44,7 +46,6 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "chest-press": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 기구 사용법" },
   "shoulder-press": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
   "lateral-raise": { howTo: "레터럴 레이즈 운동방법", machine: "덤벨 레터럴 레이즈 자세" },
-  "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 머신 사용법 복근" },
   "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
   "machine-row": { howTo: "머신 로우 운동방법", machine: "머신 로우 기구 사용법" },
   "high-foot-leg-press": { howTo: "레그프레스 발 높게 운동방법", machine: "레그프레스 기구 사용법" },
@@ -78,6 +79,7 @@ const DEFAULT_GENERATOR_TEMPLATES = {
     { id: "tpl-shoulder", name: "숄더 프레스", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["덤벨", "머신"], goals: ["근육증가"], avoid: ["어깨"] },
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cable-crunch", name: "케이블 크런치 또는 크런치", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "맨몸"], goals: ["복근강화"], avoid: ["허리"] },
+    { id: "tpl-cable-woodchop", name: "케이블 우드찹 또는 밴드 우드찹", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
   ],
@@ -153,7 +155,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "machine-row", name: "머신 로우 (Machine Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 80 }),
       exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "hammer-curl", name: "해머 컬 (Hammer Curl)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "hanging-leg-raise", name: "복근: 행잉 레그레이즈 (Hanging Leg Raise)", sets: ["8-12회", "8-12회", "8-12회"], restSec: 70 })
+      exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
     ]
   },
   WED: {
@@ -172,7 +174,17 @@ const ROUTINE_PLAN = {
       exercise({ id: "lateral-raise", name: "레터럴 레이즈 (Lateral Raise)", sets: ["12-15회", "12-15회", "12-15회", "12-15회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "push-up-db-press", name: "푸시업 또는 덤벨 프레스", sets: ["10-12회", "10-12회", "10-12회"], restSec: 75 }),
-      exercise({ id: "russian-twist", name: "복근: 러시안 트위스트 (Russian Twist)", sets: ["20회", "20회", "20회"], restSec: 60 }),
+      exercise({
+        id: "cable-woodchop",
+        name: "복근: 케이블 우드찹 (Cable Woodchop)",
+        sets: ["12회/쪽", "12회/쪽", "12회/쪽"],
+        restSec: 60,
+        howTo: "케이블을 가슴 높이에 맞추고 골반은 고정한 채 몸통으로 대각선 회전을 만들어. 팔로만 당기지 말고 옆구리와 복부로 버텨.",
+        machine: "케이블 머신 손잡이를 사용해. 무게는 가볍게 시작하고 좌우 같은 횟수로 진행해.",
+        ball: "케이블이 없으면 밴드 우드찹이나 데드버그로 대체해.",
+        safety: "허리가 꺾이거나 통증이 있으면 회전 범위를 줄이고 무게를 낮춰.",
+        mistake: "무거운 무게로 팔만 휘두르면 복근보다 허리와 어깨에 부담이 커져."
+      }),
       exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
     ]
   },
@@ -224,7 +236,7 @@ const ROUTINE_PLAN = {
       exercise({ id: "barbell-curl", name: "바벨 컬 (Barbell Curl)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "hammer-curl", name: "해머 컬 (Hammer Curl)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "hanging-leg-raise", name: "복근: 행잉 레그레이즈 (Hanging Leg Raise)", sets: ["8-12회", "8-12회", "8-12회"], restSec: 70 })
+      exercise({ id: "cable-crunch-fri", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 })
     ]
   },
   SAT: {
@@ -256,7 +268,17 @@ const ROUTINE_PLAN = {
       exercise({ id: "lateral-raise-sat", name: "레터럴 레이즈 (Lateral Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "cable-crunch-sat", name: "복근: 케이블 크런치 (Cable Crunch)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 60 }),
-      exercise({ id: "russian-twist-sat", name: "복근: 러시안 트위스트 (Russian Twist)", sets: ["20회", "20회", "20회"], restSec: 60 })
+      exercise({
+        id: "cable-woodchop-sat",
+        name: "복근: 케이블 우드찹 (Cable Woodchop)",
+        sets: ["12회/쪽", "12회/쪽", "12회/쪽"],
+        restSec: 60,
+        howTo: "케이블을 잡고 배에 힘을 준 상태로 몸통을 대각선으로 회전해. 허리만 비틀지 말고 갈비뼈와 골반 사이를 단단히 잡아.",
+        machine: "케이블 머신 또는 밴드를 사용해. 좌우 균형을 맞춰 같은 횟수로 진행해.",
+        ball: "기구가 없으면 사이드 플랭크 또는 데드버그로 대체해.",
+        safety: "허리 통증이 있으면 즉시 중단하고 플랭크나 데드버그로 바꿔.",
+        mistake: "반동으로 휘두르면 배보다 허리에 부담이 커져."
+      })
     ]
   }
 };
