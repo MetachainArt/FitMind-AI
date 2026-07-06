@@ -10,7 +10,7 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_6km_strength_v2";
+const PLAN_VERSION = "daily_6km_strength_v3";
 const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
 const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
 const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
@@ -39,6 +39,8 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "negative-pull-up-deadhang": { howTo: "네거티브 풀업 데드행 운동방법", machine: "철봉 턱걸이 보조 운동" },
   "scapular-pull-up-deadhang": { howTo: "스캐풀라 풀업 데드행 운동방법", machine: "철봉 매달리기 턱걸이 보조" },
   "seated-row": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
+  "vertical-row": { howTo: "버티컬 로우 운동방법", machine: "Vertical Row 머신 사용법" },
+  "pullover-machine": { howTo: "풀오버 머신 운동방법", machine: "Pullover 머신 사용법" },
   "machine-biceps-curl": { howTo: "머신 바이셉 컬 운동방법", machine: "바이셉 컬 머신 사용법" },
   "cable-hammer-curl": { howTo: "케이블 해머 컬 운동방법", machine: "케이블 로프 컬 사용법" },
   "triceps-pushdown": { howTo: "트라이셉스 푸시다운 운동방법", machine: "케이블 푸시다운 기구 사용법" },
@@ -50,24 +52,24 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "side-plank": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   "side-plank-sat": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   deadbug: { howTo: "데드버그 운동방법", machine: "데드버그 코어 운동" },
-  "squat-machine": { howTo: "스쿼트 머신 운동방법", machine: "스쿼트 머신 사용법" },
+  "squat-machine": { howTo: "핵스쿼트 스미스머신 스쿼트 운동방법", machine: "핵스쿼트 머신 스미스머신 사용법" },
   "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
   "leg-curl-seated": { howTo: "시티드 레그컬 운동방법", machine: "시티드 레그컬 기구 사용법" },
   "hip-thrust": { howTo: "힙 쓰러스트 운동방법", machine: "힙쓰러스트 머신 사용법" },
   "calf-press": { howTo: "카프 프레스 운동방법", machine: "카프 프레스 기구 사용법" },
   "chest-press": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 기구 사용법" },
   "shoulder-press": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
-  "lateral-raise": { howTo: "레터럴 레이즈 머신 운동방법", machine: "레터럴 레이즈 머신 사용법" },
+  "lateral-raise": { howTo: "델토이드 레이즈 머신 운동방법", machine: "Deltoid Raise 머신 사용법" },
   "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
-  "machine-row": { howTo: "머신 로우 운동방법", machine: "머신 로우 기구 사용법" },
+  "machine-row": { howTo: "버티컬 로우 운동방법", machine: "Vertical Row 머신 사용법" },
   "high-foot-leg-press": { howTo: "레그프레스 발 높게 운동방법", machine: "레그프레스 기구 사용법" },
   "face-pull": { howTo: "페이스풀 운동방법", machine: "케이블 페이스풀 사용법" },
   "pec-deck-machine": { howTo: "펙덱 머신 운동방법", machine: "펙덱 머신 사용법" },
   "leg-press-sat": { howTo: "레그프레스 운동방법", machine: "레그프레스 기구 사용법" },
   "chest-press-sat": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 머신 사용법" },
-  "seated-row-sat": { howTo: "시티드 로우 운동방법", machine: "시티드 로우 머신 사용법" },
+  "seated-row-sat": { howTo: "버티컬 로우 운동방법", machine: "Vertical Row 머신 사용법" },
   "shoulder-press-sat": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
-  "lateral-raise-sat": { howTo: "레터럴 레이즈 머신 운동방법", machine: "레터럴 레이즈 머신 사용법" },
+  "lateral-raise-sat": { howTo: "델토이드 레이즈 머신 운동방법", machine: "Deltoid Raise 머신 사용법" },
   "hip-abduction-sat": { howTo: "힙 어브덕션 운동방법", machine: "힙 어브덕션 머신 사용법" },
   "russian-twist-sat": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" }
 };
@@ -83,10 +85,11 @@ const DEFAULT_GENERATOR_TEMPLATES = {
   exercises: [
     { id: "tpl-squat", name: "레그프레스 또는 스쿼트 머신", part: "하체", place: ["헬스장", "집"], equipment: ["머신", "맨몸"], goals: ["체중감량", "근육증가", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-hip-hinge", name: "힙 쓰러스트 머신 또는 레그컬", part: "하체 후면", place: ["헬스장", "집"], equipment: ["머신", "밴드", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
-    { id: "tpl-lat-pull", name: "랫풀다운 또는 밴드 풀다운", part: "등", place: ["헬스장", "집"], equipment: ["머신", "밴드"], goals: ["근육증가", "풀업", "건강관리"], avoid: ["어깨"] },
-    { id: "tpl-row", name: "시티드 로우 머신 또는 케이블 로우", part: "등", place: ["헬스장", "집"], equipment: ["머신", "케이블", "밴드"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
+    { id: "tpl-lat-pull", name: "랫풀다운 또는 보조 풀업 머신", part: "등", place: ["헬스장", "집"], equipment: ["머신", "밴드"], goals: ["근육증가", "풀업", "건강관리"], avoid: ["어깨"] },
+    { id: "tpl-row", name: "버티컬 로우 또는 시티드 로우 머신", part: "등", place: ["헬스장", "집"], equipment: ["머신", "케이블", "밴드"], goals: ["근육증가", "체력향상", "풀업"], avoid: ["허리"] },
+    { id: "tpl-pullover", name: "풀오버 머신", part: "등", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "풀업"], avoid: ["어깨"] },
     { id: "tpl-push", name: "체스트 프레스 머신 또는 펙덱", part: "가슴/어깨", place: ["헬스장", "집", "야외"], equipment: ["머신", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
-    { id: "tpl-shoulder", name: "숄더 프레스 머신", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["머신"], goals: ["근육증가"], avoid: ["어깨"] },
+    { id: "tpl-shoulder", name: "숄더 프레스 또는 델토이드 레이즈 머신", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["머신"], goals: ["근육증가"], avoid: ["어깨"] },
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
     { id: "tpl-side-plank", name: "사이드 플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["어깨"] },
     { id: "tpl-deadbug", name: "데드버그", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: [] },
@@ -131,7 +134,17 @@ const ROUTINE_PLAN = {
     cardioPlan: "대화 가능한 강도로 조깅. 하체 피로가 심하면 조깅 속도를 낮춰.",
     exercises: [
       exercise({ id: "leg-press", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 105 }),
-      exercise({ id: "squat-machine", name: "스쿼트 머신 (Squat Machine)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 105 }),
+      exercise({
+        id: "squat-machine",
+        name: "핵스쿼트 또는 스미스 머신 스쿼트",
+        sets: ["8-10회", "8-10회", "8-10회"],
+        restSec: 105,
+        howTo: "사진 기준 핵스쿼트/스미스 머신 계열을 사용할 수 있어. 처음에는 발 위치를 안정적으로 잡고 깊이보다 무릎 정렬을 우선해.",
+        machine: "핵스쿼트가 비어 있으면 핵스쿼트, 없으면 스미스 머신으로 진행해. 둘 다 부담되면 레그프레스로 대체해.",
+        ball: "기구가 어렵거나 무릎이 불편하면 레그프레스 3세트로 바꿔.",
+        safety: "무릎이 안쪽으로 모이거나 허리가 말리면 범위를 줄이고 무게를 낮춰.",
+        mistake: "처음부터 깊게 앉거나 무게를 빨리 올리면 조깅 피로와 겹쳐 무릎 부담이 커져."
+      }),
       exercise({ id: "leg-extension", name: "레그 익스텐션 (Leg Extension)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 75 }),
       exercise({ id: "hip-abduction", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "standing-calf-raise", name: "카프레이즈 (Calf Raise)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
@@ -173,7 +186,17 @@ const ROUTINE_PLAN = {
         mistake: "목만 빼서 턱을 넘기려 하면 등이 아니라 목과 팔꿈치에 부담이 커져."
       }),
       exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
-      exercise({ id: "machine-row", name: "머신 로우 (Machine Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 80 }),
+      exercise({
+        id: "vertical-row",
+        name: "버티컬 로우 머신 (Vertical Row)",
+        sets: ["10-12회", "10-12회", "10-12회"],
+        restSec: 80,
+        howTo: "가슴 패드에 몸을 기대고 팔꿈치를 뒤로 보낸다는 느낌으로 당겨. 어깨가 귀 쪽으로 올라가지 않게 먼저 내리고 시작해.",
+        machine: "사진의 Nautilus Impact Vertical Row 머신을 사용해. 손잡이는 편한 위치를 잡고 가슴 패드 높이를 명치 근처에 맞춰.",
+        ball: "자리가 없으면 시티드 로우나 랫풀다운 3세트로 대체해.",
+        safety: "허리를 뒤로 젖혀 당기지 말고, 팔꿈치나 어깨 앞쪽이 찌릿하면 무게를 낮춰.",
+        mistake: "손으로만 당기면 이두만 지치니 팔꿈치를 몸 뒤로 보낸다는 느낌을 유지해."
+      }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
@@ -192,7 +215,7 @@ const ROUTINE_PLAN = {
     exercises: [
       exercise({ id: "chest-press", name: "체스트 프레스 (Chest Press)", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 90 }),
       exercise({ id: "shoulder-press", name: "숄더 프레스 (Shoulder Press)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 90 }),
-      exercise({ id: "lateral-raise", name: "레터럴 레이즈 머신 (Lateral Raise Machine)", sets: ["12-15회", "12-15회", "12-15회", "12-15회"], restSec: 70 }),
+      exercise({ id: "lateral-raise", name: "델토이드 레이즈 머신 (Deltoid Raise)", sets: ["12-15회", "12-15회", "12-15회", "12-15회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "pec-deck-machine", name: "펙덱 머신 또는 체스트 프레스 보조", sets: ["10-12회", "10-12회", "10-12회"], restSec: 75 }),
       exercise({
@@ -262,7 +285,17 @@ const ROUTINE_PLAN = {
         safety: "어깨가 귀 쪽으로 으쓱 올라가거나 팔꿈치 통증이 있으면 시간을 줄여.",
         mistake: "버티려고 몸을 비틀거나 떨어지듯 내려오면 턱걸이 힘보다 관절 부담이 커져."
       }),
-      exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["12회", "12회", "12회"], restSec: 85 }),
+      exercise({
+        id: "pullover-machine",
+        name: "풀오버 머신 (Pullover)",
+        sets: ["12회", "12회", "12회"],
+        restSec: 85,
+        howTo: "팔꿈치를 살짝 굽힌 상태로 겨드랑이 아래 등근육을 조여 손잡이를 아래로 끌어내려. 턱걸이에 필요한 광배근 감각을 익히기 좋아.",
+        machine: "사진의 Pullover 머신을 사용해. 좌석을 맞추고 허리를 과하게 꺾지 않은 상태에서 가볍게 시작해.",
+        ball: "자리가 없으면 랫풀다운을 천천히 내리는 템포 3세트로 대체해.",
+        safety: "어깨가 앞쪽으로 찌릿하면 범위를 줄이고 무게를 낮춰.",
+        mistake: "팔 힘으로만 누르면 등 자극이 줄어드니 겨드랑이로 끌어내리는 느낌을 잡아."
+      }),
       exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
@@ -283,7 +316,7 @@ const ROUTINE_PLAN = {
     exercises: [
       exercise({ id: "leg-press-sat", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
       exercise({ id: "chest-press-sat", name: "체스트 프레스 (Chest Press)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
-      exercise({ id: "seated-row-sat", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
+      exercise({ id: "seated-row-sat", name: "버티컬 로우 또는 시티드 로우", sets: ["10-12회", "10-12회", "10-12회"], restSec: 90 }),
       exercise({
         id: "scapular-pull-up-deadhang",
         name: "풀업 보강: 스캐풀라 풀업 + 데드행",
@@ -296,7 +329,7 @@ const ROUTINE_PLAN = {
         mistake: "팔 힘으로 당기려고 팔꿈치를 굽히면 스캐풀라 연습이 아니라 불완전한 턱걸이가 돼."
       }),
       exercise({ id: "shoulder-press-sat", name: "숄더 프레스 (Shoulder Press)", sets: ["10회", "10회", "10회"], restSec: 85 }),
-      exercise({ id: "lateral-raise-sat", name: "레터럴 레이즈 머신 (Lateral Raise Machine)", sets: ["15회", "15회", "15회"], restSec: 70 }),
+      exercise({ id: "lateral-raise-sat", name: "델토이드 레이즈 머신 (Deltoid Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "side-plank-sat", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 }),
       exercise({
@@ -2940,6 +2973,7 @@ function normalizeLoadedState(parsed) {
   if (!isPlainObject(parsed)) {
     return initial;
   }
+  const shouldRefreshRoutine = parsed.planVersion !== PLAN_VERSION;
 
   initial.selectedDay = typeof parsed.selectedDay === "string" ? parsed.selectedDay : null;
   initial.planVersion = PLAN_VERSION;
@@ -2985,7 +3019,7 @@ function normalizeLoadedState(parsed) {
     initial.generatorGoals = goals.length ? goals : [...FIT_GOALS];
   }
 
-  if (isPlainObject(parsed.customPlans)) {
+  if (!shouldRefreshRoutine && isPlainObject(parsed.customPlans)) {
     initial.customPlans = { ...parsed.customPlans };
   }
 
