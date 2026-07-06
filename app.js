@@ -10,7 +10,7 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_6km_strength_v3";
+const PLAN_VERSION = "daily_6km_strength_v4";
 const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
 const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
 const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
@@ -153,13 +153,12 @@ const ROUTINE_PLAN = {
         name: "복근: 플랭크 + 복근 머신 선택",
         sets: ["플랭크 45초", "플랭크 45초", "머신 있으면 12-15회"],
         restSec: 60,
-        howTo: "사진 기준 복근 머신은 확실하지 않으니 플랭크를 기본으로 진행해. 복근 머신이 보이면 마지막 세트에만 가볍게 추가해.",
+        howTo: "월요일 복근은 이 항목 하나만 하면 돼. 플랭크 2세트를 기본으로 하고, 복근 머신이 보이면 마지막 세트에만 가볍게 추가해.",
         machine: "복근 크런치 머신이 있으면 선택해서 사용해. 무게는 가볍게 시작하고 허리가 꺾이지 않게 배를 먼저 조여.",
         ball: "복근 머신이 없거나 불편하면 플랭크 3세트 또는 데드버그 3세트로 대체해.",
         safety: "허리 통증이 있으면 즉시 멈추고 플랭크 시간을 줄여.",
         mistake: "목과 팔로 당기거나 반동으로 접으면 복근보다 허리에 부담이 커져."
-      }),
-      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
+      })
     ]
   },
   TUE: {
