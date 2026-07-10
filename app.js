@@ -366,6 +366,7 @@ const ui = {
   currentExerciseTitle: document.getElementById("currentExerciseTitle"),
   currentExerciseTarget: document.getElementById("currentExerciseTarget"),
   coachMessage: document.getElementById("coachMessage"),
+  quickExerciseSelect: document.getElementById("quickExerciseSelect"),
   targetSetList: document.getElementById("targetSetList"),
   startWorkoutBtn: document.getElementById("startWorkoutBtn"),
   completeSetBtn: document.getElementById("completeSetBtn"),
@@ -535,17 +536,19 @@ function bindEvents() {
     if (!(target instanceof HTMLElement)) {
       return;
     }
-    const exerciseId = target.dataset.jumpExercise;
+    const trigger = target.closest("[data-jump-exercise]");
+    if (!(trigger instanceof HTMLButtonElement)) {
+      return;
+    }
+    const exerciseId = trigger.dataset.jumpExercise;
     if (!exerciseId) {
       return;
     }
-    const session = getCurrentSession();
-    session.activeExerciseId = exerciseId;
-    session.updatedAt = new Date().toISOString();
-    persistState();
-    renderCurrentExercise();
-    renderQueue();
-    announce("좋아, 이 운동부터 바로 진행하자.");
+    activateExercise(exerciseId);
+  });
+
+  ui.quickExerciseSelect.addEventListener("change", () => {
+    activateExercise(ui.quickExerciseSelect.value);
   });
 
   ui.startWorkoutBtn.addEventListener("click", () => {
@@ -788,8 +791,8 @@ function bindEvents() {
       return;
     }
     renderAll();
-    setEditorMessage("선택한 운동을 저장했어요.");
-    announce("선택한 운동을 저장했어.");
+    setEditorMessage("세트 중량과 횟수를 이 기기에 저장했어요.");
+    announce("세트 중량과 횟수를 이 기기에 저장했어.");
   });
 
   ui.addExerciseBtn.addEventListener("click", () => {
@@ -1166,7 +1169,13 @@ function renderQueue() {
 
     return `
       <li class="${classNames}">
-        <button class="queue-name" data-jump-exercise="${item.id}">
+        <button
+          class="queue-name"
+          type="button"
+          data-jump-exercise="${escapeHtml(item.id)}"
+          aria-current="${current ? "true" : "false"}"
+          ${done ? "disabled" : ""}
+        >
           <span class="queue-icon" aria-hidden="true">${getExerciseIcon(item)}</span>
           <span class="queue-text">${escapeHtml(item.name)}</span>
         </button>
@@ -1215,6 +1224,7 @@ function renderCurrentExercise() {
   const plan = getCurrentPlan();
   const allDone = getCompletedExerciseCount() >= plan.exercises.length;
   const active = getActiveExercise();
+  renderExerciseSwitcher(active);
 
   if (!active || allDone) {
     ui.currentExerciseTitle.textContent = "🎉 오늘 루틴 완료";
@@ -1258,6 +1268,23 @@ function renderCurrentExercise() {
   ui.guideSafety.textContent = active.safety;
   ui.guideMistake.textContent = `자주 하는 실수: ${active.mistake}`;
   renderExerciseVideoLinks(active);
+}
+
+function renderExerciseSwitcher(active) {
+  const unfinished = getCurrentPlan().exercises.filter((item) => !isExerciseDone(item));
+  if (!unfinished.length) {
+    ui.quickExerciseSelect.innerHTML = '<option value="">오늘 운동 완료</option>';
+    ui.quickExerciseSelect.disabled = true;
+    return;
+  }
+
+  ui.quickExerciseSelect.innerHTML = unfinished.map((item) => {
+    const doneSets = getSetDone(item.id);
+    const label = `${getExerciseIcon(item)} ${item.name} (${doneSets}/${item.sets.length}세트)`;
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(label)}</option>`;
+  }).join("");
+  ui.quickExerciseSelect.value = active?.id || unfinished[0].id;
+  ui.quickExerciseSelect.disabled = unfinished.length <= 1;
 }
 
 function renderSummary() {
@@ -2669,6 +2696,29 @@ function moveActiveToNextIncomplete() {
   const session = getCurrentSession();
   const next = getCurrentPlan().exercises.find((item) => !isExerciseDone(item));
   session.activeExerciseId = next ? next.id : null;
+}
+
+function activateExercise(exerciseId) {
+  const target = getCurrentPlan().exercises.find((item) => item.id === exerciseId);
+  if (!target) {
+    return;
+  }
+  if (isExerciseDone(target)) {
+    announce("이미 완료한 운동이야. 미완료 운동을 선택해 줘.");
+    return;
+  }
+
+  const session = getCurrentSession();
+  session.activeExerciseId = target.id;
+  session.updatedAt = new Date().toISOString();
+  stopRestTimer();
+  const saved = persistState();
+  renderCurrentExercise();
+  renderQueue();
+  renderTimer();
+  announce(saved
+    ? `${target.name}, 이 운동부터 먼저 진행하자.`
+    : "운동은 바꿨지만 순서를 저장하지 못했어. 저장공간을 확인해 줘.");
 }
 
 function getActiveExercise() {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>핏마인드 짐 루틴</title>
   <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
-  <link rel="stylesheet" href="styles.css?v=release-ready-v1">
+  <link rel="stylesheet" href="styles.css?v=exercise-switch-v2">
 </head>
 <body>
   <header class="hero reveal">
@@ -92,6 +92,11 @@
       <p id="currentExerciseTitle" class="exercise-title"></p>
       <p id="currentExerciseTarget" class="exercise-target"></p>
       <p id="coachMessage" class="coach-message">좋아, 시작해보자.</p>
+
+      <div class="exercise-switcher">
+        <label for="quickExerciseSelect">다른 운동 먼저 하기</label>
+        <select id="quickExerciseSelect" class="editor-input"></select>
+      </div>
 
       <ul id="targetSetList" class="set-list"></ul>
 
@@ -491,6 +496,6 @@
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="app.js?v=release-ready-v1"></script>
+  <script src="app.js?v=exercise-switch-v2"></script>
 </body>
 </html>

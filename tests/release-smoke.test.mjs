@@ -44,9 +44,17 @@ test("custom plans survive plan version upgrades", () => {
 
 test("mobile workflow and data recovery controls are present", () => {
   assert.match(html, /id="currentWorkoutPanel"/);
+  assert.match(html, /id="quickExerciseSelect"/);
   assert.match(html, /<details class="routine-editor">/);
   assert.match(html, /id="exportDataBtn"/);
   assert.match(html, /id="importDataBtn"/);
+});
+
+test("workout order can change without losing saved loads", () => {
+  assert.match(app, /target\.closest\("\[data-jump-exercise\]"\)/);
+  assert.match(app, /function activateExercise\(exerciseId\)/);
+  assert.match(app, /세트 중량과 횟수를 이 기기에 저장했어요/);
+  assert.match(app, /window\.localStorage\.setItem\(STORAGE_KEY, JSON\.stringify\(state\)\)/);
 });
 
 test("production security headers are configured", () => {

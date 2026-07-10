@@ -374,6 +374,11 @@ body {
   gap: 8px;
 }
 
+.queue-name:disabled {
+  cursor: default;
+  color: #3f6f55;
+}
+
 .queue-icon {
   display: inline-flex;
   align-items: center;
@@ -525,6 +530,28 @@ body {
   background: #f0fdf4;
   color: #166534;
   font-weight: 600;
+}
+
+.exercise-switcher {
+  margin: 0 0 var(--space-4);
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  background: #eff6ff;
+}
+
+.exercise-switcher label {
+  display: block;
+  margin-bottom: 6px;
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.exercise-switcher .editor-input {
+  min-height: 44px;
+  border-color: #93c5fd;
+  font-weight: 700;
 }
 
 .set-list {
