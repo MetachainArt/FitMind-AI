@@ -10,15 +10,15 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_6km_strength_v4";
+const PLAN_VERSION = "daily_6km_strength_v5";
 const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
 const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
 const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
 const LEGACY_EXERCISE_REPLACEMENTS = {
   MON: { "cable-crunch": "ab-crunch-machine", fallback: "ab-crunch-machine" },
   THU: { "cable-crunch": "ab-crunch-machine-thu", fallback: "ab-crunch-machine-thu" },
-  FRI: { "cable-crunch": "plank", "cable-crunch-fri": "plank", fallback: "plank" },
-  SAT: { "cable-crunch": "side-plank-sat", "cable-crunch-sat": "side-plank-sat", fallback: "side-plank-sat" }
+  FRI: { "cable-crunch": "side-plank-fri", "cable-crunch-fri": "side-plank-fri", fallback: "side-plank-fri" },
+  SAT: { "cable-crunch": "cable-woodchop-sat", "cable-crunch-sat": "cable-woodchop-sat", fallback: "cable-woodchop-sat" }
 };
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
@@ -50,6 +50,7 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "ab-crunch-machine-thu": { howTo: "플랭크 복근 머신 대체 운동방법", machine: "복근 크런치 머신 선택 사용법" },
   plank: { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
   "side-plank": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
+  "side-plank-fri": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   "side-plank-sat": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   deadbug: { howTo: "데드버그 운동방법", machine: "데드버그 코어 운동" },
   "squat-machine": { howTo: "핵스쿼트 스미스머신 스쿼트 운동방법", machine: "핵스쿼트 머신 스미스머신 사용법" },
@@ -77,9 +78,13 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
 const ANALYTICS_SCOPES = ["day", "week", "month"];
 const INBODY_MAX_RECORDS = 12;
 const INBODY_MAX_IMAGE_RECORDS = 6;
-const INBODY_IMAGE_MAX_EDGE = 900;
-const INBODY_IMAGE_QUALITY = 0.72;
+const INBODY_IMAGE_MAX_EDGE = 720;
+const INBODY_IMAGE_QUALITY = 0.68;
+const INBODY_MAX_SOURCE_BYTES = 15 * 1024 * 1024;
+const INBODY_MAX_DATA_URL_CHARS = 1200000;
+const WORKOUT_PERSIST_INTERVAL_MS = 30000;
 const FIT_GOALS = ["체중감량", "근육증가", "체력향상", "복근강화", "건강관리"];
+const FIT_INJURY_AREAS = ["무릎", "허리", "어깨", "손목", "팔꿈치", "발목"];
 const FIT_DAY_PARTS = ["하체", "등", "가슴/어깨", "하체 후면", "전신", "복근"];
 const DEFAULT_GENERATOR_TEMPLATES = {
   exercises: [
@@ -204,7 +209,7 @@ const ROUTINE_PLAN = {
   WED: {
     dayLabel: "WED",
     theme: "가슴 · 어깨 · 삼두 · 복근",
-    trainingFocus: "상체 밀기 운동으로 가슴/어깨/삼두 근육량을 만든다.",
+    trainingFocus: "상체 밀기 운동 후 우드찹 2세트만 가볍게 진행해 복근 회복 여유를 남긴다.",
     warmupMain: "밴드 풀어파트 + 가벼운 프레스",
     warmupTime: "5-7분",
     warmupNote: "어깨가 말리지 않게 견갑을 먼저 안정화해.",
@@ -220,21 +225,20 @@ const ROUTINE_PLAN = {
       exercise({
         id: "cable-woodchop",
         name: "복근: 케이블 우드찹 (Cable Woodchop)",
-        sets: ["12회/쪽", "12회/쪽", "12회/쪽"],
+        sets: ["12회/쪽", "12회/쪽"],
         restSec: 60,
         howTo: "케이블을 가슴 높이에 맞추고 골반은 고정한 채 몸통으로 대각선 회전을 만들어. 팔로만 당기지 말고 옆구리와 복부로 버텨.",
         machine: "케이블 머신 손잡이를 사용해. 무게는 가볍게 시작하고 좌우 같은 횟수로 진행해.",
         ball: "케이블이 없으면 밴드 우드찹이나 플랭크로 대체해.",
         safety: "허리가 꺾이거나 통증이 있으면 회전 범위를 줄이고 무게를 낮춰.",
         mistake: "무거운 무게로 팔만 휘두르면 복근보다 허리와 어깨에 부담이 커져."
-      }),
-      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["45-60초", "45-60초"], restSec: 60 })
+      })
     ]
   },
   THU: {
     dayLabel: "THU",
     theme: "하체 후면 · 허벅지 보강 · 복근",
-    trainingFocus: "햄스트링/엉덩이/허벅지 보강. 피로가 심하면 하체 세트 1개씩 감량.",
+    trainingFocus: "햄스트링/엉덩이/허벅지 보강. 복근은 플랭크 또는 머신 중 하나만 선택한다.",
     warmupMain: "글루트 브릿지 + 에어 스쿼트",
     warmupTime: "5-7분",
     warmupNote: "조깅으로 다리가 무거우면 첫 운동 무게를 낮춰 시작해.",
@@ -247,7 +251,6 @@ const ROUTINE_PLAN = {
       exercise({ id: "high-foot-leg-press", name: "레그프레스 발 높게", sets: ["12회", "12회", "12회"], restSec: 90 }),
       exercise({ id: "hip-adduction", name: "힙 어덕션 (Hip Adduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "calf-press", name: "카프 프레스 (Calf Press)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
-      exercise({ id: "side-plank", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 }),
       exercise({
         id: "ab-crunch-machine-thu",
         name: "복근: 플랭크 또는 복근 머신 선택",
@@ -299,13 +302,13 @@ const ROUTINE_PLAN = {
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "plank", name: "복근: 플랭크 (Plank)", sets: ["40-60초", "40-60초", "40-60초"], restSec: 60 })
+      exercise({ id: "side-plank-fri", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 })
     ]
   },
   SAT: {
     dayLabel: "SAT",
     theme: "전신 보강 · 풀업 기술 · 복근",
-    trainingFocus: "내장지방 관리는 완주율, 풀업은 짧은 기술 연습, 복근은 플랭크와 회전 자극으로 마무리.",
+    trainingFocus: "내장지방 관리는 완주율, 풀업은 짧은 기술 연습, 복근은 우드찹 2세트로 가볍게 마무리.",
     warmupMain: "전신 관절 가동 + 가벼운 머신 1세트",
     warmupTime: "5-7분",
     warmupNote: "월-금 피로가 쌓였다면 모든 운동을 1세트씩 줄여도 좋아.",
@@ -330,11 +333,10 @@ const ROUTINE_PLAN = {
       exercise({ id: "shoulder-press-sat", name: "숄더 프레스 (Shoulder Press)", sets: ["10회", "10회", "10회"], restSec: 85 }),
       exercise({ id: "lateral-raise-sat", name: "델토이드 레이즈 머신 (Deltoid Raise)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({ id: "side-plank-sat", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 }),
       exercise({
         id: "cable-woodchop-sat",
         name: "복근: 케이블 우드찹 (Cable Woodchop)",
-        sets: ["12회/쪽", "12회/쪽", "12회/쪽"],
+        sets: ["12회/쪽", "12회/쪽"],
         restSec: 60,
         howTo: "케이블을 잡고 배에 힘을 준 상태로 몸통을 대각선으로 회전해. 허리만 비틀지 말고 갈비뼈와 골반 사이를 단단히 잡아.",
         machine: "케이블 머신 또는 밴드를 사용해. 좌우 균형을 맞춰 같은 횟수로 진행해.",
@@ -348,6 +350,7 @@ const ROUTINE_PLAN = {
 
 const ui = {
   todayLabel: document.getElementById("todayLabel"),
+  storageNotice: document.getElementById("storageNotice"),
   resetSessionBtn: document.getElementById("resetSessionBtn"),
   dayTabs: document.getElementById("dayTabs"),
   dayTitle: document.getElementById("dayTitle"),
@@ -419,6 +422,9 @@ const ui = {
   inbodyMemoInput: document.getElementById("inbodyMemoInput"),
   saveInbodyBtn: document.getElementById("saveInbodyBtn"),
   clearInbodyImageBtn: document.getElementById("clearInbodyImageBtn"),
+  exportDataBtn: document.getElementById("exportDataBtn"),
+  importDataBtn: document.getElementById("importDataBtn"),
+  importDataInput: document.getElementById("importDataInput"),
   inbodyMessage: document.getElementById("inbodyMessage"),
   inbodyPreview: document.getElementById("inbodyPreview"),
   inbodyPreviewEmpty: document.getElementById("inbodyPreviewEmpty"),
@@ -475,6 +481,7 @@ let workoutTimer = {
   intervalId: null,
   running: false
 };
+let lastWorkoutPersistMs = 0;
 let editorSelectedExerciseId = null;
 let pendingInbodyImageDataUrl = "";
 
@@ -488,6 +495,16 @@ function bootstrap() {
 }
 
 function bindEvents() {
+  window.addEventListener("pagehide", () => {
+    applyWorkoutElapsedTick(getCurrentSession(), { forcePersist: true });
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      applyWorkoutElapsedTick(getCurrentSession(), { forcePersist: true });
+    }
+  });
+
   ui.dayTabs.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) {
@@ -571,13 +588,16 @@ function bindEvents() {
       announce(`좋아, ${done + 1}세트 완료. 잠깐 쉬고 다음 세트 가자.`);
     }
     session.updatedAt = new Date().toISOString();
-    persistState();
+    const setSaved = persistState();
     const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
     if (isAllDone) {
       saveCurrentSummary({ auto: true });
     }
     startRestTimer(active.restSec);
     renderAll();
+    if (!setSaved) {
+      announce("세트는 화면에 반영됐지만 저장하지 못했어. 데이터 백업 후 저장공간을 확인해 줘.");
+    }
   });
 
   ui.markExerciseDoneBtn.addEventListener("click", () => {
@@ -591,13 +611,15 @@ function bindEvents() {
     session.completedExerciseMap[active.id] = true;
     session.updatedAt = new Date().toISOString();
     moveActiveToNextIncomplete();
-    persistState();
+    const exerciseSaved = persistState();
     const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
     if (isAllDone) {
       saveCurrentSummary({ auto: true });
     }
     renderAll();
-    announce("운동 완료 처리했어. 다음 운동으로 이어가자.");
+    announce(exerciseSaved
+      ? "운동 완료 처리했어. 다음 운동으로 이어가자."
+      : "운동 완료는 화면에 반영됐지만 저장하지 못했어. 저장공간을 확인해 줘.");
   });
 
   ui.timerToggleBtn.addEventListener("click", () => {
@@ -696,11 +718,13 @@ function bindEvents() {
     pauseWorkoutTimer();
     editorSelectedExerciseId = null;
     ensureSession(selectedDay);
-    persistState();
+    const resetSaved = persistState();
     ui.saveMessage.textContent = "";
     ui.editorMessage.textContent = "";
     renderAll();
-    announce("초기화 완료. 처음 세트부터 다시 시작할 수 있어.");
+    announce(resetSaved
+      ? "초기화 완료. 처음 세트부터 다시 시작할 수 있어."
+      : "화면은 초기화됐지만 저장하지 못했어. 저장공간을 확인해 줘.");
   });
 
   ui.editorExerciseSelect.addEventListener("change", () => {
@@ -759,7 +783,10 @@ function bindEvents() {
     fillGuideDefaults(target);
 
     syncSessionToCurrentPlan();
-    persistState();
+    if (!persistState()) {
+      setEditorMessage("저장공간 부족으로 운동 변경을 저장하지 못했어요.");
+      return;
+    }
     renderAll();
     setEditorMessage("선택한 운동을 저장했어요.");
     announce("선택한 운동을 저장했어.");
@@ -789,7 +816,10 @@ function bindEvents() {
     plan.exercises.push(newExercise);
     editorSelectedExerciseId = newExercise.id;
     syncSessionToCurrentPlan();
-    persistState();
+    if (!persistState()) {
+      setEditorMessage("저장공간 부족으로 새 운동을 저장하지 못했어요.");
+      return;
+    }
     renderAll();
     setEditorMessage("새 운동을 추가했어요.");
     announce("새 운동을 추가했어.");
@@ -816,7 +846,10 @@ function bindEvents() {
     plan.exercises = plan.exercises.filter((item) => item.id !== editorSelectedExerciseId);
     editorSelectedExerciseId = plan.exercises[0] ? plan.exercises[0].id : null;
     syncSessionToCurrentPlan();
-    persistState();
+    if (!persistState()) {
+      setEditorMessage("저장공간 부족으로 삭제 결과를 저장하지 못했어요.");
+      return;
+    }
     renderAll();
     setEditorMessage("운동을 삭제했어요.");
     announce("선택한 운동을 삭제했어.");
@@ -836,7 +869,10 @@ function bindEvents() {
     delete state.customPlans[selectedDay];
     editorSelectedExerciseId = null;
     syncSessionToCurrentPlan();
-    persistState();
+    if (!persistState()) {
+      setEditorMessage("저장공간 부족으로 기본 루틴 복원을 저장하지 못했어요.");
+      return;
+    }
     renderAll();
     setEditorMessage("기본 루틴으로 되돌렸어요.");
     announce("이 요일 루틴을 기본값으로 되돌렸어.");
@@ -856,9 +892,18 @@ function bindEvents() {
         pendingInbodyImageDataUrl = "";
         return;
       }
+      if (file.size > INBODY_MAX_SOURCE_BYTES) {
+        ui.inbodyMessage.textContent = "이미지가 너무 커요. 15MB 이하 JPG/PNG를 선택해 주세요.";
+        ui.inbodyImageInput.value = "";
+        pendingInbodyImageDataUrl = "";
+        return;
+      }
       ui.inbodyMessage.textContent = "이미지를 저장하기 좋게 줄이는 중...";
       try {
         pendingInbodyImageDataUrl = await compressImageFile(file);
+        if (pendingInbodyImageDataUrl.length > INBODY_MAX_DATA_URL_CHARS) {
+          throw new Error("compressed_image_too_large");
+        }
         renderInbodyPreview(pendingInbodyImageDataUrl);
         ui.inbodyMessage.textContent = "이미지 준비 완료. 수치를 입력하고 저장해 주세요.";
       } catch (_error) {
@@ -888,6 +933,47 @@ function bindEvents() {
     });
   }
 
+  if (ui.inbodyHistoryList) {
+    ui.inbodyHistoryList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const viewId = target.dataset.viewInbody;
+      const deleteId = target.dataset.deleteInbody;
+      const record = (state.inbodyRecords || []).find((item) => item.id === (viewId || deleteId));
+      if (!record) {
+        return;
+      }
+      if (viewId && record.imageDataUrl) {
+        renderInbodyPreview(record.imageDataUrl);
+        ui.inbodyMessage.textContent = `${record.date} 인바디 이미지를 표시했어요.`;
+        return;
+      }
+      if (!deleteId || !window.confirm(`${record.date} 인바디 기록을 삭제할까요?`)) {
+        return;
+      }
+      const previousRecords = state.inbodyRecords || [];
+      state.inbodyRecords = previousRecords.filter((item) => item.id !== deleteId);
+      if (!persistState()) {
+        state.inbodyRecords = previousRecords;
+        ui.inbodyMessage.textContent = "저장공간 문제로 삭제 결과를 저장하지 못했어요.";
+        return;
+      }
+      renderInbodyPanel();
+      ui.inbodyMessage.textContent = "인바디 기록을 삭제했어요.";
+    });
+  }
+
+  if (ui.exportDataBtn) {
+    ui.exportDataBtn.addEventListener("click", exportAppData);
+  }
+
+  if (ui.importDataBtn && ui.importDataInput) {
+    ui.importDataBtn.addEventListener("click", () => ui.importDataInput.click());
+    ui.importDataInput.addEventListener("change", importAppData);
+  }
+
   if (ui.generatorForm) {
     ui.generatorForm.addEventListener("change", enforceGoalLimit);
     ui.generatorForm.addEventListener("submit", (event) => {
@@ -898,9 +984,11 @@ function bindEvents() {
         return;
       }
       state.generatedPlanDraft = generateAdaptivePlan(profile.value);
-      persistState();
+      const saved = persistState();
       renderGeneratorPanel();
-      ui.generatorMessage.textContent = "맞춤 운동·식단 계획을 생성했어요. 입력값을 바꾸고 다시 생성할 수 있습니다.";
+      ui.generatorMessage.textContent = saved
+        ? "맞춤 운동·식단 계획을 생성했어요. 입력값을 바꾸고 다시 생성할 수 있습니다."
+        : "계획은 생성했지만 저장공간 부족으로 이 기기에 보관하지 못했어요.";
     });
   }
 
@@ -978,9 +1066,11 @@ function bindEvents() {
       }
       state.generatorTemplates = cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES);
       clearTemplateForms();
-      persistState();
+      const didSave = persistState();
       renderGeneratorPanel();
-      ui.generatorMessage.textContent = "기본 템플릿으로 되돌렸어요.";
+      ui.generatorMessage.textContent = didSave
+        ? "기본 템플릿으로 되돌렸어요."
+        : "기본 템플릿은 화면에 반영됐지만 저장하지 못했어요.";
     });
   }
 }
@@ -1233,7 +1323,11 @@ function saveCurrentSummary({ manual = false, auto = false } = {}) {
   const session = getCurrentSession();
   session.lastSavedAt = summary.savedAt;
   session.updatedAt = summary.savedAt;
-  persistState();
+  const saved = persistState();
+  if (!saved) {
+    ui.saveMessage.textContent = "저장공간 부족으로 오늘 요약을 저장하지 못했어요.";
+    return null;
+  }
 
   if (manual) {
     ui.saveMessage.textContent = "오늘 요약을 이 기기에 저장했어.";
@@ -1472,7 +1566,7 @@ function renderInbodyHistory(records) {
     return;
   }
 
-  ui.inbodyHistoryList.innerHTML = records.slice(0, 6).map((record) => {
+  ui.inbodyHistoryList.innerHTML = records.map((record) => {
     const parts = [];
     if (Number.isFinite(record.weightKg)) {
       parts.push(`체중 ${formatMetric(record.weightKg)}kg`);
@@ -1491,11 +1585,18 @@ function renderInbodyHistory(records) {
     }
     const imageLabel = record.imageDataUrl ? " | 이미지 저장됨" : "";
     const memo = record.memo ? `<br><span class="muted">${escapeHtml(record.memo)}</span>` : "";
+    const viewButton = record.imageDataUrl
+      ? `<button class="btn ghost small" type="button" data-view-inbody="${escapeHtml(record.id)}">이미지 보기</button>`
+      : "";
     return `
       <li class="history-item">
         <strong>${escapeHtml(record.date || "")}</strong>${imageLabel}<br>
         ${escapeHtml(parts.join(" | ") || "수치 미입력")}
         ${memo}
+        <div class="history-actions">
+          ${viewButton}
+          <button class="btn ghost small danger" type="button" data-delete-inbody="${escapeHtml(record.id)}">기록 삭제</button>
+        </div>
       </li>
     `;
   }).join("");
@@ -1722,6 +1823,69 @@ function compressImageFile(file) {
   });
 }
 
+function exportAppData() {
+  const payload = {
+    app: "FitMind Gym Routine",
+    version: PLAN_VERSION,
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `fitmind-backup-${getTodayDateString()}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  ui.inbodyMessage.textContent = "전체 운동·인바디 데이터를 JSON 파일로 백업했어요.";
+}
+
+async function importAppData() {
+  const file = ui.importDataInput?.files?.[0];
+  const previousState = state;
+  let stateWasReplaced = false;
+  if (!file) {
+    return;
+  }
+  if (file.size > 12 * 1024 * 1024) {
+    ui.inbodyMessage.textContent = "백업 파일이 너무 큽니다. 12MB 이하 JSON 파일만 복원할 수 있어요.";
+    ui.importDataInput.value = "";
+    return;
+  }
+  try {
+    const parsed = JSON.parse(await file.text());
+    const rawState = isPlainObject(parsed?.state) ? parsed.state : parsed;
+    if (!isPlainObject(rawState) || !isPlainObject(rawState.sessions)) {
+      throw new Error("invalid_backup");
+    }
+    if (!window.confirm("현재 기기의 데이터를 백업 파일 내용으로 교체할까요?")) {
+      ui.importDataInput.value = "";
+      return;
+    }
+    stopRestTimer();
+    pauseWorkoutTimer();
+    state = normalizeLoadedState(rawState);
+    stateWasReplaced = true;
+    prepareLoadedState();
+    if (!persistState()) {
+      throw new Error("storage_failed");
+    }
+    renderAll();
+    ui.inbodyMessage.textContent = "백업 데이터를 복원했어요.";
+  } catch (_error) {
+    if (stateWasReplaced) {
+      state = previousState;
+      prepareLoadedState();
+      renderAll();
+    }
+    ui.inbodyMessage.textContent = "백업 파일을 복원하지 못했어요. FitMind JSON 파일인지 확인해 주세요.";
+  } finally {
+    ui.importDataInput.value = "";
+  }
+}
+
 function renderGeneratorPanel() {
   if (!ui.generatedPlanResult || !ui.savedGeneratedPlansList) {
     return;
@@ -1851,6 +2015,7 @@ function enforceGoalLimit(event) {
 function readGeneratorProfile() {
   const goals = readCheckedValues("fitGoals");
   const days = readCheckedValues("fitDays");
+  const injuryAreas = readCheckedValues("fitInjuryAreas").filter((area) => FIT_INJURY_AREAS.includes(area));
   const timeMin = readNumberFromInput(ui.fitTimeInput, 70);
   const heightCm = readNumberFromInput(ui.fitHeightInput, null);
   const weightKg = readNumberFromInput(ui.fitWeightInput, null);
@@ -1868,6 +2033,13 @@ function readGeneratorProfile() {
   if (!Number.isFinite(timeMin) || timeMin < 15) {
     return { error: "하루 운동 가능 시간은 15분 이상으로 입력해 주세요." };
   }
+  if (![heightCm, weightKg, age].every(Number.isFinite) || !ui.fitSexSelect.value) {
+    return { error: "키, 몸무게, 나이, 성별을 모두 입력해 주세요." };
+  }
+  const injury = (ui.fitInjuryInput.value || "").trim();
+  if (injury && injuryAreas.length === 0) {
+    return { error: "주의사항이 있다면 피해야 할 부위를 하나 이상 선택해 주세요." };
+  }
 
   return {
     value: {
@@ -1881,7 +2053,8 @@ function readGeneratorProfile() {
       experience: ui.fitExperienceSelect.value || "초보",
       place: ui.fitPlaceSelect.value || "헬스장",
       equipment: splitCsv(ui.fitEquipmentInput.value || ""),
-      injury: (ui.fitInjuryInput.value || "").trim(),
+      injury,
+      injuryAreas,
       dietPreference: ui.fitDietSelect.value || "일반식",
       allergies: splitCsv(ui.fitAllergyInput.value || "")
     }
@@ -1926,11 +2099,15 @@ function buildDayParts(profile) {
 
 function selectGeneratedExercises(part, profile, templates, intensity) {
   const injuryText = `${profile.injury || ""}`.toLowerCase();
+  const injuryAreas = new Set(normalizeStringArray(profile.injuryAreas));
   const place = profile.place;
   const equipmentText = profile.equipment.join(" ").toLowerCase();
   const placeAndInjuryPool = templates.filter((item) => {
     const placeOk = arrayIncludes(item.place, place) || arrayIncludes(item.place, "전체");
-    const injuryOk = !item.avoid.some((tag) => tag && injuryText.includes(String(tag).toLowerCase()));
+    const injuryOk = !item.avoid.some((tag) => {
+      const normalizedTag = String(tag || "").trim();
+      return normalizedTag && (injuryAreas.has(normalizedTag) || injuryText.includes(normalizedTag.toLowerCase()));
+    });
     return placeOk && injuryOk;
   });
   const equipmentPool = placeAndInjuryPool.filter((item) => {
@@ -1944,7 +2121,7 @@ function selectGeneratedExercises(part, profile, templates, intensity) {
   });
   const pool = equipmentPool.length ? equipmentPool : placeAndInjuryPool;
   const partPool = pool.filter((item) => item.part === part || (part === "전신" && item.part !== "회복"));
-  const fallbackPool = pool.length ? pool : templates;
+  const fallbackPool = pool;
   const targetCount = profile.timeMin < 40 ? 3 : profile.timeMin < 70 ? 4 : 5;
   const selected = uniqueById(partPool.concat(fallbackPool))
     .sort((a, b) => getTemplateGoalScore(b, profile.goals) - getTemplateGoalScore(a, profile.goals))
@@ -2001,17 +2178,27 @@ function buildGeneratedMeal(profile, mealTemplates) {
     || mealTemplates.find((item) => item.preference === "일반식")
     || mealTemplates[0];
   const allergyText = profile.allergies.join(" ").toLowerCase();
+  if (allergyText) {
+    return {
+      name: `${meal.name} · 알레르기 안전 확인 필요`,
+      items: [
+        "아침: 알레르기 표시를 확인한 단백질 식품 + 안전한 과일/곡류",
+        "점심: 원재료를 확인한 밥/곡류 + 단백질 식품 + 채소",
+        "저녁: 알레르기 성분이 없는 것으로 확인된 단백질 식품 + 채소 + 탄수화물 소량"
+      ],
+      note: `피해야 할 음식(${profile.allergies.join(", ")})을 입력해 특정 식품 추천을 제한했습니다. 제품 원재료 표시를 직접 확인하세요.`,
+      proteinNote: "알레르기 성분이 없는 것으로 확인된 단백질 식품을 끼니마다 나눠 드세요."
+    };
+  }
   const items = meal.items.map((item) => {
-    const hasAllergy = profile.allergies.some((tag) => tag && item.toLowerCase().includes(tag.toLowerCase()));
-    return hasAllergy ? `${item} (피해야 할 음식 확인 후 대체)` : item;
+    return item;
   });
   const proteinFactor = profile.goals.includes("근육증가") ? 1.7 : profile.goals.includes("체중감량") ? 1.5 : 1.4;
   const proteinTarget = Number.isFinite(profile.weightKg) ? Math.round(profile.weightKg * proteinFactor) : null;
-  const allergyNote = allergyText ? ` 피해야 할 음식: ${profile.allergies.join(", ")}.` : "";
   return {
     name: meal.name,
     items,
-    note: `${meal.note}${allergyNote}`,
+    note: meal.note,
     proteinNote: proteinTarget
       ? `단백질은 하루 약 ${proteinTarget}g을 목표로 끼니마다 나눠 먹는 방향을 추천합니다.`
       : "단백질은 매 끼니 손바닥 1-2개 분량을 기준으로 잡아주세요."
@@ -2020,8 +2207,10 @@ function buildGeneratedMeal(profile, mealTemplates) {
 
 function buildGeneratedExplanation(profile) {
   const beginner = profile.experience === "초보" ? "초보 기준이라 실패지점까지 가지 않고 여유 2-3회를 남기도록 구성했습니다. " : "";
-  const injury = profile.injury ? `주의사항에 적은 "${profile.injury}" 부위는 관련 운동을 피하거나 강도를 낮추도록 안내했습니다. ` : "";
-  return `${beginner}${injury}${profile.place}에서 가능한 장비와 ${profile.goals.join(", ")} 목표에 맞춰 주간 스케줄과 단백질 중심 식단을 생성했습니다.`;
+  const injury = profile.injuryAreas?.length
+    ? `선택한 주의 부위(${profile.injuryAreas.join(", ")})가 금기 태그인 운동은 제외했습니다. `
+    : "";
+  return `${beginner}${injury}${profile.place}에서 가능한 장비와 ${profile.goals.join(", ")} 목표에 맞춰 규칙 기반으로 주간 스케줄과 식단 예시를 만들었습니다.`;
 }
 
 function saveGeneratedPlanDraft() {
@@ -2040,9 +2229,11 @@ function saveGeneratedPlanDraft() {
   };
   state.generatedPlans.unshift(saved);
   state.generatedPlans = state.generatedPlans.slice(0, 12);
-  persistState();
+  const didSave = persistState();
   renderGeneratorPanel();
-  ui.generatorMessage.textContent = "맞춤 계획을 이 기기에 저장했어요.";
+  ui.generatorMessage.textContent = didSave
+    ? "맞춤 계획을 이 기기에 저장했어요."
+    : "저장공간 부족으로 맞춤 계획을 저장하지 못했어요.";
 }
 
 function upsertExerciseTemplate() {
@@ -2066,9 +2257,11 @@ function upsertExerciseTemplate() {
   templates.exercises = templates.exercises.filter((item) => item.id !== id).concat(next);
   state.generatorTemplates = templates;
   clearTemplateForms();
-  persistState();
+  const didSave = persistState();
   renderGeneratorPanel();
-  ui.generatorMessage.textContent = "운동 템플릿을 저장했어요.";
+  ui.generatorMessage.textContent = didSave
+    ? "운동 템플릿을 저장했어요."
+    : "저장공간 부족으로 운동 템플릿을 저장하지 못했어요.";
 }
 
 function upsertMealTemplate() {
@@ -2091,9 +2284,11 @@ function upsertMealTemplate() {
   templates.meals = templates.meals.filter((item) => item.id !== id).concat(next);
   state.generatorTemplates = templates;
   clearTemplateForms();
-  persistState();
+  const didSave = persistState();
   renderGeneratorPanel();
-  ui.generatorMessage.textContent = "식단 템플릿을 저장했어요.";
+  ui.generatorMessage.textContent = didSave
+    ? "식단 템플릿을 저장했어요."
+    : "저장공간 부족으로 식단 템플릿을 저장하지 못했어요.";
 }
 
 function addGoalTemplate() {
@@ -2107,9 +2302,11 @@ function addGoalTemplate() {
     state.generatorGoals.push(goal);
   }
   ui.templateGoalName.value = "";
-  persistState();
+  const didSave = persistState();
   renderGeneratorPanel();
-  ui.generatorMessage.textContent = "목표 템플릿을 추가했어요.";
+  ui.generatorMessage.textContent = didSave
+    ? "목표 템플릿을 추가했어요."
+    : "저장공간 부족으로 목표 템플릿을 저장하지 못했어요.";
 }
 
 function handleTemplateListClick(event, type) {
@@ -2130,18 +2327,22 @@ function handleTemplateListClick(event, type) {
       if (state.generatorGoals.length === 0) {
         state.generatorGoals = [...FIT_GOALS];
       }
-      persistState();
+      const didSave = persistState();
       renderGeneratorPanel();
-      ui.generatorMessage.textContent = "목표 템플릿을 삭제했어요.";
+      ui.generatorMessage.textContent = didSave
+        ? "목표 템플릿을 삭제했어요."
+        : "목표 템플릿 삭제를 저장하지 못했어요.";
     }
     return;
   }
   if (deleteId) {
     templates[key] = templates[key].filter((item) => item.id !== deleteId);
     state.generatorTemplates = templates;
-    persistState();
+    const didSave = persistState();
     renderGeneratorPanel();
-    ui.generatorMessage.textContent = "템플릿을 삭제했어요.";
+    ui.generatorMessage.textContent = didSave
+      ? "템플릿을 삭제했어요."
+      : "템플릿 삭제를 저장하지 못했어요.";
     return;
   }
   const item = templates[key].find((entry) => entry.id === editId);
@@ -2431,7 +2632,7 @@ function resetWorkoutTimer() {
   persistState();
 }
 
-function applyWorkoutElapsedTick(session) {
+function applyWorkoutElapsedTick(session, { forcePersist = false } = {}) {
   if (!session || !session.workoutTimerRunning) {
     return;
   }
@@ -2444,7 +2645,11 @@ function applyWorkoutElapsedTick(session) {
   session.workoutElapsedSec += deltaSec;
   session.workoutLastTickMs = lastTick + deltaSec * 1000;
   session.updatedAt = new Date().toISOString();
-  persistState();
+  if (forcePersist || now - lastWorkoutPersistMs >= WORKOUT_PERSIST_INTERVAL_MS) {
+    if (persistState()) {
+      lastWorkoutPersistMs = now;
+    }
+  }
 }
 
 function getWorkoutElapsedSec(session) {
@@ -2972,8 +3177,6 @@ function normalizeLoadedState(parsed) {
   if (!isPlainObject(parsed)) {
     return initial;
   }
-  const shouldRefreshRoutine = parsed.planVersion !== PLAN_VERSION;
-
   initial.selectedDay = typeof parsed.selectedDay === "string" ? parsed.selectedDay : null;
   initial.planVersion = PLAN_VERSION;
   initial.analyticsScope = ANALYTICS_SCOPES.includes(parsed.analyticsScope) ? parsed.analyticsScope : "week";
@@ -3018,7 +3221,7 @@ function normalizeLoadedState(parsed) {
     initial.generatorGoals = goals.length ? goals : [...FIT_GOALS];
   }
 
-  if (!shouldRefreshRoutine && isPlainObject(parsed.customPlans)) {
+  if (isPlainObject(parsed.customPlans)) {
     initial.customPlans = { ...parsed.customPlans };
   }
 
@@ -3040,10 +3243,20 @@ function loadState() {
 function persistState() {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    setStorageNotice("");
     return true;
   } catch (_error) {
+    setStorageNotice("이 기기의 저장공간이 부족해 변경사항을 저장하지 못했습니다. 데이터 백업 후 오래된 인바디 기록을 정리해 주세요.");
     return false;
   }
+}
+
+function setStorageNotice(message) {
+  if (!ui.storageNotice) {
+    return;
+  }
+  ui.storageNotice.textContent = message || "";
+  ui.storageNotice.hidden = !message;
 }
 
 function prepareLoadedState() {

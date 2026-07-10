@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>핏마인드 짐 루틴</title>
   <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
-  <link rel="stylesheet" href="styles.css?v=dedupe-plank-v1">
+  <link rel="stylesheet" href="styles.css?v=release-ready-v1">
 </head>
 <body>
   <header class="hero reveal">
@@ -16,6 +16,7 @@
       <p id="todayLabel" class="chip"></p>
       <button id="resetSessionBtn" class="btn secondary">오늘 기록 초기화</button>
     </div>
+    <p id="storageNotice" class="storage-notice" role="alert" hidden></p>
   </header>
 
   <main class="layout">
@@ -47,43 +48,46 @@
       <h3 class="section-title">오늘 순서</h3>
       <ul id="exerciseQueue" class="queue" aria-live="polite"></ul>
 
-      <section class="routine-editor" aria-label="Routine editor">
-        <div class="editor-head">
-          <h3 class="section-title">Routine Editor</h3>
-          <button id="resetDayPlanBtn" class="btn ghost small" type="button">Reset Day</button>
+      <details class="routine-editor">
+        <summary>루틴 편집</summary>
+        <div class="routine-editor-body" aria-label="루틴 편집기">
+          <div class="editor-head">
+            <h3 class="section-title">운동 구성 편집</h3>
+            <button id="resetDayPlanBtn" class="btn ghost small" type="button">기본 루틴 복원</button>
+          </div>
+
+          <label for="editorExerciseSelect" class="editor-label">운동 선택</label>
+          <select id="editorExerciseSelect" class="editor-input"></select>
+
+          <label for="editorExerciseName" class="editor-label">운동 이름</label>
+          <input
+            id="editorExerciseName"
+            class="editor-input"
+            type="text"
+            maxlength="80"
+            placeholder="예: 레그프레스"
+          >
+
+          <label for="editorRestSec" class="editor-label">휴식 시간(초)</label>
+          <input id="editorRestSec" class="editor-input" type="number" min="0" max="600" step="5" value="75">
+
+          <label class="editor-label">세트 / 횟수</label>
+          <div id="editorSetRows" class="editor-set-rows" aria-label="세트 편집"></div>
+          <div class="editor-set-actions">
+            <button id="addSetRowBtn" class="btn ghost small" type="button">세트 추가</button>
+          </div>
+
+          <div class="editor-actions">
+            <button id="saveExerciseBtn" class="btn secondary" type="button">변경 저장</button>
+            <button id="addExerciseBtn" class="btn primary" type="button">운동 추가</button>
+            <button id="deleteExerciseBtn" class="btn ghost danger" type="button">운동 삭제</button>
+          </div>
+          <p id="editorMessage" class="muted editor-message"></p>
         </div>
-
-        <label for="editorExerciseSelect" class="editor-label">Exercise</label>
-        <select id="editorExerciseSelect" class="editor-input"></select>
-
-        <label for="editorExerciseName" class="editor-label">Name</label>
-        <input
-          id="editorExerciseName"
-          class="editor-input"
-          type="text"
-          maxlength="80"
-          placeholder="e.g. Leg Press"
-        >
-
-        <label for="editorRestSec" class="editor-label">Rest (sec)</label>
-        <input id="editorRestSec" class="editor-input" type="number" min="0" max="600" step="5" value="75">
-
-        <label class="editor-label">세트 / 횟수</label>
-        <div id="editorSetRows" class="editor-set-rows" aria-label="세트 편집"></div>
-        <div class="editor-set-actions">
-          <button id="addSetRowBtn" class="btn ghost small" type="button">+ Set 추가</button>
-        </div>
-
-        <div class="editor-actions">
-          <button id="saveExerciseBtn" class="btn secondary" type="button">Save</button>
-          <button id="addExerciseBtn" class="btn primary" type="button">Add</button>
-          <button id="deleteExerciseBtn" class="btn ghost danger" type="button">Delete</button>
-        </div>
-        <p id="editorMessage" class="muted editor-message"></p>
-      </section>
+      </details>
     </section>
 
-    <section class="panel focus-panel reveal">
+    <section id="currentWorkoutPanel" class="panel focus-panel reveal">
       <h2>현재 운동</h2>
       <p id="currentExerciseTitle" class="exercise-title"></p>
       <p id="currentExerciseTarget" class="exercise-target"></p>
@@ -115,7 +119,7 @@
           <p id="guideMachine"></p>
         </article>
         <article class="guide-card">
-          <h3>공 운동방법</h3>
+          <h3>대체 운동</h3>
           <p id="guideBall"></p>
         </article>
         <article class="guide-card warning">
@@ -309,6 +313,9 @@
           <div class="inbody-actions">
             <button id="saveInbodyBtn" class="btn primary" type="submit">인바디 기록 저장</button>
             <button id="clearInbodyImageBtn" class="btn ghost" type="button">선택 이미지 제거</button>
+            <button id="exportDataBtn" class="btn secondary" type="button">전체 데이터 백업</button>
+            <button id="importDataBtn" class="btn ghost" type="button">백업 복원</button>
+            <input id="importDataInput" type="file" accept="application/json,.json" hidden>
           </div>
           <p id="inbodyMessage" class="muted editor-message"></p>
         </form>
@@ -333,8 +340,8 @@
     <section class="panel generator-panel reveal" aria-label="맞춤 운동 식단 자동 생성">
       <h2>맞춤 운동·식단 생성</h2>
       <div class="safety-notice" role="note">
-        <strong>건강 참고용 AI 코치</strong>
-        <p>입력값을 바탕으로 주간 운동과 하루 식단 예시를 자동 생성합니다. 의료 진단이 아니며, 통증·질환·복용 약이 있으면 전문가 상담을 우선하세요.</p>
+        <strong>건강 참고용 규칙 기반 맞춤 코치</strong>
+        <p>입력값과 관리자가 설정한 템플릿을 바탕으로 주간 운동과 하루 식단 예시를 생성합니다. 의료 진단이나 생성형 AI 상담이 아니며, 통증·질환·복용 약이 있으면 전문가 상담을 우선하세요.</p>
       </div>
 
       <div class="generator-grid">
@@ -360,16 +367,16 @@
               <input id="fitTimeInput" class="editor-input" type="number" min="15" max="180" step="5" value="70">
             </label>
             <label class="editor-label" for="fitHeightInput">키 cm
-              <input id="fitHeightInput" class="editor-input" type="number" min="120" max="230" step="1" placeholder="170">
+              <input id="fitHeightInput" class="editor-input" type="number" min="120" max="230" step="1" placeholder="170" required>
             </label>
             <label class="editor-label" for="fitWeightInput">몸무게 kg
-              <input id="fitWeightInput" class="editor-input" type="number" min="30" max="220" step="0.1" placeholder="78">
+              <input id="fitWeightInput" class="editor-input" type="number" min="30" max="220" step="0.1" placeholder="78" required>
             </label>
             <label class="editor-label" for="fitAgeInput">나이
-              <input id="fitAgeInput" class="editor-input" type="number" min="10" max="100" step="1" placeholder="35">
+              <input id="fitAgeInput" class="editor-input" type="number" min="10" max="100" step="1" placeholder="35" required>
             </label>
             <label class="editor-label" for="fitSexSelect">성별
-              <select id="fitSexSelect" class="editor-input">
+              <select id="fitSexSelect" class="editor-input" required>
                 <option value="">선택</option>
                 <option value="남성">남성</option>
                 <option value="여성">여성</option>
@@ -399,6 +406,18 @@
               </select>
             </label>
           </div>
+
+          <fieldset class="generator-fieldset">
+            <legend>부상 시 피해야 할 부위</legend>
+            <div class="generator-option-list injury-option-list">
+              <label><input type="checkbox" name="fitInjuryAreas" value="무릎"> 무릎</label>
+              <label><input type="checkbox" name="fitInjuryAreas" value="허리"> 허리</label>
+              <label><input type="checkbox" name="fitInjuryAreas" value="어깨"> 어깨</label>
+              <label><input type="checkbox" name="fitInjuryAreas" value="손목"> 손목</label>
+              <label><input type="checkbox" name="fitInjuryAreas" value="팔꿈치"> 팔꿈치</label>
+              <label><input type="checkbox" name="fitInjuryAreas" value="발목"> 발목</label>
+            </div>
+          </fieldset>
 
           <label class="editor-label" for="fitEquipmentInput">사용 가능한 장비</label>
           <textarea id="fitEquipmentInput" class="editor-input generator-textarea" placeholder="예: 머신, 케이블, 밴드, 풀업바"></textarea>
@@ -472,6 +491,6 @@
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="app.js?v=dedupe-plank-v1"></script>
+  <script src="app.js?v=release-ready-v1"></script>
 </body>
 </html>
