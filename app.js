@@ -10,15 +10,23 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_6km_strength_v5";
+const PLAN_VERSION = "daily_6km_strength_v6";
 const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
 const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
 const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
 const LEGACY_EXERCISE_REPLACEMENTS = {
-  MON: { "cable-crunch": "ab-crunch-machine", fallback: "ab-crunch-machine" },
+  MON: { "cable-crunch": "ab-slide-mon", fallback: "ab-slide-mon" },
   THU: { "cable-crunch": "ab-crunch-machine-thu", fallback: "ab-crunch-machine-thu" },
-  FRI: { "cable-crunch": "side-plank-fri", "cable-crunch-fri": "side-plank-fri", fallback: "side-plank-fri" },
+  FRI: { "cable-crunch": "ab-slide-fri", "cable-crunch-fri": "ab-slide-fri", fallback: "ab-slide-fri" },
   SAT: { "cable-crunch": "cable-woodchop-sat", "cable-crunch-sat": "cable-woodchop-sat", fallback: "cable-woodchop-sat" }
+};
+const ROUTINE_EXERCISE_UPGRADES = {
+  MON: { "ab-crunch-machine": "ab-slide-mon" },
+  WED: { "pec-deck-machine": "smith-incline-press" },
+  FRI: {
+    "cable-hammer-curl": "single-arm-cable-curl",
+    "side-plank-fri": "ab-slide-fri"
+  }
 };
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
@@ -53,13 +61,17 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "side-plank-fri": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   "side-plank-sat": { howTo: "사이드 플랭크 자세 운동방법", machine: "사이드 플랭크 매트 운동" },
   deadbug: { howTo: "데드버그 운동방법", machine: "데드버그 코어 운동" },
+  "ab-slide-mon": { howTo: "AB 슬라이드 무릎 롤아웃 초보 운동방법", machine: "AB 슬라이드 복근 롤아웃 사용법" },
+  "ab-slide-fri": { howTo: "AB 슬라이드 무릎 롤아웃 초보 운동방법", machine: "AB 슬라이드 복근 롤아웃 사용법" },
   "squat-machine": { howTo: "핵스쿼트 스미스머신 스쿼트 운동방법", machine: "핵스쿼트 머신 스미스머신 사용법" },
   "leg-extension": { howTo: "레그 익스텐션 운동방법", machine: "레그 익스텐션 기구 사용법" },
   "leg-curl-seated": { howTo: "시티드 레그컬 운동방법", machine: "시티드 레그컬 기구 사용법" },
   "hip-thrust": { howTo: "힙 쓰러스트 운동방법", machine: "힙쓰러스트 머신 사용법" },
   "calf-press": { howTo: "카프 프레스 운동방법", machine: "카프 프레스 기구 사용법" },
   "chest-press": { howTo: "체스트 프레스 운동방법", machine: "체스트 프레스 기구 사용법" },
+  "smith-incline-press": { howTo: "스미스 인클라인 프레스 운동방법", machine: "스미스머신 인클라인 벤치 세팅" },
   "shoulder-press": { howTo: "숄더 프레스 운동방법", machine: "숄더 프레스 머신 사용법" },
+  "single-arm-cable-curl": { howTo: "원암 케이블 컬 운동방법", machine: "케이블 바이셉 컬 사용법" },
   "lateral-raise": { howTo: "델토이드 레이즈 머신 운동방법", machine: "Deltoid Raise 머신 사용법" },
   "russian-twist": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
   "machine-row": { howTo: "버티컬 로우 운동방법", machine: "Vertical Row 머신 사용법" },
@@ -130,7 +142,7 @@ const ROUTINE_PLAN = {
   MON: {
     dayLabel: "MON",
     theme: "하체 전면 · 엉덩이 · 복근",
-    trainingFocus: "아침 6km 조깅은 고정. 헬스장에서는 근력 65-70분 + 복근 8-10분.",
+    trainingFocus: "아침 6km 조깅은 고정. AB 슬라이드는 무릎 자세 6-8회부터 시작하고 허리가 꺾이기 전에 멈춘다.",
     warmupMain: "고관절/무릎/발목 워밍업",
     warmupTime: "5-7분",
     warmupNote: "하체 첫날은 무릎 정렬과 엉덩이 활성화를 먼저 잡아.",
@@ -154,15 +166,15 @@ const ROUTINE_PLAN = {
       exercise({ id: "hip-abduction", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "standing-calf-raise", name: "카프레이즈 (Calf Raise)", sets: ["15-20회", "15-20회", "15-20회"], restSec: 60 }),
       exercise({
-        id: "ab-crunch-machine",
-        name: "복근: 플랭크 + 복근 머신 선택",
-        sets: ["플랭크 45초", "플랭크 45초", "머신 있으면 12-15회"],
-        restSec: 60,
-        howTo: "월요일 복근은 이 항목 하나만 하면 돼. 플랭크 2세트를 기본으로 하고, 복근 머신이 보이면 마지막 세트에만 가볍게 추가해.",
-        machine: "복근 크런치 머신이 있으면 선택해서 사용해. 무게는 가볍게 시작하고 허리가 꺾이지 않게 배를 먼저 조여.",
-        ball: "복근 머신이 없거나 불편하면 플랭크 3세트 또는 데드버그 3세트로 대체해.",
-        safety: "허리 통증이 있으면 즉시 멈추고 플랭크 시간을 줄여.",
-        mistake: "목과 팔로 당기거나 반동으로 접으면 복근보다 허리에 부담이 커져."
+        id: "ab-slide-mon",
+        name: "복근: AB 슬라이드 입문 (무릎 롤아웃)",
+        sets: ["6-8회", "6-8회", "6-8회"],
+        restSec: 75,
+        howTo: "무릎을 패드에 대고 배와 엉덩이에 힘을 준 채 천천히 앞으로 밀어. 허리가 꺾이기 직전까지만 갔다가 복근으로 당겨 돌아와.",
+        machine: "AB 슬라이드 또는 복근 롤아웃 휠을 사용해. 처음에는 벽 앞에서 이동 거리를 짧게 제한해.",
+        ball: "기구가 없거나 허리 고정이 어렵다면 데드버그 3세트로 대체해.",
+        safety: "허리나 어깨가 아프거나 배 힘이 풀리면 즉시 중단해. 매일 100회가 아니라 월·금에만 진행해.",
+        mistake: "팔로만 밀거나 허리를 아래로 처지게 하면 복근보다 허리와 어깨에 부담이 커져."
       })
     ]
   },
@@ -209,8 +221,8 @@ const ROUTINE_PLAN = {
   WED: {
     dayLabel: "WED",
     theme: "가슴 · 어깨 · 삼두 · 복근",
-    trainingFocus: "상체 밀기 운동 후 우드찹 2세트만 가볍게 진행해 복근 회복 여유를 남긴다.",
-    warmupMain: "밴드 풀어파트 + 가벼운 프레스",
+    trainingFocus: "머신 숄더프레스와 스미스 인클라인 프레스로 어깨·윗가슴·삼두 볼륨을 만든다.",
+    warmupMain: "밴드 외회전 + 가벼운 머신 프레스",
     warmupTime: "5-7분",
     warmupNote: "어깨가 말리지 않게 견갑을 먼저 안정화해.",
     cardioMain: "아침 6km 조깅 기준",
@@ -221,7 +233,17 @@ const ROUTINE_PLAN = {
       exercise({ id: "shoulder-press", name: "숄더 프레스 (Shoulder Press)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 90 }),
       exercise({ id: "lateral-raise", name: "델토이드 레이즈 머신 (Deltoid Raise)", sets: ["12-15회", "12-15회", "12-15회", "12-15회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({ id: "pec-deck-machine", name: "펙덱 머신 또는 체스트 프레스 보조", sets: ["10-12회", "10-12회", "10-12회"], restSec: 75 }),
+      exercise({
+        id: "smith-incline-press",
+        name: "스미스 인클라인 프레스 또는 플레이트 체스트 프레스",
+        sets: ["10-12회", "10-12회", "10-12회"],
+        restSec: 90,
+        howTo: "벤치 각도를 약 20-30도로 맞추고 바가 윗가슴 쪽으로 내려오게 세팅해. 견갑을 등받이에 고정하고 반동 없이 밀어.",
+        machine: "스미스머신과 인클라인 벤치를 사용해. 자리가 없으면 사진의 플레이트 로드 체스트 프레스나 일반 체스트 프레스로 대체해.",
+        ball: "스미스머신이 비어 있지 않으면 체스트 프레스 머신을 같은 세트와 횟수로 진행해.",
+        safety: "어깨 앞쪽이 아프면 벤치 각도와 가동범위를 줄이고 빈 바 또는 가벼운 중량부터 시작해.",
+        mistake: "벤치 각도를 너무 높이면 윗가슴보다 어깨 부담이 커지고, 팔꿈치를 과하게 벌리면 어깨가 불편할 수 있어."
+      }),
       exercise({
         id: "cable-woodchop",
         name: "복근: 케이블 우드찹 (Cable Woodchop)",
@@ -267,7 +289,7 @@ const ROUTINE_PLAN = {
   FRI: {
     dayLabel: "FRI",
     theme: "등 · 풀업 보강 · 팔 볼륨 · 복근",
-    trainingFocus: "등과 팔을 한 번 더 자극하고, 턱걸이 0개에서 1개로 가는 내려오기/매달리기 힘을 만든다.",
+    trainingFocus: "등과 팔을 한 번 더 자극하고, 원암 케이블 컬과 턱걸이 보강으로 팔 볼륨과 당기는 힘을 만든다.",
     warmupMain: "가벼운 풀다운 + 팔꿈치/손목 가동",
     warmupTime: "5-7분",
     warmupNote: "팔 운동은 반동보다 느린 내림 동작을 우선해.",
@@ -300,9 +322,29 @@ const ROUTINE_PLAN = {
       }),
       exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
+      exercise({
+        id: "single-arm-cable-curl",
+        name: "원암 케이블 컬 (얼터네이트 컬)",
+        sets: ["10-12회/팔", "10-12회/팔", "10-12회/팔"],
+        restSec: 70,
+        howTo: "케이블을 가장 낮게 맞추고 한 팔씩 손바닥이 위를 보게 감아 올려. 팔꿈치는 몸 옆에 고정하고 내릴 때 2초 동안 버텨.",
+        machine: "케이블 손잡이를 한쪽씩 사용해. 자리가 없으면 머신 바이셉 컬에서 한 팔씩 번갈아 진행해.",
+        ball: "케이블을 사용할 수 없으면 가벼운 덤벨 얼터네이트 컬로 대체해.",
+        safety: "손목을 꺾거나 몸을 뒤로 젖히지 말고 팔꿈치 통증이 있으면 무게를 낮춰.",
+        mistake: "반동으로 어깨를 먼저 들면 이두 자극이 줄어드니 팔꿈치 위치를 고정해."
+      }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "side-plank-fri", name: "복근: 사이드 플랭크 (Side Plank)", sets: ["20-30초/쪽", "20-30초/쪽"], restSec: 60 })
+      exercise({
+        id: "ab-slide-fri",
+        name: "복근: AB 슬라이드 입문 (무릎 롤아웃)",
+        sets: ["6-8회", "6-8회"],
+        restSec: 75,
+        howTo: "월요일보다 이동 거리를 욕심내지 말고 같은 자세로 반복해. 배와 엉덩이를 조인 채 허리가 중립을 유지하는 범위까지만 밀어.",
+        machine: "AB 슬라이드 또는 복근 롤아웃 휠을 사용해. 벽을 앞에 두면 과하게 멀리 나가는 것을 막을 수 있어.",
+        ball: "피로가 남거나 기구가 없으면 사이드 플랭크 2세트 또는 데드버그 2세트로 바꿔.",
+        safety: "월요일 후 허리·어깨 통증이 남아 있으면 금요일 AB 슬라이드는 건너뛰어. 매일 100회는 하지 않아.",
+        mistake: "횟수만 채우려고 짧게 튕기거나 허리를 처지게 하지 말고 매회 천천히 왕복해."
+      })
     ]
   },
   SAT: {
@@ -1106,7 +1148,7 @@ function getExerciseIcon(exercise) {
   const nameText = String(exercise?.name || "").toLowerCase();
   const fullText = `${idText} ${nameText}`;
 
-  if (fullText.includes("walk") || fullText.includes("cardio") || fullText.includes("incline")) {
+  if (fullText.includes("walk") || fullText.includes("cardio") || fullText.includes("유산소")) {
     return "🚶";
   }
   if (fullText.includes("hip") || fullText.includes("glute") || fullText.includes("thrust")) {
@@ -1121,13 +1163,23 @@ function getExerciseIcon(exercise) {
   if (fullText.includes("curl") || fullText.includes("triceps") || fullText.includes("biceps") || fullText.includes("hammer")) {
     return "💪";
   }
-  if (fullText.includes("plank") || fullText.includes("crunch") || fullText.includes("raise") || fullText.includes("twist")) {
+  if (
+    fullText.includes("복근")
+    || fullText.includes("ab-slide")
+    || fullText.includes("rollout")
+    || fullText.includes("슬라이드")
+    || fullText.includes("plank")
+    || fullText.includes("crunch")
+    || fullText.includes("deadbug")
+    || fullText.includes("woodchop")
+    || fullText.includes("twist")
+  ) {
     return "🧘";
   }
   if (fullText.includes("leg") || fullText.includes("squat") || fullText.includes("calf")) {
     return "🦵";
   }
-  if (fullText.includes("press") || fullText.includes("shoulder") || fullText.includes("chest")) {
+  if (fullText.includes("press") || fullText.includes("shoulder") || fullText.includes("chest") || fullText.includes("raise") || fullText.includes("deltoid")) {
     return "🏋️";
   }
   return "✨";
@@ -2817,13 +2869,16 @@ function normalizePlanForDay(rawPlan, dayCode) {
 
 function replaceRetiredExercises(exercises, dayCode) {
   const replacementMap = LEGACY_EXERCISE_REPLACEMENTS[dayCode] || {};
+  const upgradeMap = ROUTINE_EXERCISE_UPGRADES[dayCode] || {};
   const seenIds = new Set();
   return exercises
     .map((item, index) => {
-      if (!isRetiredExercise(item)) {
+      const replacementId = isRetiredExercise(item)
+        ? (replacementMap[item.id] || replacementMap.fallback || "plank")
+        : upgradeMap[item.id];
+      if (!replacementId) {
         return item;
       }
-      const replacementId = replacementMap[item.id] || replacementMap.fallback || "plank";
       const replacement = findBaseExercise(dayCode, replacementId);
       return replacement ? cloneExerciseItem(replacement, index) : null;
     })

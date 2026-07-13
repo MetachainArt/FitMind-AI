@@ -40,6 +40,24 @@ test("release copy is honest about the rule-based generator", () => {
 test("custom plans survive plan version upgrades", () => {
   assert.match(app, /if \(isPlainObject\(parsed\.customPlans\)\)/);
   assert.doesNotMatch(app, /!shouldRefreshRoutine && isPlainObject\(parsed\.customPlans\)/);
+  assert.match(app, /ROUTINE_EXERCISE_UPGRADES/);
+  assert.match(app, /"pec-deck-machine": "smith-incline-press"/);
+  assert.match(app, /"cable-hammer-curl": "single-arm-cable-curl"/);
+});
+
+test("upper-body upgrades and conservative ab-slide volume are in the routine", () => {
+  const mon = dayBlock("MON", "TUE");
+  const wed = dayBlock("WED", "THU");
+  const fri = dayBlock("FRI", "SAT");
+
+  assert.match(wed, /스미스 인클라인 프레스/);
+  assert.match(wed, /밴드 외회전/);
+  assert.match(fri, /원암 케이블 컬/);
+  assert.doesNotMatch(fri, /케이블 해머 컬/);
+  assert.match(mon, /AB 슬라이드 입문/);
+  assert.match(fri, /AB 슬라이드 입문/);
+  assert.doesNotMatch(`${mon}\n${fri}`, /sets: \[[^\]]*100회/);
+  assert.match(html, /매일 100회보다/);
 });
 
 test("mobile workflow and data recovery controls are present", () => {
