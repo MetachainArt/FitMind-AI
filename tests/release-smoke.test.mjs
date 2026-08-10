@@ -60,6 +60,57 @@ test("upper-body upgrades and conservative ab-slide volume are in the routine", 
   assert.match(html, /매일 100회보다/);
 });
 
+test("coach feedback routine upgrades are applied without duplicating face pull", () => {
+  const mon = dayBlock("MON", "TUE");
+  const tue = dayBlock("TUE", "WED");
+  const wed = dayBlock("WED", "THU");
+  const thu = dayBlock("THU", "FRI");
+  const fri = dayBlock("FRI", "SAT");
+  const sat = dayBlock("SAT");
+  const routine = app.slice(app.indexOf("const ROUTINE_PLAN"), app.indexOf("\nconst ui"));
+
+  const monOrder = [
+    "squat-machine",
+    "leg-press",
+    "bulgarian-split-squat",
+    "hip-abduction",
+    "leg-extension",
+    "standing-calf-raise",
+    "ab-slide-mon"
+  ];
+  monOrder.reduce((previousIndex, id) => {
+    const index = mon.indexOf(`id: "${id}"`);
+    assert.ok(index > previousIndex, `${id} must stay in the recommended Monday order`);
+    return index;
+  }, -1);
+
+  assert.match(tue, /id: "straight-arm-pulldown"/);
+  assert.ok(tue.indexOf('id: "straight-arm-pulldown"') < tue.indexOf('id: "lat-pulldown"'));
+  assert.match(tue, /id: "chest-supported-row"/);
+  assert.doesNotMatch(tue, /id: "vertical-row"/);
+
+  assert.match(wed, /id: "rear-delt-fly"/);
+  assert.match(thu, /id: "romanian-deadlift"/);
+  assert.ok(thu.indexOf('id: "hip-thrust"') < thu.indexOf('id: "romanian-deadlift"'));
+  assert.doesNotMatch(thu, /id: "high-foot-leg-press"/);
+
+  assert.match(sat, /id: "farmers-walk"/);
+  assert.match(sat, /300m 7km\/h \+ 200m 5km\/h를 6회/);
+
+  assert.match(fri, /id: "face-pull"/);
+  assert.equal((routine.match(/id: "face-pull"/g) || []).length, 1);
+});
+
+test("calves stay at two weekly sessions with four sets each", () => {
+  const mon = dayBlock("MON", "TUE");
+  const thu = dayBlock("THU", "FRI");
+  const sat = dayBlock("SAT");
+
+  assert.match(mon, /id: "standing-calf-raise"[\s\S]*?sets: \["12-15회", "12-15회", "12-15회", "12-15회"\]/);
+  assert.match(thu, /id: "seated-calf-raise"[\s\S]*?sets: \["15-20회", "15-20회", "15-20회", "15-20회"\]/);
+  assert.doesNotMatch(sat, /calf|카프/i);
+});
+
 test("mobile workflow and data recovery controls are present", () => {
   assert.match(html, /id="currentWorkoutPanel"/);
   assert.match(html, /id="quickExerciseSelect"/);
