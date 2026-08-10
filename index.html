@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>핏마인드 짐 루틴</title>
   <meta name="description" content="헬스장에서 검색 없이 루틴 순서대로 진행하는 개인 운동 코치 웹앱">
-  <link rel="stylesheet" href="styles.css?v=upper-body-ab-slide-v3">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css?v=routine-v7">
 </head>
 <body>
   <header class="hero reveal">
@@ -217,16 +218,16 @@
     </section>
 
     <section class="panel nutrition-panel reveal" aria-label="식단과 체크 기준">
-      <h2>6km 조깅 반영 식단</h2>
+      <h2>경사 걷기·인터벌 반영 식단</h2>
       <div class="safety-notice" role="note">
         <strong>안전 기준</strong>
-        <p>질환, 약물 복용, 흉통, 어지러움, 관절 통증이 있으면 운동량을 줄이고 전문가 상담을 우선하세요. 2주 이상 피로가 누적되거나 근력이 떨어지면 조깅 속도와 하체 세트를 낮추고 저녁 탄수화물을 보충하세요.</p>
+        <p>질환, 약물 복용, 흉통, 어지러움, 관절 통증이 있으면 운동량을 줄이고 전문가 상담을 우선하세요. 2주 이상 피로가 누적되거나 근력이 떨어지면 경사·인터벌 속도와 하체 세트를 낮추고 저녁 탄수화물을 보충하세요.</p>
       </div>
       <div class="priority-grid" aria-label="핵심 목표">
         <article class="priority-card visceral">
           <span class="priority-rank">1</span>
           <h3>내장지방 감소</h3>
-          <p>아침 6km 조깅은 유지하고, 저녁은 단백질+채소를 빼지 않습니다. 체중보다 허리둘레와 인바디 내장지방 레벨을 우선 봅니다.</p>
+          <p>평일 경사 걷기와 토요일 인터벌은 계획한 양만 진행하고, 저녁은 단백질+채소를 빼지 않습니다. 체중보다 허리둘레와 인바디 내장지방 레벨을 우선 봅니다.</p>
         </article>
         <article class="priority-card abs">
           <span class="priority-rank">2</span>
@@ -246,7 +247,7 @@
             <li>삶은 계란 2개</li>
             <li>바나나 1개 + 사과 2쪽</li>
             <li>두유 250ml</li>
-            <li>조깅 후 힘이 빠지면 프로틴 반 스쿱 또는 그릭요거트 추가</li>
+            <li>유산소 후 힘이 빠지면 프로틴 반 스쿱 또는 그릭요거트 추가</li>
           </ul>
         </article>
         <article class="nutrition-card">
@@ -279,10 +280,10 @@
       </div>
     </section>
 
-    <section class="panel inbody-panel reveal" aria-label="월간 인바디 체크">
-      <h2>월간 인바디 체크</h2>
+    <section class="panel inbody-panel reveal" aria-label="4주 간격 인바디 체크">
+      <h2>4주 간격 인바디 체크</h2>
       <div class="safety-notice" role="note">
-        <strong>한 달에 한 번만 점검</strong>
+        <strong>4주에 한 번만 점검</strong>
         <p>인바디 JPG는 이 기기에만 저장됩니다. 이미지를 자동 판독하지는 않으니 체중, 골격근량, 체지방률 같은 핵심 수치를 직접 입력하면 지난 기록과 비교해 운동·식단 조정안을 만들어줍니다.</p>
       </div>
 
@@ -313,7 +314,7 @@
           </div>
 
           <label class="editor-label" for="inbodyMemoInput">메모</label>
-          <textarea id="inbodyMemoInput" class="editor-input inbody-memo" maxlength="220" placeholder="컨디션, 식단 변화, 조깅 피로감 등을 짧게 적어두세요."></textarea>
+          <textarea id="inbodyMemoInput" class="editor-input inbody-memo" maxlength="220" placeholder="컨디션, 식단 변화, 유산소 피로감 등을 짧게 적어두세요."></textarea>
 
           <div class="inbody-actions">
             <button id="saveInbodyBtn" class="btn primary" type="submit">인바디 기록 저장</button>
@@ -332,7 +333,7 @@
           </div>
 
           <article class="inbody-recommendation" aria-live="polite">
-            <h3 class="section-title">이번 달 조정안</h3>
+            <h3 class="section-title">이번 4주 조정안</h3>
             <ul id="inbodyRecommendationList"></ul>
           </article>
 
@@ -496,6 +497,6 @@
     <p>운동 중에는 짧고 명확하게. 자세가 불안하면 즉시 무게를 낮춰서 진행하세요.</p>
   </footer>
 
-  <script src="app.js?v=upper-body-ab-slide-v3"></script>
+  <script src="app.js?v=routine-v7"></script>
 </body>
 </html>
