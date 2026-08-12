@@ -10,28 +10,19 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "incline_interval_strength_v7";
-const RETIRED_EXERCISE_IDS = new Set(["cable-crunch", "cable-crunch-fri", "cable-crunch-sat"]);
-const RETIRED_TEMPLATE_IDS = new Set(["tpl-cable-crunch"]);
-const RETIRED_EXERCISE_NAME_PATTERNS = [/케이블\s*크런치/i, /Cable\s*Crunch/i];
-const LEGACY_EXERCISE_REPLACEMENTS = {
-  MON: { "cable-crunch": "ab-slide-mon", fallback: "ab-slide-mon" },
-  THU: { "cable-crunch": "ab-crunch-machine-thu", fallback: "ab-crunch-machine-thu" },
-  FRI: { "cable-crunch": "ab-slide-fri", "cable-crunch-fri": "ab-slide-fri", fallback: "ab-slide-fri" },
-  SAT: { "cable-crunch": "cable-woodchop-sat", "cable-crunch-sat": "cable-woodchop-sat", fallback: "cable-woodchop-sat" }
-};
+const PLAN_VERSION = "incline_interval_strength_v8";
+const RETIRED_EXERCISE_IDS = new Set();
+const RETIRED_TEMPLATE_IDS = new Set();
+const RETIRED_EXERCISE_NAME_PATTERNS = [];
+const LEGACY_EXERCISE_REPLACEMENTS = {};
 const ROUTINE_EXERCISE_UPGRADES = {
-  MON: { "ab-crunch-machine": "ab-slide-mon" },
   TUE: { "vertical-row": "chest-supported-row" },
   WED: { "pec-deck-machine": "smith-incline-press" },
   THU: {
     "high-foot-leg-press": "romanian-deadlift",
     "calf-press": "seated-calf-raise"
   },
-  FRI: {
-    "cable-hammer-curl": "single-arm-cable-curl",
-    "side-plank-fri": "ab-slide-fri"
-  }
+  FRI: { "cable-hammer-curl": "single-arm-cable-curl" }
 };
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
@@ -61,6 +52,15 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "machine-biceps-curl": { howTo: "머신 바이셉 컬 운동방법", machine: "바이셉 컬 머신 사용법" },
   "cable-hammer-curl": { howTo: "케이블 해머 컬 운동방법", machine: "케이블 로프 컬 사용법" },
   "triceps-pushdown": { howTo: "트라이셉스 푸시다운 운동방법", machine: "케이블 푸시다운 기구 사용법" },
+  "cable-crunch-mon": { howTo: "케이블 크런치 운동방법", machine: "케이블 크런치 로프 세팅" },
+  "cable-crunch-wed": { howTo: "케이블 크런치 운동방법", machine: "케이블 크런치 로프 세팅" },
+  "cable-crunch-fri": { howTo: "케이블 크런치 운동방법", machine: "케이블 크런치 로프 세팅" },
+  "hanging-knee-raise-mon": { howTo: "행잉 니레이즈 운동방법", machine: "행잉 니레이즈 철봉 사용법" },
+  "hanging-knee-raise-fri": { howTo: "행잉 니레이즈 운동방법", machine: "행잉 니레이즈 철봉 사용법" },
+  "reverse-crunch-wed": { howTo: "리버스 크런치 운동방법", machine: "리버스 크런치 매트 운동" },
+  "pallof-press-wed": { howTo: "팔로프 프레스 운동방법", machine: "케이블 팔로프 프레스 세팅" },
+  "ab-wheel-fri": { howTo: "복근 롤아웃 AB wheel 운동방법", machine: "AB wheel 사용법" },
+  "plank-mon": { howTo: "플랭크 자세 운동방법", machine: "플랭크 매트 사용법" },
   "cable-woodchop": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
   "cable-woodchop-sat": { howTo: "케이블 우드찹 운동방법", machine: "케이블 머신 코어 회전 운동" },
   "ab-crunch-machine": { howTo: "플랭크 복근 머신 대체 운동방법", machine: "복근 크런치 머신 선택 사용법" },
@@ -122,14 +122,19 @@ const DEFAULT_GENERATOR_TEMPLATES = {
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
     { id: "tpl-side-plank", name: "사이드 플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["어깨"] },
     { id: "tpl-deadbug", name: "데드버그", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: [] },
+    { id: "tpl-cable-crunch", name: "케이블 크런치", part: "복근", place: ["헬스장"], equipment: ["케이블"], goals: ["복근강화", "근육증가"], avoid: ["허리"] },
+    { id: "tpl-hanging-knee-raise", name: "행잉 니레이즈", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["어깨", "허리"] },
+    { id: "tpl-reverse-crunch", name: "리버스 크런치", part: "복근", place: ["헬스장", "집"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["허리"] },
+    { id: "tpl-pallof-press", name: "Pallof press", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "건강관리"], avoid: [] },
+    { id: "tpl-ab-wheel", name: "Ab wheel 무릎 롤아웃", part: "복근", place: ["헬스장", "집"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["허리", "어깨"] },
     { id: "tpl-cable-woodchop", name: "케이블 우드찹 또는 밴드 우드찹", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
   ],
   meals: [
-    { id: "meal-normal", name: "일반식 균형형", preference: "일반식", items: ["아침: 계란 2개 + 과일 + 두유", "점심: 밥 반-1공기 + 단백질 반찬 + 채소", "저녁: 닭가슴살/생선/두부 + 채소 + 고구마 소량"], note: "일반식을 유지하되 단백질과 채소를 먼저 고정합니다." },
+    { id: "meal-normal", name: "일반식 균형형", preference: "일반식", items: ["아침: 무가당 두유 250ml + 계란 2개 + 바나나 1개", "11시: 아몬드 10개, 커피는 아메리카노", "점심: 밥 반 공기 + 단백질 손바닥 1-1.5장 + 채소", "오후: 무가당 고단백 그릭요거트 200g", "운동 전후: 프로틴 + 무가당 두유, 강한 운동일만 바나나 1개", "저녁: 채소 + 계란/닭가슴살/두부/생선 중 하나"], note: "2주간 믹스커피 제거와 점심 밥 반 공기만 우선 적용하고 단백질은 줄이지 않습니다." },
     { id: "meal-protein", name: "고단백 근육형", preference: "고단백", items: ["아침: 그릭요거트 + 계란 + 과일", "점심: 밥 + 살코기/생선 + 채소", "저녁: 단백질 30g + 닭가슴살/두부 + 채소"], note: "매 끼니 단백질을 분산해서 근손실을 줄입니다." },
-    { id: "meal-diet", name: "다이어트식 감량형", preference: "다이어트식", items: ["아침: 계란 + 두유 + 과일 소량", "점심: 일반식에서 밥은 반 공기", "저녁: 단백질 식품 + 채소, 하체 운동일만 탄수화물 소량"], note: "감량 중에도 저녁 단백질은 빼지 않습니다." },
+    { id: "meal-diet", name: "다이어트식 감량형", preference: "다이어트식", items: ["아침: 무가당 두유 250ml + 계란 2개 + 바나나 1개", "점심: 일반식에서 밥은 반 공기, 단백질과 채소 충분히", "오후: 무가당 고단백 그릭요거트 200g", "운동 전후: 프로틴 + 무가당 두유", "저녁: 단백질 식품 + 채소, 하체 운동일만 탄수화물 소량"], note: "믹스커피를 빼고, 쉬는 날 오후 바나나만 반 개 또는 생략합니다. 감량 중에도 단백질은 줄이지 않습니다." },
     { id: "meal-vegan", name: "채식 단백질형", preference: "채식", items: ["아침: 두유 + 두부/콩류 + 과일", "점심: 잡곡밥 + 콩/두부/템페 + 채소", "저녁: 두부/콩고기 + 채소 + 고구마 소량"], note: "채식에서는 두부, 콩류, 두유로 단백질을 확보합니다." }
   ]
 };
@@ -199,21 +204,43 @@ const ROUTINE_PLAN = {
         mistake: "짧은 범위로 튕기면 종아리보다 발목과 아킬레스건 부담이 커져."
       }),
       exercise({
-        id: "ab-slide-mon",
-        name: "복근: AB 슬라이드 입문 (무릎 롤아웃)",
-        sets: ["6-8회", "6-8회", "6-8회"],
+        id: "cable-crunch-mon",
+        name: "복근: 케이블 크런치",
+        sets: ["10-15회", "10-15회", "10-15회"],
         restSec: 75,
-        howTo: "무릎을 패드에 대고 배와 엉덩이에 힘을 준 채 천천히 앞으로 밀어. 허리가 꺾이기 직전까지만 갔다가 복근으로 당겨 돌아와.",
-        machine: "AB 슬라이드 또는 복근 롤아웃 휠을 사용해. 처음에는 벽 앞에서 이동 거리를 짧게 제한해.",
-        ball: "기구가 없거나 허리 고정이 어렵다면 데드버그 3세트로 대체해.",
-        safety: "허리나 어깨가 아프거나 배 힘이 풀리면 즉시 중단해. 매일 100회가 아니라 월·금에만 진행해.",
-        mistake: "팔로만 밀거나 허리를 아래로 처지게 하면 복근보다 허리와 어깨에 부담이 커져."
+        howTo: "무릎을 꿇고 로프를 머리 옆에 고정한 채 갈비뼈를 골반 쪽으로 말아 내려. 마지막 2-3회가 힘들지만 자세는 유지되는 중량을 사용해.",
+        machine: "케이블을 가장 높은 위치에 두고 로프 손잡이를 연결해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
+        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
+        safety: "허리를 접기보다 복부를 수축하고, 허리나 목에 통증이 생기면 중량과 가동범위를 줄여.",
+        mistake: "엉덩이를 뒤로 빼며 팔로 로프를 당기면 복근의 긴장과 운동 범위가 줄어."
+      }),
+      exercise({
+        id: "hanging-knee-raise-mon",
+        name: "복근: 행잉 니레이즈",
+        sets: ["10-15회", "10-15회", "10-15회"],
+        restSec: 75,
+        howTo: "철봉에 매달려 몸의 흔들림을 멈춘 뒤, 무릎을 가슴 쪽으로 올리며 골반을 살짝 말아. 내려갈 때도 천천히 버텨.",
+        machine: "풀업 바나 캡틴스 체어를 사용해. 매달리기가 힘들면 캡틴스 체어 니레이즈로 진행해.",
+        ball: "철봉이 없으면 누워서 니레이즈 또는 리버스 크런치 3세트로 대체해.",
+        safety: "어깨나 허리에 통증이 있으면 매달리기를 중단하고 바닥 동작으로 바꿔.",
+        mistake: "반동으로 다리를 휘두르거나 허리를 과하게 젖히면 복근보다 고관절과 허리에 부담이 커져."
+      }),
+      exercise({
+        id: "plank-mon",
+        name: "복근: 플랭크",
+        sets: ["45-60초", "45-60초"],
+        restSec: 60,
+        howTo: "팔꿈치를 어깨 아래 두고 갈비뼈와 골반을 서로 당긴다는 느낌으로 몸을 일직선으로 유지해.",
+        machine: "매트에서 진행하고 시간이 길어 허리가 처지면 30초씩 정확한 자세로 나눠.",
+        ball: "손목이나 어깨가 불편하면 데드버그 2세트로 대체해.",
+        safety: "허리가 처지거나 통증이 생기기 전에 세트를 끝내. 버틴 시간보다 자세가 우선이야.",
+        mistake: "엉덩이를 너무 들거나 숨을 참으면 복부 긴장이 분산돼."
       })
     ]
   },
   TUE: {
     dayLabel: "TUE",
-    theme: "등 · 풀업 입문 · 이두 · 복근",
+    theme: "등 · 풀업 입문 · 이두",
     trainingFocus: "팔이 얇은 체형 보완과 턱걸이 1개 달성을 위해 등 당기기와 보조 풀업을 함께 진행.",
     warmupMain: "어깨 가동성 + 가벼운 밴드 로우",
     warmupTime: "5-7분",
@@ -258,8 +285,7 @@ const ROUTINE_PLAN = {
         mistake: "손으로만 당기면 이두만 지치니 팔꿈치를 몸 뒤로 보낸다는 느낌을 유지해."
       }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({ id: "deadbug", name: "복근: 데드버그 (Dead Bug)", sets: ["10회/쪽", "10회/쪽", "10회/쪽"], restSec: 60 })
+      exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 })
     ]
   },
   WED: {
@@ -300,21 +326,43 @@ const ROUTINE_PLAN = {
         mistake: "벤치 각도를 너무 높이면 윗가슴보다 어깨 부담이 커지고, 팔꿈치를 과하게 벌리면 어깨가 불편할 수 있어."
       }),
       exercise({
-        id: "cable-woodchop",
-        name: "복근: 케이블 우드찹 (Cable Woodchop)",
+        id: "cable-crunch-wed",
+        name: "복근: 케이블 크런치",
+        sets: ["10-12회", "10-12회", "10-12회"],
+        restSec: 75,
+        howTo: "월요일보다 반복 범위를 좁혀도 좋으니 마지막 반복까지 갈비뼈를 골반 쪽으로 말아 내리는 동작을 유지해.",
+        machine: "케이블 상단에 로프를 연결해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
+        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
+        safety: "허리나 목이 당기면 중량을 낮추고 복부 수축 범위 안에서만 움직여.",
+        mistake: "팔과 엉덩이 반동으로 중량을 움직이면 복근 자극이 줄어."
+      }),
+      exercise({
+        id: "reverse-crunch-wed",
+        name: "복근: 리버스 크런치",
+        sets: ["12-15회", "12-15회", "12-15회"],
+        restSec: 60,
+        howTo: "무릎을 굽혀 들어 올린 뒤 꼬리뼈가 바닥에서 살짝 떨어질 만큼 골반을 가슴 쪽으로 말아. 천천히 원위치해.",
+        machine: "매트나 평평한 벤치에서 진행해. 손은 바닥을 가볍게 눌러 몸을 안정시켜.",
+        ball: "허리가 불편하면 데드버그 3세트로 대체해.",
+        safety: "다리를 멀리 뻗을 때 허리가 뜨면 범위를 줄이고 무릎을 더 굽혀.",
+        mistake: "다리를 흔들어 반동으로 골반을 들면 하복부 긴장이 끊겨."
+      }),
+      exercise({
+        id: "pallof-press-wed",
+        name: "복근: Pallof press",
         sets: ["12회/쪽", "12회/쪽"],
         restSec: 60,
-        howTo: "케이블을 가슴 높이에 맞추고 골반은 고정한 채 몸통으로 대각선 회전을 만들어. 팔로만 당기지 말고 옆구리와 복부로 버텨.",
-        machine: "케이블 머신 손잡이를 사용해. 무게는 가볍게 시작하고 좌우 같은 횟수로 진행해.",
-        ball: "케이블이 없으면 밴드 우드찹이나 플랭크로 대체해.",
-        safety: "허리가 꺾이거나 통증이 있으면 회전 범위를 줄이고 무게를 낮춰.",
-        mistake: "무거운 무게로 팔만 휘두르면 복근보다 허리와 어깨에 부담이 커져."
+        howTo: "케이블을 가슴 높이에 맞추고 옆으로 선 뒤 손잡이를 가슴 앞에서 곧게 밀어. 몸통이 케이블 쪽으로 돌아가지 않게 버텨.",
+        machine: "가벼운 케이블이나 밴드를 사용하고 좌우 같은 거리와 횟수로 진행해.",
+        ball: "케이블이 없으면 밴드 Pallof press 또는 데드버그로 대체해.",
+        safety: "허리 힘으로 버티지 말고 배와 엉덩이를 함께 조여. 통증이 있으면 저항을 낮춰.",
+        mistake: "무거운 중량으로 몸통이 돌아가면 안정화 목적이 사라져."
       })
     ]
   },
   THU: {
     dayLabel: "THU",
-    theme: "하체 후면 · 후면사슬 · 복근",
+    theme: "하체 후면 · 후면사슬",
     trainingFocus: "힙 쓰러스트 다음 RDL로 엉덩이·햄스트링·허리의 후면사슬을 보강한다.",
     warmupMain: "글루트 브릿지 + 가벼운 힙힌지",
     warmupTime: "5-7분",
@@ -347,17 +395,6 @@ const ROUTINE_PLAN = {
         ball: "기구가 없으면 앉아서 무릎 위에 가벼운 덤벨을 올리고 카프레이즈를 진행해.",
         safety: "발목을 좌우로 꺾지 말고 아킬레스건 통증이 있으면 중단해.",
         mistake: "무거운 중량으로 짧게 튕기면 가자미근보다 발목 부담이 커져."
-      }),
-      exercise({
-        id: "ab-crunch-machine-thu",
-        name: "복근: 플랭크 또는 복근 머신 선택",
-        sets: ["플랭크 45초", "플랭크 45초", "머신 있으면 12-15회"],
-        restSec: 60,
-        howTo: "사진 기준 복근 머신은 확실하지 않으니 플랭크를 기본으로 진행해. 복근 머신이 있으면 허리를 꺾지 않고 갈비뼈를 골반 쪽으로 말아내리는 느낌으로 가볍게 추가해.",
-        machine: "복근 크런치 머신이 있으면 선택해서 사용해. 좌석과 패드를 먼저 몸에 맞춘 뒤 가벼운 무게로 시작해.",
-        ball: "복근 머신이 없으면 데드버그 또는 플랭크 3세트로 대체해.",
-        safety: "허리나 목이 아프면 무게를 낮추거나 플랭크로 바꿔.",
-        mistake: "손잡이를 팔로 당기면 복근 자극이 줄고 허리 부담이 커져."
       })
     ]
   },
@@ -410,15 +447,37 @@ const ROUTINE_PLAN = {
       }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({
-        id: "ab-slide-fri",
-        name: "복근: AB 슬라이드 입문 (무릎 롤아웃)",
-        sets: ["6-8회", "6-8회"],
+        id: "cable-crunch-fri",
+        name: "복근: 케이블 크런치",
+        sets: ["10-15회", "10-15회", "10-15회"],
         restSec: 75,
-        howTo: "월요일보다 이동 거리를 욕심내지 말고 같은 자세로 반복해. 배와 엉덩이를 조인 채 허리가 중립을 유지하는 범위까지만 밀어.",
-        machine: "AB 슬라이드 또는 복근 롤아웃 휠을 사용해. 벽을 앞에 두면 과하게 멀리 나가는 것을 막을 수 있어.",
-        ball: "피로가 남거나 기구가 없으면 사이드 플랭크 2세트 또는 데드버그 2세트로 바꿔.",
-        safety: "월요일 후 허리·어깨 통증이 남아 있으면 금요일 AB 슬라이드는 건너뛰어. 매일 100회는 하지 않아.",
-        mistake: "횟수만 채우려고 짧게 튕기거나 허리를 처지게 하지 말고 매회 천천히 왕복해."
+        howTo: "로프를 머리 옆에 고정하고 복부를 짧게 접어 갈비뼈를 골반 쪽으로 당겨. 세 세트 모두 10-15회 범위에서 자세를 유지해.",
+        machine: "케이블 상단과 로프 손잡이를 사용해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
+        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
+        safety: "주 3회 누적 피로로 허리나 목이 불편하면 이 날 중량이나 세트를 먼저 낮춰.",
+        mistake: "반동과 팔 힘으로 로프를 끌어내리면 복근의 긴장이 사라져."
+      }),
+      exercise({
+        id: "ab-wheel-fri",
+        name: "복근: Ab wheel 무릎 롤아웃",
+        sets: ["6-12회", "6-12회", "6-12회"],
+        restSec: 75,
+        howTo: "무릎을 패드에 대고 배와 엉덩이를 조인 채 휠을 천천히 밀어. 허리가 꺾이기 전까지만 갔다가 복근으로 당겨 돌아와.",
+        machine: "Ab wheel이나 AB 슬라이드를 사용하고 처음에는 벽으로 이동 거리를 제한해.",
+        ball: "기구가 없거나 허리 고정이 어렵다면 데드버그 3세트로 대체해.",
+        safety: "허리나 어깨가 아프거나 배 힘이 풀리면 즉시 중단하고 이동 거리를 줄여.",
+        mistake: "팔로만 밀거나 허리를 아래로 처지게 하면 복근보다 허리와 어깨에 부담이 커져."
+      }),
+      exercise({
+        id: "hanging-knee-raise-fri",
+        name: "복근: 행잉 니레이즈",
+        sets: ["10-15회", "10-15회"],
+        restSec: 75,
+        howTo: "몸을 흔들지 않고 무릎을 올리며 골반을 말아. 마지막 두 세트는 횟수보다 느린 내림 동작을 지켜.",
+        machine: "풀업 바나 캡틴스 체어를 사용해. 악력이 먼저 풀리면 캡틴스 체어로 바꿔.",
+        ball: "철봉이 없으면 누워서 니레이즈 또는 리버스 크런치 2세트로 대체해.",
+        safety: "어깨와 허리에 통증이 있으면 바닥 동작으로 바꾸고 반동을 쓰지 마.",
+        mistake: "다리를 앞뒤로 흔들어 횟수만 채우면 복근 자극보다 관절 부담이 커져."
       })
     ]
   },
@@ -459,17 +518,6 @@ const ROUTINE_PLAN = {
         ball: "공간이 없으면 제자리 수트케이스 홀드나 양손 덤벨 홀드 30-45초로 대체해.",
         safety: "손아귀가 풀리기 전에 내려놓고 허리가 한쪽으로 기울면 무게를 낮춰.",
         mistake: "어깨를 으쓱하거나 몸을 좌우로 흔들면 승모와 허리에 부담이 몰려."
-      }),
-      exercise({
-        id: "cable-woodchop-sat",
-        name: "복근: 케이블 우드찹 (Cable Woodchop)",
-        sets: ["12회/쪽", "12회/쪽"],
-        restSec: 60,
-        howTo: "케이블을 잡고 배에 힘을 준 상태로 몸통을 대각선으로 회전해. 허리만 비틀지 말고 갈비뼈와 골반 사이를 단단히 잡아.",
-        machine: "케이블 머신 또는 밴드를 사용해. 좌우 균형을 맞춰 같은 횟수로 진행해.",
-        ball: "기구가 없으면 사이드 플랭크 또는 플랭크로 대체해.",
-        safety: "허리 통증이 있으면 즉시 중단하고 플랭크로 바꿔.",
-        mistake: "반동으로 휘두르면 배보다 허리에 부담이 커져."
       })
     ]
   }

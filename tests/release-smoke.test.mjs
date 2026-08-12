@@ -13,21 +13,20 @@ function dayBlock(day, nextDay) {
   return app.slice(start, end);
 }
 
-test("core routine stays at 15 direct sets without cable crunch", () => {
-  const expected = { MON: 3, TUE: 3, WED: 2, THU: 3, FRI: 2, SAT: 2 };
+test("direct ab work follows the Monday Wednesday Friday plan", () => {
+  const expected = { MON: 8, TUE: 0, WED: 8, THU: 0, FRI: 8, SAT: 0 };
   const days = Object.keys(expected);
   let total = 0;
 
   days.forEach((day, index) => {
     const block = dayBlock(day, days[index + 1]);
-    assert.equal(block.includes("케이블 크런치"), false);
     const coreExercises = [...block.matchAll(/name: "복근:[\s\S]*?sets: \[([^\]]+)\]/g)];
     const setCount = coreExercises.reduce((sum, match) => sum + (match[1].match(/"/g)?.length || 0) / 2, 0);
     assert.equal(setCount, expected[day], `${day} core set count`);
     total += setCount;
   });
 
-  assert.equal(total, 15);
+  assert.equal(total, 24);
 });
 
 test("release copy is honest about the rule-based generator", () => {
@@ -45,7 +44,7 @@ test("custom plans survive plan version upgrades", () => {
   assert.match(app, /"cable-hammer-curl": "single-arm-cable-curl"/);
 });
 
-test("upper-body upgrades and conservative ab-slide volume are in the routine", () => {
+test("upper-body upgrades and requested three-day ab routine are in the plan", () => {
   const mon = dayBlock("MON", "TUE");
   const wed = dayBlock("WED", "THU");
   const fri = dayBlock("FRI", "SAT");
@@ -54,10 +53,17 @@ test("upper-body upgrades and conservative ab-slide volume are in the routine", 
   assert.match(wed, /밴드 외회전/);
   assert.match(fri, /원암 케이블 컬/);
   assert.doesNotMatch(fri, /케이블 해머 컬/);
-  assert.match(mon, /AB 슬라이드 입문/);
-  assert.match(fri, /AB 슬라이드 입문/);
-  assert.doesNotMatch(`${mon}\n${fri}`, /sets: \[[^\]]*100회/);
-  assert.match(html, /매일 100회보다/);
+  assert.match(mon, /복근: 케이블 크런치[\s\S]*?10-15회/);
+  assert.match(mon, /복근: 행잉 니레이즈[\s\S]*?10-15회/);
+  assert.match(mon, /복근: 플랭크[\s\S]*?45-60초/);
+  assert.match(wed, /복근: 케이블 크런치[\s\S]*?10-12회/);
+  assert.match(wed, /복근: 리버스 크런치[\s\S]*?12-15회/);
+  assert.match(wed, /복근: Pallof press[\s\S]*?12회\/쪽/);
+  assert.match(fri, /복근: Ab wheel 무릎 롤아웃[\s\S]*?6-12회/);
+  assert.match(fri, /복근: 행잉 니레이즈[\s\S]*?10-15회/);
+  assert.match(html, /무거운 사이드벤드를 수백 번 하지 않습니다/);
+  assert.match(html, /믹스커피는 중단/);
+  assert.match(html, /밥은 반 공기로 고정/);
 });
 
 test("coach feedback routine upgrades are applied without duplicating face pull", () => {
@@ -76,7 +82,9 @@ test("coach feedback routine upgrades are applied without duplicating face pull"
     "hip-abduction",
     "leg-extension",
     "standing-calf-raise",
-    "ab-slide-mon"
+    "cable-crunch-mon",
+    "hanging-knee-raise-mon",
+    "plank-mon"
   ];
   monOrder.reduce((previousIndex, id) => {
     const index = mon.indexOf(`id: "${id}"`);
