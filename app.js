@@ -10,19 +10,25 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "incline_interval_strength_v8";
+const PLAN_VERSION = "incline_interval_strength_v9";
 const RETIRED_EXERCISE_IDS = new Set();
 const RETIRED_TEMPLATE_IDS = new Set();
 const RETIRED_EXERCISE_NAME_PATTERNS = [];
 const LEGACY_EXERCISE_REPLACEMENTS = {};
 const ROUTINE_EXERCISE_UPGRADES = {
-  TUE: { "vertical-row": "chest-supported-row" },
+  TUE: {
+    "vertical-row": "seated-row",
+    "chest-supported-row": "seated-row"
+  },
   WED: { "pec-deck-machine": "smith-incline-press" },
   THU: {
     "high-foot-leg-press": "romanian-deadlift",
     "calf-press": "seated-calf-raise"
   },
-  FRI: { "cable-hammer-curl": "single-arm-cable-curl" }
+  FRI: {
+    "cable-hammer-curl": "machine-biceps-curl",
+    "single-arm-cable-curl": "machine-biceps-curl"
+  }
 };
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
@@ -217,7 +223,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "hanging-knee-raise-mon",
         name: "복근: 행잉 니레이즈",
-        sets: ["10-15회", "10-15회", "10-15회"],
+        sets: ["10-15회", "10-15회"],
         restSec: 75,
         howTo: "철봉에 매달려 몸의 흔들림을 멈춘 뒤, 무릎을 가슴 쪽으로 올리며 골반을 살짝 말아. 내려갈 때도 천천히 버텨.",
         machine: "풀업 바나 캡틴스 체어를 사용해. 매달리기가 힘들면 캡틴스 체어 니레이즈로 진행해.",
@@ -273,17 +279,6 @@ const ROUTINE_PLAN = {
         mistake: "목만 빼서 턱을 넘기려 하면 등이 아니라 목과 팔꿈치에 부담이 커져."
       }),
       exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
-      exercise({
-        id: "chest-supported-row",
-        name: "체스트 서포티드 로우",
-        sets: ["10-12회", "10-12회", "10-12회"],
-        restSec: 80,
-        howTo: "가슴을 패드에 고정하고 팔꿈치를 몸 뒤로 보낸다는 느낌으로 당겨. 수축 지점에서 1초 멈춘 뒤 천천히 내려.",
-        machine: "체스트 서포티드 로우 머신의 패드를 명치 높이에 맞춰. 없다면 인클라인 벤치와 가벼운 덤벨을 사용해.",
-        ball: "기구가 없으면 기존 버티컬 로우나 시티드 로우 3세트로 대체해.",
-        safety: "가슴을 패드에서 떼거나 허리를 젖혀 당기지 말고 어깨가 찌릿하면 무게를 낮춰.",
-        mistake: "손으로만 당기면 이두만 지치니 팔꿈치를 몸 뒤로 보낸다는 느낌을 유지해."
-      }),
       exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 })
     ]
@@ -328,7 +323,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "cable-crunch-wed",
         name: "복근: 케이블 크런치",
-        sets: ["10-12회", "10-12회", "10-12회"],
+        sets: ["10-12회", "10-12회"],
         restSec: 75,
         howTo: "월요일보다 반복 범위를 좁혀도 좋으니 마지막 반복까지 갈비뼈를 골반 쪽으로 말아 내리는 동작을 유지해.",
         machine: "케이블 상단에 로프를 연결해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
@@ -339,7 +334,7 @@ const ROUTINE_PLAN = {
       exercise({
         id: "reverse-crunch-wed",
         name: "복근: 리버스 크런치",
-        sets: ["12-15회", "12-15회", "12-15회"],
+        sets: ["12-15회", "12-15회"],
         restSec: 60,
         howTo: "무릎을 굽혀 들어 올린 뒤 꼬리뼈가 바닥에서 살짝 떨어질 만큼 골반을 가슴 쪽으로 말아. 천천히 원위치해.",
         machine: "매트나 평평한 벤치에서 진행해. 손은 바닥을 가볍게 눌러 몸을 안정시켜.",
@@ -401,7 +396,7 @@ const ROUTINE_PLAN = {
   FRI: {
     dayLabel: "FRI",
     theme: "등 · 풀업 보강 · 팔 볼륨 · 복근",
-    trainingFocus: "등과 팔을 한 번 더 자극하고, 원암 케이블 컬과 턱걸이 보강으로 팔 볼륨과 당기는 힘을 만든다.",
+    trainingFocus: "등과 팔을 한 번 더 자극하고, 머신 바이셉 컬과 턱걸이 보강으로 팔 볼륨과 당기는 힘을 만든다.",
     warmupMain: "가벼운 풀다운 + 팔꿈치/손목 가동",
     warmupTime: "5-7분",
     warmupNote: "팔 운동은 반동보다 느린 내림 동작을 우선해.",
@@ -433,25 +428,14 @@ const ROUTINE_PLAN = {
         mistake: "팔 힘으로만 누르면 등 자극이 줄어드니 겨드랑이로 끌어내리는 느낌을 잡아."
       }),
       exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({
-        id: "single-arm-cable-curl",
-        name: "원암 케이블 컬 (얼터네이트 컬)",
-        sets: ["10-12회/팔", "10-12회/팔", "10-12회/팔"],
-        restSec: 70,
-        howTo: "케이블을 가장 낮게 맞추고 한 팔씩 손바닥이 위를 보게 감아 올려. 팔꿈치는 몸 옆에 고정하고 내릴 때 2초 동안 버텨.",
-        machine: "케이블 손잡이를 한쪽씩 사용해. 자리가 없으면 머신 바이셉 컬에서 한 팔씩 번갈아 진행해.",
-        ball: "케이블을 사용할 수 없으면 가벼운 덤벨 얼터네이트 컬로 대체해.",
-        safety: "손목을 꺾거나 몸을 뒤로 젖히지 말고 팔꿈치 통증이 있으면 무게를 낮춰.",
-        mistake: "반동으로 어깨를 먼저 들면 이두 자극이 줄어드니 팔꿈치 위치를 고정해."
-      }),
+      exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
       exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
       exercise({
         id: "cable-crunch-fri",
         name: "복근: 케이블 크런치",
-        sets: ["10-15회", "10-15회", "10-15회"],
+        sets: ["10-15회", "10-15회"],
         restSec: 75,
-        howTo: "로프를 머리 옆에 고정하고 복부를 짧게 접어 갈비뼈를 골반 쪽으로 당겨. 세 세트 모두 10-15회 범위에서 자세를 유지해.",
+        howTo: "로프를 머리 옆에 고정하고 복부를 짧게 접어 갈비뼈를 골반 쪽으로 당겨. 두 세트 모두 10-15회 범위에서 자세를 유지해.",
         machine: "케이블 상단과 로프 손잡이를 사용해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
         ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
         safety: "주 3회 누적 피로로 허리나 목이 불편하면 이 날 중량이나 세트를 먼저 낮춰.",
@@ -460,24 +444,13 @@ const ROUTINE_PLAN = {
       exercise({
         id: "ab-wheel-fri",
         name: "복근: Ab wheel 무릎 롤아웃",
-        sets: ["6-12회", "6-12회", "6-12회"],
+        sets: ["6-12회", "6-12회"],
         restSec: 75,
         howTo: "무릎을 패드에 대고 배와 엉덩이를 조인 채 휠을 천천히 밀어. 허리가 꺾이기 전까지만 갔다가 복근으로 당겨 돌아와.",
         machine: "Ab wheel이나 AB 슬라이드를 사용하고 처음에는 벽으로 이동 거리를 제한해.",
         ball: "기구가 없거나 허리 고정이 어렵다면 데드버그 3세트로 대체해.",
         safety: "허리나 어깨가 아프거나 배 힘이 풀리면 즉시 중단하고 이동 거리를 줄여.",
         mistake: "팔로만 밀거나 허리를 아래로 처지게 하면 복근보다 허리와 어깨에 부담이 커져."
-      }),
-      exercise({
-        id: "hanging-knee-raise-fri",
-        name: "복근: 행잉 니레이즈",
-        sets: ["10-15회", "10-15회"],
-        restSec: 75,
-        howTo: "몸을 흔들지 않고 무릎을 올리며 골반을 말아. 마지막 두 세트는 횟수보다 느린 내림 동작을 지켜.",
-        machine: "풀업 바나 캡틴스 체어를 사용해. 악력이 먼저 풀리면 캡틴스 체어로 바꿔.",
-        ball: "철봉이 없으면 누워서 니레이즈 또는 리버스 크런치 2세트로 대체해.",
-        safety: "어깨와 허리에 통증이 있으면 바닥 동작으로 바꾸고 반동을 쓰지 마.",
-        mistake: "다리를 앞뒤로 흔들어 횟수만 채우면 복근 자극보다 관절 부담이 커져."
       })
     ]
   },

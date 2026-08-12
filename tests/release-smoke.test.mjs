@@ -14,7 +14,7 @@ function dayBlock(day, nextDay) {
 }
 
 test("direct ab work follows the Monday Wednesday Friday plan", () => {
-  const expected = { MON: 8, TUE: 0, WED: 8, THU: 0, FRI: 8, SAT: 0 };
+  const expected = { MON: 7, TUE: 0, WED: 6, THU: 0, FRI: 4, SAT: 0 };
   const days = Object.keys(expected);
   let total = 0;
 
@@ -26,7 +26,7 @@ test("direct ab work follows the Monday Wednesday Friday plan", () => {
     total += setCount;
   });
 
-  assert.equal(total, 24);
+  assert.equal(total, 17);
 });
 
 test("release copy is honest about the rule-based generator", () => {
@@ -41,7 +41,8 @@ test("custom plans survive plan version upgrades", () => {
   assert.doesNotMatch(app, /!shouldRefreshRoutine && isPlainObject\(parsed\.customPlans\)/);
   assert.match(app, /ROUTINE_EXERCISE_UPGRADES/);
   assert.match(app, /"pec-deck-machine": "smith-incline-press"/);
-  assert.match(app, /"cable-hammer-curl": "single-arm-cable-curl"/);
+  assert.match(app, /"chest-supported-row": "seated-row"/);
+  assert.match(app, /"single-arm-cable-curl": "machine-biceps-curl"/);
 });
 
 test("upper-body upgrades and requested three-day ab routine are in the plan", () => {
@@ -51,8 +52,8 @@ test("upper-body upgrades and requested three-day ab routine are in the plan", (
 
   assert.match(wed, /스미스 인클라인 프레스/);
   assert.match(wed, /밴드 외회전/);
-  assert.match(fri, /원암 케이블 컬/);
-  assert.doesNotMatch(fri, /케이블 해머 컬/);
+  assert.match(fri, /머신 바이셉 컬/);
+  assert.doesNotMatch(fri, /원암 케이블 컬|케이블 해머 컬/);
   assert.match(mon, /복근: 케이블 크런치[\s\S]*?10-15회/);
   assert.match(mon, /복근: 행잉 니레이즈[\s\S]*?10-15회/);
   assert.match(mon, /복근: 플랭크[\s\S]*?45-60초/);
@@ -60,8 +61,8 @@ test("upper-body upgrades and requested three-day ab routine are in the plan", (
   assert.match(wed, /복근: 리버스 크런치[\s\S]*?12-15회/);
   assert.match(wed, /복근: Pallof press[\s\S]*?12회\/쪽/);
   assert.match(fri, /복근: Ab wheel 무릎 롤아웃[\s\S]*?6-12회/);
-  assert.match(fri, /복근: 행잉 니레이즈[\s\S]*?10-15회/);
-  assert.match(html, /무거운 사이드벤드를 수백 번 하지 않습니다/);
+  assert.doesNotMatch(fri, /복근: 행잉 니레이즈/);
+  assert.match(html, /월 7·수 6·금 4세트, 주 17세트/);
   assert.match(html, /믹스커피는 중단/);
   assert.match(html, /밥은 반 공기로 고정/);
 });
@@ -94,8 +95,8 @@ test("coach feedback routine upgrades are applied without duplicating face pull"
 
   assert.match(tue, /id: "straight-arm-pulldown"/);
   assert.ok(tue.indexOf('id: "straight-arm-pulldown"') < tue.indexOf('id: "lat-pulldown"'));
-  assert.match(tue, /id: "chest-supported-row"/);
-  assert.doesNotMatch(tue, /id: "vertical-row"/);
+  assert.match(tue, /id: "seated-row"/);
+  assert.doesNotMatch(tue, /id: "chest-supported-row"|id: "vertical-row"/);
 
   assert.match(wed, /id: "rear-delt-fly"/);
   assert.match(thu, /id: "romanian-deadlift"/);
