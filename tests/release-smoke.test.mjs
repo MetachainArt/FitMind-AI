@@ -13,20 +13,18 @@ function dayBlock(day, nextDay) {
   return app.slice(start, end);
 }
 
-test("direct ab work follows the Monday Wednesday Friday plan", () => {
-  const expected = { MON: 7, TUE: 0, WED: 6, THU: 0, FRI: 4, SAT: 0 };
-  const days = Object.keys(expected);
-  let total = 0;
-
+test("all seven days include a sustainable fat-loss activity plan", () => {
+  const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   days.forEach((day, index) => {
     const block = dayBlock(day, days[index + 1]);
-    const coreExercises = [...block.matchAll(/name: "복근:[\s\S]*?sets: \[([^\]]+)\]/g)];
-    const setCount = coreExercises.reduce((sum, match) => sum + (match[1].match(/"/g)?.length || 0) / 2, 0);
-    assert.equal(setCount, expected[day], `${day} core set count`);
-    total += setCount;
+    assert.match(block, /cardioMain:/, `${day} cardio title`);
+    assert.match(block, /cardioTime:/, `${day} cardio duration`);
+    assert.match(block, /cardioPlan:/, `${day} cardio guidance`);
   });
 
-  assert.equal(total, 17);
+  assert.match(app, /하루 총 8,000-10,000보/);
+  assert.match(dayBlock("SUN"), /편안한 산책 또는 완전 휴식/);
+  assert.match(app, /if \(day === 6\) \{[\s\S]*?return "SAT";[\s\S]*?return "SUN";/);
 });
 
 test("release copy is honest about the rule-based generator", () => {
@@ -39,53 +37,41 @@ test("release copy is honest about the rule-based generator", () => {
 test("custom plans survive plan version upgrades", () => {
   assert.match(app, /if \(isPlainObject\(parsed\.customPlans\)\)/);
   assert.doesNotMatch(app, /!shouldRefreshRoutine && isPlainObject\(parsed\.customPlans\)/);
-  assert.match(app, /ROUTINE_EXERCISE_UPGRADES/);
-  assert.match(app, /"pec-deck-machine": "smith-incline-press"/);
-  assert.match(app, /"chest-supported-row": "seated-row"/);
-  assert.match(app, /"single-arm-cable-curl": "machine-biceps-curl"/);
+  assert.match(app, /const ROUTINE_EXERCISE_UPGRADES = \{\};/);
+  assert.equal(app.match(/const ROUTINE_EXERCISE_UPGRADES = ([^;]+);/)?.[1], "{}");
 });
 
-test("upper-body upgrades and requested three-day ab routine are in the plan", () => {
+test("reported working weights and double-progression ranges are in the plan", () => {
   const mon = dayBlock("MON", "TUE");
   const wed = dayBlock("WED", "THU");
   const fri = dayBlock("FRI", "SAT");
+  const tue = dayBlock("TUE", "WED");
 
-  assert.match(wed, /스미스 인클라인 프레스/);
-  assert.match(wed, /밴드 외회전/);
-  assert.match(fri, /머신 바이셉 컬/);
-  assert.doesNotMatch(fri, /원암 케이블 컬|케이블 해머 컬/);
-  assert.match(mon, /복근: 케이블 크런치[\s\S]*?10-15회/);
-  assert.match(mon, /복근: 행잉 니레이즈[\s\S]*?10-15회/);
-  assert.match(mon, /복근: 플랭크[\s\S]*?45-60초/);
-  assert.match(wed, /복근: 케이블 크런치[\s\S]*?10-12회/);
-  assert.match(wed, /복근: 리버스 크런치[\s\S]*?12-15회/);
-  assert.match(wed, /복근: Pallof press[\s\S]*?12회\/쪽/);
-  assert.match(fri, /복근: Ab wheel 무릎 롤아웃[\s\S]*?6-12회/);
-  assert.doesNotMatch(fri, /복근: 행잉 니레이즈/);
-  assert.match(html, /월 7·수 6·금 4세트, 주 17세트/);
-  assert.match(html, /믹스커피는 중단/);
-  assert.match(html, /밥은 반 공기로 고정/);
+  assert.match(mon, /숄더 프레스 · 40kg 시험[\s\S]*?8-12회/);
+  assert.match(wed, /랫풀다운 · 55kg 시험[\s\S]*?8-12회/);
+  assert.match(tue, /레그프레스 · 90-95kg 시험[\s\S]*?8-12회/);
+  assert.match(tue, /힙 어브덕션 · 60kg[\s\S]*?12-20회/);
+  assert.match(tue, /힙 어덕션 · 30kg[\s\S]*?10-15회/);
+  assert.match(fri, /숄더 프레스 · 40kg 기준/);
+  assert.match(html, /12\/12\/12와 RIR 1-2/);
+  assert.match(html, /단백질 하루 120-140g/);
 });
 
-test("coach feedback routine upgrades are applied without duplicating face pull", () => {
+test("weekly split matches the updated hypertrophy and recovery plan", () => {
   const mon = dayBlock("MON", "TUE");
   const tue = dayBlock("TUE", "WED");
   const wed = dayBlock("WED", "THU");
   const thu = dayBlock("THU", "FRI");
   const fri = dayBlock("FRI", "SAT");
-  const sat = dayBlock("SAT");
-  const routine = app.slice(app.indexOf("const ROUTINE_PLAN"), app.indexOf("\nconst ui"));
+  const sat = dayBlock("SAT", "SUN");
 
   const monOrder = [
-    "squat-machine",
-    "leg-press",
-    "bulgarian-split-squat",
-    "hip-abduction",
-    "leg-extension",
-    "standing-calf-raise",
-    "cable-crunch-mon",
-    "hanging-knee-raise-mon",
-    "plank-mon"
+    "smith-incline-press",
+    "chest-press",
+    "pec-deck-machine",
+    "shoulder-press",
+    "lateral-raise",
+    "triceps-pushdown"
   ];
   monOrder.reduce((previousIndex, id) => {
     const index = mon.indexOf(`id: "${id}"`);
@@ -93,31 +79,25 @@ test("coach feedback routine upgrades are applied without duplicating face pull"
     return index;
   }, -1);
 
-  assert.match(tue, /id: "straight-arm-pulldown"/);
-  assert.ok(tue.indexOf('id: "straight-arm-pulldown"') < tue.indexOf('id: "lat-pulldown"'));
-  assert.match(tue, /id: "seated-row"/);
-  assert.doesNotMatch(tue, /id: "chest-supported-row"|id: "vertical-row"/);
-
-  assert.match(wed, /id: "rear-delt-fly"/);
+  assert.match(tue, /id: "leg-press"/);
+  assert.match(wed, /id: "lat-pulldown"/);
+  assert.match(wed, /id: "seated-row"/);
   assert.match(thu, /id: "romanian-deadlift"/);
-  assert.ok(thu.indexOf('id: "hip-thrust"') < thu.indexOf('id: "romanian-deadlift"'));
-  assert.doesNotMatch(thu, /id: "high-foot-leg-press"/);
-
-  assert.match(sat, /id: "farmers-walk"/);
-  assert.match(sat, /300m 7km\/h \+ 200m 5km\/h를 6회/);
-
-  assert.match(fri, /id: "face-pull"/);
-  assert.equal((routine.match(/id: "face-pull"/g) || []).length, 1);
+  assert.match(fri, /어깨 · 팔 · 상부가슴/);
+  assert.match(sat, /HYROX 또는 3km 인터벌 중 하나/);
+  assert.doesNotMatch(sat, /레그프레스 \(가벼운 펌핑\)|파머스 워크/);
 });
 
-test("calves stay at two weekly sessions with four sets each", () => {
-  const mon = dayBlock("MON", "TUE");
+test("strong cardio is limited while daily recovery activity remains", () => {
+  const tue = dayBlock("TUE", "WED");
   const thu = dayBlock("THU", "FRI");
-  const sat = dayBlock("SAT");
+  const sat = dayBlock("SAT", "SUN");
+  const sun = dayBlock("SUN");
 
-  assert.match(mon, /id: "standing-calf-raise"[\s\S]*?sets: \["12-15회", "12-15회", "12-15회", "12-15회"\]/);
-  assert.match(thu, /id: "seated-calf-raise"[\s\S]*?sets: \["15-20회", "15-20회", "15-20회", "15-20회"\]/);
-  assert.doesNotMatch(sat, /calf|카프/i);
+  assert.match(tue, /회복성 평지 걷기/);
+  assert.match(thu, /회복성 평지 걷기/);
+  assert.match(sat, /HYROX를 했다면 인터벌은 생략/);
+  assert.match(sun, /회복 강도/);
 });
 
 test("mobile workflow and data recovery controls are present", () => {

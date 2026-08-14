@@ -6,30 +6,17 @@ const WEEKDAYS = [
   { code: "WED", short: "수", title: "수요일" },
   { code: "THU", short: "목", title: "목요일" },
   { code: "FRI", short: "금", title: "금요일" },
-  { code: "SAT", short: "토", title: "토요일" }
+  { code: "SAT", short: "토", title: "토요일" },
+  { code: "SUN", short: "일", title: "일요일" }
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "incline_interval_strength_v9";
+const PLAN_VERSION = "daily_fat_loss_hypertrophy_v10";
 const RETIRED_EXERCISE_IDS = new Set();
 const RETIRED_TEMPLATE_IDS = new Set();
 const RETIRED_EXERCISE_NAME_PATTERNS = [];
 const LEGACY_EXERCISE_REPLACEMENTS = {};
-const ROUTINE_EXERCISE_UPGRADES = {
-  TUE: {
-    "vertical-row": "seated-row",
-    "chest-supported-row": "seated-row"
-  },
-  WED: { "pec-deck-machine": "smith-incline-press" },
-  THU: {
-    "high-foot-leg-press": "romanian-deadlift",
-    "calf-press": "seated-calf-raise"
-  },
-  FRI: {
-    "cable-hammer-curl": "machine-biceps-curl",
-    "single-arm-cable-curl": "machine-biceps-curl"
-  }
-};
+const ROUTINE_EXERCISE_UPGRADES = {};
 const DEFAULT_EXERCISE_GUIDE = {
   howTo: "반동 없이 천천히 움직이고, 마지막 2회가 힘든 정도의 무게로 진행해.",
   machine: "좌석, 패드, 손잡이를 몸에 먼저 맞춘 뒤 관절이 편한 범위에서 시작해.",
@@ -164,334 +151,129 @@ function exercise({
 const ROUTINE_PLAN = {
   MON: {
     dayLabel: "MON",
-    theme: "하체 전면 · 엉덩이 · 복근",
-    trainingFocus: "큰 동작부터 진행해 하체 힘을 확보하고, 불가리안 스플릿 스쿼트로 좌우 균형을 보강한다.",
-    warmupMain: "고관절/무릎/발목 워밍업",
+    theme: "가슴 · 어깨 · 삼두",
+    trainingFocus: "가슴 두께와 어깨 폭을 우선하고, 모든 본세트는 자세를 지키며 RIR 1-3으로 끝낸다.",
+    warmupMain: "어깨 가동성 + 가벼운 프레스",
     warmupTime: "5-7분",
-    warmupNote: "하체 첫날은 무릎 정렬과 엉덩이 활성화를 먼저 잡아.",
+    warmupNote: "첫 프레스 전에 가벼운 중량으로 2세트 준비하고 워밍업 세트는 본세트에 포함하지 않아.",
     cardioMain: "근력 후 경사 걷기",
-    cardioTime: "약 25분",
-    cardioPlan: "0°·5°·10°는 각 5분 6km/h, 15°는 5.5km/h, 20°는 4.5-5km/h. 손잡이는 잡지 말고 힘들면 최고 경사를 15°로 낮춰.",
+    cardioTime: "25-30분",
+    cardioPlan: "경사 5-10%, 4.5-5.5km/h의 대화 가능한 강도. 하루 총 8,000-10,000보에 이미 도달했다면 20분으로 줄여.",
     exercises: [
-      exercise({
-        id: "squat-machine",
-        name: "핵스쿼트 또는 스미스 머신 스쿼트",
-        sets: ["8-10회", "8-10회", "8-10회"],
-        restSec: 105,
-        howTo: "사진 기준 핵스쿼트/스미스 머신 계열을 사용할 수 있어. 처음에는 발 위치를 안정적으로 잡고 깊이보다 무릎 정렬을 우선해.",
-        machine: "핵스쿼트가 비어 있으면 핵스쿼트, 없으면 스미스 머신으로 진행해. 둘 다 부담되면 레그프레스로 대체해.",
-        ball: "기구가 어렵거나 무릎이 불편하면 레그프레스 3세트로 바꿔.",
-        safety: "무릎이 안쪽으로 모이거나 허리가 말리면 범위를 줄이고 무게를 낮춰.",
-        mistake: "처음부터 깊게 앉거나 무게를 빨리 올리면 무릎 부담이 커져."
-      }),
-      exercise({ id: "leg-press", name: "레그프레스 (Leg Press)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 105 }),
-      exercise({
-        id: "bulgarian-split-squat",
-        name: "불가리안 스플릿 스쿼트",
-        sets: ["10회/쪽", "10회/쪽", "10회/쪽"],
-        restSec: 90,
-        howTo: "한쪽 발을 뒤 벤치에 올리고 앞발 전체로 바닥을 밀어 올라와. 좌우 10회씩 같은 깊이와 속도로 진행해.",
-        machine: "맨몸이나 덤벨로 시작하고, 균형이 익숙해지면 스미스머신을 사용해.",
-        ball: "균형 잡기 어렵거나 무릎이 불편하면 스플릿 스쿼트 또는 리버스 런지로 바꿔.",
-        safety: "앞 무릎이 안쪽으로 무너지거나 골반이 돌아가면 범위와 중량을 줄여.",
-        mistake: "보폭이 너무 좁거나 앞꿈치로만 밀면 무릎 부담이 커질 수 있어."
-      }),
-      exercise({ id: "hip-abduction", name: "힙 어브덕션 (Hip Abduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({ id: "leg-extension", name: "레그 익스텐션 (Leg Extension)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 75 }),
-      exercise({
-        id: "standing-calf-raise",
-        name: "스탠딩 카프레이즈 (Standing Calf Raise)",
-        sets: ["12-15회", "12-15회", "12-15회", "12-15회"],
-        restSec: 60,
-        howTo: "무릎을 편 상태에서 발꿈치를 끝까지 올려 1초 멈추고, 2초 동안 천천히 내려 종아리를 충분히 늘려.",
-        machine: "스탠딩 카프레이즈 머신이나 스미스머신을 사용해. 발 앞부분만 받침에 안정적으로 올려.",
-        ball: "기구가 없으면 한 손으로 지지하고 싱글 레그 카프레이즈를 진행해.",
-        safety: "반동 없이 움직이고 아킬레스건에 날카로운 통증이 있으면 즉시 중단해.",
-        mistake: "짧은 범위로 튕기면 종아리보다 발목과 아킬레스건 부담이 커져."
-      }),
-      exercise({
-        id: "cable-crunch-mon",
-        name: "복근: 케이블 크런치",
-        sets: ["10-15회", "10-15회", "10-15회"],
-        restSec: 75,
-        howTo: "무릎을 꿇고 로프를 머리 옆에 고정한 채 갈비뼈를 골반 쪽으로 말아 내려. 마지막 2-3회가 힘들지만 자세는 유지되는 중량을 사용해.",
-        machine: "케이블을 가장 높은 위치에 두고 로프 손잡이를 연결해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
-        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
-        safety: "허리를 접기보다 복부를 수축하고, 허리나 목에 통증이 생기면 중량과 가동범위를 줄여.",
-        mistake: "엉덩이를 뒤로 빼며 팔로 로프를 당기면 복근의 긴장과 운동 범위가 줄어."
-      }),
-      exercise({
-        id: "hanging-knee-raise-mon",
-        name: "복근: 행잉 니레이즈",
-        sets: ["10-15회", "10-15회"],
-        restSec: 75,
-        howTo: "철봉에 매달려 몸의 흔들림을 멈춘 뒤, 무릎을 가슴 쪽으로 올리며 골반을 살짝 말아. 내려갈 때도 천천히 버텨.",
-        machine: "풀업 바나 캡틴스 체어를 사용해. 매달리기가 힘들면 캡틴스 체어 니레이즈로 진행해.",
-        ball: "철봉이 없으면 누워서 니레이즈 또는 리버스 크런치 3세트로 대체해.",
-        safety: "어깨나 허리에 통증이 있으면 매달리기를 중단하고 바닥 동작으로 바꿔.",
-        mistake: "반동으로 다리를 휘두르거나 허리를 과하게 젖히면 복근보다 고관절과 허리에 부담이 커져."
-      }),
-      exercise({
-        id: "plank-mon",
-        name: "복근: 플랭크",
-        sets: ["45-60초", "45-60초"],
-        restSec: 60,
-        howTo: "팔꿈치를 어깨 아래 두고 갈비뼈와 골반을 서로 당긴다는 느낌으로 몸을 일직선으로 유지해.",
-        machine: "매트에서 진행하고 시간이 길어 허리가 처지면 30초씩 정확한 자세로 나눠.",
-        ball: "손목이나 어깨가 불편하면 데드버그 2세트로 대체해.",
-        safety: "허리가 처지거나 통증이 생기기 전에 세트를 끝내. 버틴 시간보다 자세가 우선이야.",
-        mistake: "엉덩이를 너무 들거나 숨을 참으면 복부 긴장이 분산돼."
-      })
+      exercise({ id: "smith-incline-press", name: "인클라인 체스트 프레스", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "chest-press", name: "플랫 체스트 프레스 · 현재보다 한 단계 증량 시험", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "pec-deck-machine", name: "펙덱 또는 케이블 플라이", sets: ["10-15회", "10-15회"], restSec: 75 }),
+      exercise({ id: "shoulder-press", name: "숄더 프레스 · 40kg 시험", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "lateral-raise", name: "레터럴 레이즈", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
+      exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
     ]
   },
   TUE: {
     dayLabel: "TUE",
-    theme: "등 · 풀업 입문 · 이두",
-    trainingFocus: "팔이 얇은 체형 보완과 턱걸이 1개 달성을 위해 등 당기기와 보조 풀업을 함께 진행.",
-    warmupMain: "어깨 가동성 + 가벼운 밴드 로우",
+    theme: "하체 전면 · 둔근 · 복근",
+    trainingFocus: "레그프레스를 주력으로 하고 무릎 정렬과 완전한 가동범위를 중량보다 우선한다.",
+    warmupMain: "고관절/무릎/발목 워밍업",
     warmupTime: "5-7분",
-    warmupNote: "스트레이트 암 풀다운은 광배 활성화가 목적이므로 가벼운 무게로 시작해.",
-    cardioMain: "근력 후 경사 걷기",
-    cardioTime: "약 25분",
-    cardioPlan: "0°·5°·10°는 각 5분 6km/h, 15°는 5.5km/h, 20°는 4.5-5km/h. 손잡이 없이 걷고 자세가 무너지면 경사를 낮춰.",
+    warmupNote: "레그프레스는 85kg 가벼운 준비 세트 후 다음 한 단계인 90-95kg를 시험해.",
+    cardioMain: "회복성 평지 걷기",
+    cardioTime: "30-40분 또는 하루 8,000-10,000보",
+    cardioPlan: "하체 회복을 방해하지 않는 편한 속도. 걸음 수를 이미 채웠거나 다리가 무거우면 별도 유산소는 생략해.",
     exercises: [
-      exercise({
-        id: "straight-arm-pulldown",
-        name: "스트레이트 암 풀다운",
-        sets: ["15회", "15회", "15회"],
-        restSec: 60,
-        howTo: "팔꿈치를 살짝 굽혀 고정하고 겨드랑이로 손잡이를 허벅지 쪽까지 눌러. 광배에 힘이 들어오는 가벼운 무게를 사용해.",
-        machine: "케이블을 머리보다 높게 두고 스트레이트 바나 로프를 연결해.",
-        ball: "케이블이 없으면 밴드 스트레이트 암 풀다운으로 바꿔.",
-        safety: "허리를 젖혀 반동을 쓰지 말고 어깨 앞쪽이 아프면 범위를 줄여.",
-        mistake: "팔꿈치를 계속 굽혔다 펴면 풀다운보다 삼두 운동이 되기 쉬워."
-      }),
-      exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
-      exercise({
-        id: "assisted-pull-up",
-        name: "턱걸이 입문: 어시스트 풀업 머신/밴드 풀업",
-        sets: ["보조 크게 3-5회", "보조 크게 3-5회", "보조 크게 3-5회"],
-        restSec: 120,
-        howTo: "가슴을 살짝 들고 어깨를 귀에서 멀리 내린 뒤, 턱보다 가슴을 바에 가까이 보낸다는 느낌으로 당겨.",
-        machine: "어시스트 풀업 머신이 있으면 체중을 많이 보조하는 무게부터 시작해. 없으면 밴드나 발 받침으로 도움을 받아.",
-        ball: "기구가 없으면 스미스머신 낮은 바에서 인버티드 로우 3세트로 대체해.",
-        safety: "반동으로 뛰어오르지 말고 어깨 앞쪽 통증이 있으면 즉시 중단해.",
-        mistake: "목만 빼서 턱을 넘기려 하면 등이 아니라 목과 팔꿈치에 부담이 커져."
-      }),
-      exercise({ id: "seated-row", name: "시티드 로우 (Seated Row)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 90 }),
-      exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬 또는 케이블 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({ id: "cable-hammer-curl", name: "케이블 해머 컬 (로프)", sets: ["12회", "12회", "12회"], restSec: 70 })
+      exercise({ id: "leg-press", name: "레그프레스 · 90-95kg 시험", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "leg-extension", name: "레그 익스텐션", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 }),
+      exercise({ id: "bulgarian-split-squat", name: "불가리안 스플릿 스쿼트", sets: ["8-12회/쪽", "8-12회/쪽"], restSec: 90 }),
+      exercise({ id: "hip-abduction", name: "힙 어브덕션 · 60kg", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
+      exercise({ id: "hip-adduction", name: "힙 어덕션 · 30kg", sets: ["10-15회", "10-15회"], restSec: 75 }),
+      exercise({ id: "standing-calf-raise", name: "스탠딩 카프레이즈", sets: ["10-15회", "10-15회", "10-15회"], restSec: 60 }),
+      exercise({ id: "cable-crunch-tue", name: "복근: 케이블 크런치", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
     ]
   },
   WED: {
     dayLabel: "WED",
-    theme: "가슴 · 어깨 전후면 · 삼두 · 복근",
-    trainingFocus: "가슴과 삼두 볼륨을 유지하면서 리어델트 플라이로 부족한 후면 어깨를 보강한다.",
-    warmupMain: "밴드 외회전 + 가벼운 머신 프레스",
+    theme: "등 · 후면어깨 · 이두",
+    trainingFocus: "수직 당기기와 수평 당기기를 균형 있게 진행하고 반동 없는 광배 수축을 우선한다.",
+    warmupMain: "어깨 가동성 + 가벼운 밴드 로우",
     warmupTime: "5-7분",
-    warmupNote: "어깨가 말리지 않게 견갑을 먼저 안정화해.",
+    warmupNote: "랫풀다운은 50kg 준비 세트 후 55kg에서 8-12회를 시험해.",
     cardioMain: "근력 후 경사 걷기",
-    cardioTime: "약 25분",
-    cardioPlan: "0°·5°·10°는 각 5분 6km/h, 15°는 5.5km/h, 20°는 4.5-5km/h. 손잡이에 기대지 말고 균형만 필요한 경우 살짝 대.",
+    cardioTime: "25-30분",
+    cardioPlan: "경사 5-10%, 4.5-5.5km/h. 숨은 차지만 대화가 가능한 강도로 유지하고 하루 총 8,000-10,000보를 목표로 해.",
     exercises: [
-      exercise({ id: "chest-press", name: "체스트 프레스 (Chest Press)", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 90 }),
-      exercise({ id: "shoulder-press", name: "숄더 프레스 (Shoulder Press)", sets: ["8-10회", "8-10회", "8-10회"], restSec: 90 }),
-      exercise({ id: "lateral-raise", name: "델토이드 레이즈 머신 (Deltoid Raise)", sets: ["12-15회", "12-15회", "12-15회"], restSec: 70 }),
-      exercise({
-        id: "rear-delt-fly",
-        name: "리어델트 플라이 (Rear Delt Fly)",
-        sets: ["15회", "15회", "15회"],
-        restSec: 70,
-        howTo: "가슴을 패드에 붙이고 팔꿈치를 살짝 굽힌 채 양팔을 옆뒤로 벌려. 어깨뼈를 과하게 모으기보다 후면 어깨로 밀어내.",
-        machine: "리버스 펙덱이나 리어델트 머신의 손잡이를 어깨 높이에 맞춰.",
-        ball: "기구가 없으면 인클라인 벤치 리어델트 덤벨 플라이로 대체해.",
-        safety: "어깨가 으쓱 올라가거나 앞쪽이 아프면 무게와 가동범위를 줄여.",
-        mistake: "무거운 무게로 반동을 쓰면 승모근이 먼저 지치고 후면 어깨 자극이 줄어."
-      }),
-      exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({
-        id: "smith-incline-press",
-        name: "스미스 인클라인 프레스 또는 플레이트 체스트 프레스",
-        sets: ["10-12회", "10-12회", "10-12회"],
-        restSec: 90,
-        howTo: "벤치 각도를 약 20-30도로 맞추고 바가 윗가슴 쪽으로 내려오게 세팅해. 견갑을 등받이에 고정하고 반동 없이 밀어.",
-        machine: "스미스머신과 인클라인 벤치를 사용해. 자리가 없으면 사진의 플레이트 로드 체스트 프레스나 일반 체스트 프레스로 대체해.",
-        ball: "스미스머신이 비어 있지 않으면 체스트 프레스 머신을 같은 세트와 횟수로 진행해.",
-        safety: "어깨 앞쪽이 아프면 벤치 각도와 가동범위를 줄이고 빈 바 또는 가벼운 중량부터 시작해.",
-        mistake: "벤치 각도를 너무 높이면 윗가슴보다 어깨 부담이 커지고, 팔꿈치를 과하게 벌리면 어깨가 불편할 수 있어."
-      }),
-      exercise({
-        id: "cable-crunch-wed",
-        name: "복근: 케이블 크런치",
-        sets: ["10-12회", "10-12회"],
-        restSec: 75,
-        howTo: "월요일보다 반복 범위를 좁혀도 좋으니 마지막 반복까지 갈비뼈를 골반 쪽으로 말아 내리는 동작을 유지해.",
-        machine: "케이블 상단에 로프를 연결해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
-        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
-        safety: "허리나 목이 당기면 중량을 낮추고 복부 수축 범위 안에서만 움직여.",
-        mistake: "팔과 엉덩이 반동으로 중량을 움직이면 복근 자극이 줄어."
-      }),
-      exercise({
-        id: "reverse-crunch-wed",
-        name: "복근: 리버스 크런치",
-        sets: ["12-15회", "12-15회"],
-        restSec: 60,
-        howTo: "무릎을 굽혀 들어 올린 뒤 꼬리뼈가 바닥에서 살짝 떨어질 만큼 골반을 가슴 쪽으로 말아. 천천히 원위치해.",
-        machine: "매트나 평평한 벤치에서 진행해. 손은 바닥을 가볍게 눌러 몸을 안정시켜.",
-        ball: "허리가 불편하면 데드버그 3세트로 대체해.",
-        safety: "다리를 멀리 뻗을 때 허리가 뜨면 범위를 줄이고 무릎을 더 굽혀.",
-        mistake: "다리를 흔들어 반동으로 골반을 들면 하복부 긴장이 끊겨."
-      }),
-      exercise({
-        id: "pallof-press-wed",
-        name: "복근: Pallof press",
-        sets: ["12회/쪽", "12회/쪽"],
-        restSec: 60,
-        howTo: "케이블을 가슴 높이에 맞추고 옆으로 선 뒤 손잡이를 가슴 앞에서 곧게 밀어. 몸통이 케이블 쪽으로 돌아가지 않게 버텨.",
-        machine: "가벼운 케이블이나 밴드를 사용하고 좌우 같은 거리와 횟수로 진행해.",
-        ball: "케이블이 없으면 밴드 Pallof press 또는 데드버그로 대체해.",
-        safety: "허리 힘으로 버티지 말고 배와 엉덩이를 함께 조여. 통증이 있으면 저항을 낮춰.",
-        mistake: "무거운 중량으로 몸통이 돌아가면 안정화 목적이 사라져."
-      })
+      exercise({ id: "lat-pulldown", name: "랫풀다운 · 55kg 시험", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "seated-row", name: "시티드 로우", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "straight-arm-pulldown", name: "스트레이트 암 풀다운", sets: ["10-15회", "10-15회"], restSec: 75 }),
+      exercise({ id: "rear-delt-fly", name: "리버스 펙덱", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
+      exercise({ id: "machine-biceps-curl", name: "머신 또는 EZ바 컬", sets: ["8-12회", "8-12회", "8-12회"], restSec: 75 }),
+      exercise({ id: "cable-hammer-curl", name: "해머 컬", sets: ["10-15회", "10-15회"], restSec: 75 })
     ]
   },
   THU: {
     dayLabel: "THU",
-    theme: "하체 후면 · 후면사슬",
-    trainingFocus: "힙 쓰러스트 다음 RDL로 엉덩이·햄스트링·허리의 후면사슬을 보강한다.",
+    theme: "하체 후면 · 둔근 · 복근",
+    trainingFocus: "RDL과 레그컬로 후면사슬을 훈련하되 허리 중립과 햄스트링 긴장을 우선한다.",
     warmupMain: "글루트 브릿지 + 가벼운 힙힌지",
     warmupTime: "5-7분",
     warmupNote: "RDL은 빈 봉이나 가벼운 중량으로 힙힌지와 허리 중립부터 확인해.",
-    cardioMain: "근력 후 경사 걷기",
-    cardioTime: "약 25분",
-    cardioPlan: "하체 피로가 크면 최고 경사를 15°로 제한해. 속도를 낮추더라도 손잡이에 기대지 말고 운동 후 종아리와 햄스트링을 풀어.",
+    cardioMain: "회복성 평지 걷기",
+    cardioTime: "30-40분 또는 하루 8,000-10,000보",
+    cardioPlan: "하체 피로가 크면 별도 유산소를 생략하고 일상 걸음만 채워. 강한 경사와 인터벌은 하지 않아.",
     exercises: [
-      exercise({ id: "hip-thrust", name: "힙 쓰러스트 (Hip Thrust)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 105 }),
-      exercise({
-        id: "romanian-deadlift",
-        name: "루마니안 데드리프트 (RDL)",
-        sets: ["8-10회", "8-10회", "8-10회"],
-        restSec: 105,
-        howTo: "무릎을 살짝 굽힌 채 엉덩이를 뒤로 보내고, 허리가 중립을 유지되는 범위까지만 중량을 내려. 햄스트링이 늘어나면 엉덩이를 앞으로 밀어 올라와.",
-        machine: "처음에는 스미스머신이나 가벼운 덤벨로 궤도를 익힌 뒤 중량을 올려.",
-        ball: "허리 고정이 어렵다면 케이블 풀스루나 백 익스텐션을 가볍게 진행해.",
-        safety: "허리가 둥글게 말리거나 허리에 날카로운 통증이 생기면 즉시 중단해.",
-        mistake: "스쿼트처럼 무릎을 많이 굽히거나 바를 몸에서 멀리 떼면 허리 부담이 커져."
-      }),
+      exercise({ id: "romanian-deadlift", name: "루마니안 데드리프트 (RDL)", sets: ["6-10회", "6-10회", "6-10회"], restSec: 120 }),
       exercise({ id: "leg-curl-seated", name: "레그컬 (Leg Curl)", sets: ["10-12회", "10-12회", "10-12회", "10-12회"], restSec: 85 }),
-      exercise({ id: "hip-adduction", name: "힙 어덕션 (Hip Adduction)", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({
-        id: "seated-calf-raise",
-        name: "시티드 카프레이즈 (Seated Calf Raise)",
-        sets: ["15-20회", "15-20회", "15-20회", "15-20회"],
-        restSec: 60,
-        howTo: "무릎을 굽힌 상태에서 발꿈치를 끝까지 올리고 천천히 내려 가자미근을 늘려. 마지막 3-4회가 힘든 무게를 선택해.",
-        machine: "시티드 카프레이즈 머신의 패드를 허벅지 위에 단단히 맞춰.",
-        ball: "기구가 없으면 앉아서 무릎 위에 가벼운 덤벨을 올리고 카프레이즈를 진행해.",
-        safety: "발목을 좌우로 꺾지 말고 아킬레스건 통증이 있으면 중단해.",
-        mistake: "무거운 중량으로 짧게 튕기면 가자미근보다 발목 부담이 커져."
-      })
+      exercise({ id: "hip-thrust", name: "힙 쓰러스트", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "back-extension", name: "백 익스텐션", sets: ["10-15회", "10-15회"], restSec: 75 }),
+      exercise({ id: "hip-abduction-thu", name: "힙 어브덕션", sets: ["15-20회", "15-20회"], restSec: 75 }),
+      exercise({ id: "seated-calf-raise", name: "시티드 카프레이즈", sets: ["12-20회", "12-20회", "12-20회"], restSec: 60 }),
+      exercise({ id: "hanging-knee-raise-thu", name: "복근: 행잉 니레이즈", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
     ]
   },
   FRI: {
     dayLabel: "FRI",
-    theme: "등 · 풀업 보강 · 팔 볼륨 · 복근",
-    trainingFocus: "등과 팔을 한 번 더 자극하고, 머신 바이셉 컬과 턱걸이 보강으로 팔 볼륨과 당기는 힘을 만든다.",
-    warmupMain: "가벼운 풀다운 + 팔꿈치/손목 가동",
+    theme: "어깨 · 팔 · 상부가슴",
+    trainingFocus: "몸을 넓고 크게 보이게 하는 측면·후면 어깨와 상부가슴을 보강한다.",
+    warmupMain: "밴드 외회전 + 가벼운 프레스",
     warmupTime: "5-7분",
-    warmupNote: "팔 운동은 반동보다 느린 내림 동작을 우선해.",
+    warmupNote: "월요일 기록이 떨어졌거나 어깨가 무거우면 숄더프레스 한 세트를 줄여.",
     cardioMain: "근력 후 경사 걷기",
-    cardioTime: "약 25분",
-    cardioPlan: "0°·5°·10°는 각 5분 6km/h, 15°는 5.5km/h, 20°는 4.5-5km/h. 근력 회복이 떨어지면 경사를 낮추고 팔 세트를 1세트 줄여.",
+    cardioTime: "20-30분 · 회복이 좋을 때만",
+    cardioPlan: "경사 5-10%, 4.5-5.5km/h. 피로가 있거나 하루 8,000-10,000보를 채웠다면 생략해.",
     exercises: [
-      exercise({ id: "lat-pulldown", name: "랫풀다운 (Lat Pulldown)", sets: ["12회", "12회", "12회"], restSec: 85 }),
-      exercise({
-        id: "negative-pull-up-deadhang",
-        name: "턱걸이 입문: 네거티브 풀업 + 데드행",
-        sets: ["천천히 내려오기 3회", "천천히 내려오기 3회", "데드행 15-30초"],
-        restSec: 120,
-        howTo: "박스나 발판을 밟고 위 자세에서 시작해 3-5초 동안 천천히 내려와. 마지막 세트는 어깨를 내린 상태로 매달려 버텨.",
-        machine: "철봉, 스미스머신 바, 풀업 스테이션을 사용해. 발판 높이는 점프하지 않아도 위 자세에 닿는 정도가 좋아.",
-        ball: "철봉이 부담되면 랫풀다운을 천천히 내리는 템포 3세트로 대체해.",
-        safety: "어깨가 귀 쪽으로 으쓱 올라가거나 팔꿈치 통증이 있으면 시간을 줄여.",
-        mistake: "버티려고 몸을 비틀거나 떨어지듯 내려오면 턱걸이 힘보다 관절 부담이 커져."
-      }),
-      exercise({
-        id: "pullover-machine",
-        name: "풀오버 머신 (Pullover)",
-        sets: ["12회", "12회", "12회"],
-        restSec: 85,
-        howTo: "팔꿈치를 살짝 굽힌 상태로 겨드랑이 아래 등근육을 조여 손잡이를 아래로 끌어내려. 턱걸이에 필요한 광배근 감각을 익히기 좋아.",
-        machine: "사진의 Pullover 머신을 사용해. 좌석을 맞추고 허리를 과하게 꺾지 않은 상태에서 가볍게 시작해.",
-        ball: "자리가 없으면 랫풀다운을 천천히 내리는 템포 3세트로 대체해.",
-        safety: "어깨가 앞쪽으로 찌릿하면 범위를 줄이고 무게를 낮춰.",
-        mistake: "팔 힘으로만 누르면 등 자극이 줄어드니 겨드랑이로 끌어내리는 느낌을 잡아."
-      }),
-      exercise({ id: "face-pull", name: "페이스풀 또는 리어델트 머신", sets: ["15회", "15회", "15회"], restSec: 70 }),
-      exercise({ id: "machine-biceps-curl", name: "머신 바이셉 컬", sets: ["10-12회", "10-12회", "10-12회"], restSec: 70 }),
-      exercise({ id: "triceps-pushdown", name: "트라이셉스 푸시다운 (Triceps Pushdown)", sets: ["12회", "12회", "12회"], restSec: 70 }),
-      exercise({
-        id: "cable-crunch-fri",
-        name: "복근: 케이블 크런치",
-        sets: ["10-15회", "10-15회"],
-        restSec: 75,
-        howTo: "로프를 머리 옆에 고정하고 복부를 짧게 접어 갈비뼈를 골반 쪽으로 당겨. 두 세트 모두 10-15회 범위에서 자세를 유지해.",
-        machine: "케이블 상단과 로프 손잡이를 사용해. 케이블이 없으면 복근 크런치 머신으로 대체해.",
-        ball: "기구가 없으면 천천히 내려가는 바닥 크런치 3세트로 바꿔.",
-        safety: "주 3회 누적 피로로 허리나 목이 불편하면 이 날 중량이나 세트를 먼저 낮춰.",
-        mistake: "반동과 팔 힘으로 로프를 끌어내리면 복근의 긴장이 사라져."
-      }),
-      exercise({
-        id: "ab-wheel-fri",
-        name: "복근: Ab wheel 무릎 롤아웃",
-        sets: ["6-12회", "6-12회"],
-        restSec: 75,
-        howTo: "무릎을 패드에 대고 배와 엉덩이를 조인 채 휠을 천천히 밀어. 허리가 꺾이기 전까지만 갔다가 복근으로 당겨 돌아와.",
-        machine: "Ab wheel이나 AB 슬라이드를 사용하고 처음에는 벽으로 이동 거리를 제한해.",
-        ball: "기구가 없거나 허리 고정이 어렵다면 데드버그 3세트로 대체해.",
-        safety: "허리나 어깨가 아프거나 배 힘이 풀리면 즉시 중단하고 이동 거리를 줄여.",
-        mistake: "팔로만 밀거나 허리를 아래로 처지게 하면 복근보다 허리와 어깨에 부담이 커져."
-      })
+      exercise({ id: "shoulder-press-fri", name: "숄더 프레스 · 40kg 기준", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "lateral-raise-fri", name: "머신 레터럴 레이즈", sets: ["12-20회", "12-20회", "12-20회", "12-20회"], restSec: 75 }),
+      exercise({ id: "rear-delt-fly-fri", name: "리버스 펙덱", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
+      exercise({ id: "smith-incline-press-fri", name: "인클라인 체스트 프레스", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "machine-biceps-curl-fri", name: "프리처 또는 머신 컬", sets: ["8-12회", "8-12회", "8-12회"], restSec: 75 }),
+      exercise({ id: "triceps-pushdown-fri", name: "트라이셉스 푸시다운 또는 오버헤드 익스텐션", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
     ]
   },
   SAT: {
     dayLabel: "SAT",
-    theme: "전신 펌핑 · 풀업 기술 · 인터벌",
-    trainingFocus: "무게 욕심보다 회복·펌핑·기술에 집중하고, 파머스 워크로 악력과 코어를 보강한다.",
-    warmupMain: "전신 관절 가동 + 가벼운 머신 1세트",
-    warmupTime: "5-7분",
-    warmupNote: "월-금 피로가 남았다면 전신 머신 운동은 건너뛰거나 더 가볍게 진행해.",
-    cardioMain: "300m/200m 인터벌 × 6회",
-    cardioTime: "워밍업·쿨다운 포함 약 40분",
-    cardioPlan: "근력운동 뒤 5분 5-5.5km/h 워밍업 → 300m 7km/h + 200m 5km/h를 6회 → 5분 4.5-5km/h 쿨다운. 쉬워질 때 빠른 구간만 7.5→8km/h로 올려.",
+    theme: "컨디셔닝 · 지방감량",
+    trainingFocus: "HYROX와 인터벌을 겹치지 않고 한 가지만 선택해 주간 피로를 관리한다.",
+    warmupMain: "전신 관절 가동 + 가벼운 걷기",
+    warmupTime: "7-10분",
+    warmupNote: "하체 통증이나 주간 중량 하락이 있으면 인터벌 대신 평지 걷기로 바꿔.",
+    cardioMain: "HYROX 또는 3km 인터벌 중 하나",
+    cardioTime: "약 40-60분",
+    cardioPlan: "인터벌 선택 시 5분 워밍업 → 300m 7-8km/h + 200m 5-6km/h를 6회 → 5분 쿨다운. HYROX를 했다면 인터벌은 생략해.",
     exercises: [
-      exercise({ id: "leg-press-sat", name: "레그프레스 (가벼운 펌핑)", sets: ["12-15회", "12-15회"], restSec: 75 }),
-      exercise({ id: "chest-press-sat", name: "체스트 프레스 (가벼운 펌핑)", sets: ["12-15회", "12-15회"], restSec: 75 }),
-      exercise({ id: "seated-row-sat", name: "버티컬 로우 또는 시티드 로우 (가볍게)", sets: ["12-15회", "12-15회"], restSec: 75 }),
-      exercise({
-        id: "scapular-pull-up-deadhang",
-        name: "풀업 보강: 스캐풀라 풀업 + 데드행",
-        sets: ["어깨 내리기 8회", "어깨 내리기 8회", "데드행 20-30초"],
-        restSec: 90,
-        howTo: "팔을 편 채 매달려 어깨를 귀에서 멀리 내렸다가 천천히 풀어. 팔꿈치를 굽히지 말고 등으로 몸을 살짝 들어올리는 느낌만 익혀.",
-        machine: "풀업 바나 어시스트 풀업 머신 손잡이를 사용해. 발이 바닥에 닿아도 괜찮으니 어깨 위치를 먼저 익혀.",
-        ball: "철봉이 없으면 랫풀다운에서 팔을 편 상태로 견갑만 내리는 연습 2세트로 대체해.",
-        safety: "손아귀가 먼저 풀리거나 어깨 앞쪽이 찌르면 즉시 내려와.",
-        mistake: "팔 힘으로 당기려고 팔꿈치를 굽히면 스캐풀라 연습이 아니라 불완전한 턱걸이가 돼."
-      }),
-      exercise({ id: "lateral-raise-sat", name: "델토이드 레이즈 머신 (가볍게)", sets: ["15회", "15회"], restSec: 60 }),
-      exercise({ id: "hip-abduction-sat", name: "힙 어브덕션 (가볍게)", sets: ["15회", "15회"], restSec: 60 }),
-      exercise({
-        id: "farmers-walk",
-        name: "파머스 워크 (Farmer's Walk)",
-        sets: ["30m", "30m", "30m"],
-        restSec: 90,
-        howTo: "양손에 같은 무게를 들고 가슴을 편 채 30m를 안정적으로 걸어. 보폭은 짧고 일정하게 유지해.",
-        machine: "덤벨이나 케틀벨을 사용하고 통로가 안전한지 먼저 확인해.",
-        ball: "공간이 없으면 제자리 수트케이스 홀드나 양손 덤벨 홀드 30-45초로 대체해.",
-        safety: "손아귀가 풀리기 전에 내려놓고 허리가 한쪽으로 기울면 무게를 낮춰.",
-        mistake: "어깨를 으쓱하거나 몸을 좌우로 흔들면 승모와 허리에 부담이 몰려."
-      })
+      exercise({ id: "conditioning-choice", name: "컨디셔닝: HYROX 또는 3km 인터벌", sets: ["둘 중 하나 완료"], restSec: 0 }),
+      exercise({ id: "cooldown-walk", name: "쿨다운 걷기 + 전신 스트레칭", sets: ["10분"], restSec: 0 })
+    ]
+  },
+  SUN: {
+    dayLabel: "SUN",
+    theme: "회복 · 일상 활동",
+    trainingFocus: "지방감량은 이어가되 강한 운동 없이 다음 주 근력 회복을 확보한다.",
+    warmupMain: "가벼운 관절 가동",
+    warmupTime: "3-5분",
+    warmupNote: "통증과 피로가 있으면 운동하지 않고 완전히 쉬어도 돼.",
+    cardioMain: "편안한 산책 또는 완전 휴식",
+    cardioTime: "30-60분",
+    cardioPlan: "하루 총 8,000-10,000보를 가볍게 채우되 피로하면 목표를 강제하지 않아. 숨이 차지 않는 회복 강도로 진행해.",
+    exercises: [
+      exercise({ id: "recovery-walk", name: "회복 산책", sets: ["30-60분 또는 완전 휴식"], restSec: 0 }),
+      exercise({ id: "mobility-recovery", name: "가벼운 전신 스트레칭", sets: ["5-10분"], restSec: 0 })
     ]
   }
 };
@@ -1861,7 +1643,7 @@ function buildInbodyRecommendations(records) {
 
   if (!hasCoreInbodyMetrics(latest)) {
     messages.push("이미지는 저장됐어요. 체중, 골격근량, 체지방률을 입력하면 운동·식단 조정안을 더 정확하게 만들 수 있습니다.");
-    messages.push("현재는 평일 경사 걷기 + 토요일 인터벌 + 월-토 근력 루틴을 유지하고, 저녁 단백질은 빼지 마세요.");
+    messages.push("현재는 하루 총 8,000-10,000보와 월·수·금 경사 걷기, 토요일 단일 컨디셔닝을 유지하고 저녁 단백질은 빼지 마세요.");
     return messages;
   }
 
@@ -1896,12 +1678,12 @@ function buildInbodyRecommendations(records) {
     messages.push("허리둘레가 높습니다. 체중보다 주 1회 허리둘레 감소와 하체/등 중량 유지 여부를 더 중요하게 보세요.");
   }
   if (Number.isFinite(latest.bodyFatPercent) && latest.bodyFatPercent >= 25) {
-    messages.push("마른비만 개선 단계입니다. 계획된 경사 걷기와 토요일 인터벌 외 유산소를 더 넣지 말고 근력운동 완주율과 저녁 단백질을 우선하세요.");
+    messages.push("체지방 감량 단계입니다. 매일 일상 걸음과 작은 열량 적자를 지키고, 계획된 경사 걷기와 토요일 단일 컨디셔닝 외에 강한 유산소를 더하지 마세요.");
   }
   if (Number.isFinite(latest.muscleKg) && latest.muscleKg < 30) {
     messages.push("골격근량을 더 올려야 합니다. 등·하체 운동에서 마지막 2회가 힘든 무게를 기록하고, 매주 한 종목만 소폭 증가시키세요.");
   }
-  messages.push("복근운동은 코어와 복근 모양을 만드는 역할입니다. 내장지방 감소는 식단, 계획한 유산소, 전신 근력운동 완주가 같이 맞아야 합니다.");
+  messages.push("복근운동은 코어와 복근 모양을 만드는 역할입니다. 복부 지방 감소는 매일의 식사 조절, 일상 걸음, 계획한 유산소와 전신 근력운동이 함께 맞아야 합니다.");
 
   messages.push("이 조정안은 의료 판단이 아니라 운동·식단 기록 보조입니다. 통증, 어지러움, 과피로가 있으면 강도를 낮추세요.");
   return dedupeMessages(messages).slice(0, 7);
@@ -3505,10 +3287,10 @@ function getTodayCode() {
   if (day === 5) {
     return "FRI";
   }
-  if (day === 6) {
-    return "SAT";
-  }
-  return "MON";
+      if (day === 6) {
+        return "SAT";
+      }
+      return "SUN";
 }
 
 function weekdayByCode(code) {

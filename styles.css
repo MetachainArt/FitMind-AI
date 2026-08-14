@@ -237,7 +237,7 @@ body {
 
 .day-tabs {
   display: grid;
-  grid-template-columns: repeat(6, minmax(42px, 1fr));
+  grid-template-columns: repeat(7, minmax(38px, 1fr));
   gap: var(--space-2);
   margin-bottom: var(--space-4);
 }
