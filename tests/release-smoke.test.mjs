@@ -83,7 +83,7 @@ test("weekly split matches the updated hypertrophy and recovery plan", () => {
   assert.match(wed, /id: "lat-pulldown"/);
   assert.match(wed, /id: "seated-row"/);
   assert.match(thu, /id: "romanian-deadlift"/);
-  assert.match(fri, /어깨 · 팔 · 상부가슴/);
+  assert.match(fri, /어깨 · 팔 슈퍼세트 · 상부가슴/);
   assert.match(sat, /HYROX 또는 3km 인터벌 중 하나/);
   assert.doesNotMatch(sat, /레그프레스 \(가벼운 펌핑\)|파머스 워크/);
 });
@@ -101,6 +101,20 @@ test("pull-up and dip supersets use assisted ten-rep rounds twice weekly", () =>
   assert.match(sat, /총 2라운드/);
   assert.match(app, /맨몸 10회가 안 되면 어시스트/);
   assert.match(html, /턱걸이 10 · 딥스 10/);
+});
+
+test("paired supersets are placed on Tuesday and Friday without duplicating standalone work", () => {
+  const tue = dayBlock("TUE", "WED");
+  const fri = dayBlock("FRI", "SAT");
+
+  assert.match(tue, /id: "leg-curl-extension-superset-tue"/);
+  assert.equal((tue.match(/레그컬 10-15회 → 레그익스텐션 10-15회/g) || []).length >= 3, true);
+  assert.match(tue, /id: "calf-crunch-superset-tue"/);
+  assert.equal((tue.match(/카프레이즈 15-20회 → 케이블 크런치 10-15회/g) || []).length >= 3, true);
+  assert.doesNotMatch(tue, /id: "standing-calf-raise"|id: "cable-crunch-tue"/);
+  assert.match(fri, /id: "arm-superset-fri"/);
+  assert.equal((fri.match(/이두컬 10-15회 → 삼두 푸시다운 10-15회/g) || []).length >= 3, true);
+  assert.doesNotMatch(fri, /id: "machine-biceps-curl-fri"|id: "triceps-pushdown-fri"/);
 });
 
 test("strong cardio is limited while daily recovery activity remains", () => {

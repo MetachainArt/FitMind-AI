@@ -11,7 +11,7 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "pullup_dip_superset_v11";
+const PLAN_VERSION = "paired_supersets_v12";
 const RETIRED_EXERCISE_IDS = new Set();
 const RETIRED_TEMPLATE_IDS = new Set();
 const RETIRED_EXERCISE_NAME_PATTERNS = [];
@@ -91,7 +91,10 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "russian-twist-sat": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
   "farmers-walk": { howTo: "파머스 워크 운동방법", machine: "덤벨 파머스 워크 자세" },
   "pullup-dip-superset-wed": { howTo: "어시스트 턱걸이 딥스 슈퍼세트 운동방법", machine: "어시스트 풀업 딥스 머신 사용법" },
-  "pullup-dip-superset-sat": { howTo: "어시스트 턱걸이 딥스 슈퍼세트 운동방법", machine: "어시스트 풀업 딥스 머신 사용법" }
+  "pullup-dip-superset-sat": { howTo: "어시스트 턱걸이 딥스 슈퍼세트 운동방법", machine: "어시스트 풀업 딥스 머신 사용법" },
+  "leg-curl-extension-superset-tue": { howTo: "레그컬 레그익스텐션 슈퍼세트 운동방법", machine: "레그컬 레그익스텐션 머신 사용법" },
+  "calf-crunch-superset-tue": { howTo: "카프레이즈 케이블 크런치 슈퍼세트", machine: "카프레이즈 케이블 크런치 머신 사용법" },
+  "arm-superset-fri": { howTo: "이두컬 삼두 푸시다운 슈퍼세트 운동방법", machine: "케이블 이두컬 삼두 푸시다운 사용법" }
 };
 
 const ANALYTICS_SCOPES = ["day", "week", "month"];
@@ -172,8 +175,8 @@ const ROUTINE_PLAN = {
   },
   TUE: {
     dayLabel: "TUE",
-    theme: "하체 전면 · 둔근 · 복근",
-    trainingFocus: "레그프레스를 주력으로 하고 무릎 정렬과 완전한 가동범위를 중량보다 우선한다.",
+    theme: "하체 전면 · 슈퍼세트 · 복근",
+    trainingFocus: "레그프레스를 먼저 집중해서 끝낸 뒤, 반대 근육과 비경쟁 부위를 슈퍼세트로 묶어 자세와 시간을 함께 관리한다.",
     warmupMain: "고관절/무릎/발목 워밍업",
     warmupTime: "5-7분",
     warmupNote: "레그프레스는 85kg 가벼운 준비 세트 후 다음 한 단계인 90-95kg를 시험해.",
@@ -182,12 +185,31 @@ const ROUTINE_PLAN = {
     cardioPlan: "하체 회복을 방해하지 않는 편한 속도. 걸음 수를 이미 채웠거나 다리가 무거우면 별도 유산소는 생략해.",
     exercises: [
       exercise({ id: "leg-press", name: "레그프레스 · 90-95kg 시험", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
-      exercise({ id: "leg-extension", name: "레그 익스텐션", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 }),
+      exercise({
+        id: "leg-curl-extension-superset-tue",
+        name: "슈퍼세트 A: 레그컬 10-15회 → 레그익스텐션 10-15회",
+        sets: ["레그컬 10-15회 → 레그익스텐션 10-15회", "레그컬 10-15회 → 레그익스텐션 10-15회", "레그컬 10-15회 → 레그익스텐션 10-15회"],
+        restSec: 90,
+        howTo: "레그컬 10-15회 직후 레그익스텐션 10-15회를 수행하면 1라운드야. 라운드가 끝난 뒤 90초 쉬고 총 3라운드 진행해.",
+        machine: "두 머신의 좌석과 회전축을 각각 무릎 관절에 맞춰. 첫 주는 각 운동에서 2-3회 여유가 남는 중량으로 시작해.",
+        ball: "시티드 레그컬이 없으면 라잉 레그컬을 사용하고, 레그익스텐션 머신이 없으면 가벼운 스텝업으로 바꿔.",
+        safety: "무릎 통증이 생기거나 허벅지 뒤쪽이 당기면 즉시 중량과 가동범위를 낮춰. 반동과 실패 반복은 사용하지 않아.",
+        mistake: "머신 이동을 서두르느라 자세 세팅을 생략하거나 두 운동을 모두 실패지점까지 밀지 않아."
+      }),
       exercise({ id: "bulgarian-split-squat", name: "불가리안 스플릿 스쿼트", sets: ["8-12회/쪽", "8-12회/쪽"], restSec: 90 }),
       exercise({ id: "hip-abduction", name: "힙 어브덕션 · 60kg", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
       exercise({ id: "hip-adduction", name: "힙 어덕션 · 30kg", sets: ["10-15회", "10-15회"], restSec: 75 }),
-      exercise({ id: "standing-calf-raise", name: "스탠딩 카프레이즈", sets: ["10-15회", "10-15회", "10-15회"], restSec: 60 }),
-      exercise({ id: "cable-crunch-tue", name: "복근: 케이블 크런치", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
+      exercise({
+        id: "calf-crunch-superset-tue",
+        name: "슈퍼세트 B: 카프레이즈 15-20회 → 케이블 크런치 10-15회",
+        sets: ["카프레이즈 15-20회 → 케이블 크런치 10-15회", "카프레이즈 15-20회 → 케이블 크런치 10-15회", "카프레이즈 15-20회 → 케이블 크런치 10-15회"],
+        restSec: 75,
+        howTo: "카프레이즈 15-20회 직후 케이블 크런치 10-15회를 하면 1라운드야. 라운드가 끝난 뒤 75초 쉬고 총 3라운드 진행해.",
+        machine: "카프레이즈는 발목을 충분히 내렸다 올리고, 크런치는 로프를 머리 옆에 고정한 채 갈비뼈를 골반 쪽으로 말아 내려.",
+        ball: "케이블이 없으면 카프레이즈와 매트 리버스 크런치를 같은 반복수로 묶어.",
+        safety: "아킬레스건이나 허리에 통증이 있으면 해당 운동을 중단해. 크런치에서 팔로 로프를 잡아당기지 않아.",
+        mistake: "카프레이즈를 튕기거나 크런치를 고관절 접기 동작으로 바꾸면 목표 근육의 긴장이 줄어들어."
+      })
     ]
   },
   WED: {
@@ -240,8 +262,8 @@ const ROUTINE_PLAN = {
   },
   FRI: {
     dayLabel: "FRI",
-    theme: "어깨 · 팔 · 상부가슴",
-    trainingFocus: "몸을 넓고 크게 보이게 하는 측면·후면 어깨와 상부가슴을 보강한다.",
+    theme: "어깨 · 팔 슈퍼세트 · 상부가슴",
+    trainingFocus: "측면·후면 어깨와 상부가슴을 먼저 훈련하고, 이두와 삼두는 같은 라운드로 묶어 효율적으로 마무리한다.",
     warmupMain: "밴드 외회전 + 가벼운 프레스",
     warmupTime: "5-7분",
     warmupNote: "월요일 기록이 떨어졌거나 어깨가 무거우면 숄더프레스 한 세트를 줄여.",
@@ -253,8 +275,17 @@ const ROUTINE_PLAN = {
       exercise({ id: "lateral-raise-fri", name: "머신 레터럴 레이즈", sets: ["12-20회", "12-20회", "12-20회", "12-20회"], restSec: 75 }),
       exercise({ id: "rear-delt-fly-fri", name: "리버스 펙덱", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
       exercise({ id: "smith-incline-press-fri", name: "인클라인 체스트 프레스", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
-      exercise({ id: "machine-biceps-curl-fri", name: "프리처 또는 머신 컬", sets: ["8-12회", "8-12회", "8-12회"], restSec: 75 }),
-      exercise({ id: "triceps-pushdown-fri", name: "트라이셉스 푸시다운 또는 오버헤드 익스텐션", sets: ["10-15회", "10-15회", "10-15회"], restSec: 75 })
+      exercise({
+        id: "arm-superset-fri",
+        name: "팔 슈퍼세트: 이두컬 10-15회 → 삼두 푸시다운 10-15회",
+        sets: ["이두컬 10-15회 → 삼두 푸시다운 10-15회", "이두컬 10-15회 → 삼두 푸시다운 10-15회", "이두컬 10-15회 → 삼두 푸시다운 10-15회"],
+        restSec: 90,
+        howTo: "이두컬 10-15회 직후 쉬지 않고 삼두 푸시다운 10-15회를 하면 1라운드야. 라운드 뒤 90초 쉬고 총 3라운드 진행해.",
+        machine: "케이블 양쪽을 쓸 수 있으면 한쪽은 컬, 다른 쪽은 푸시다운으로 미리 세팅해. 각각 1-2회 여유가 남는 중량을 따로 선택해.",
+        ball: "케이블 한 대만 가능하면 덤벨컬과 케이블 푸시다운을 묶거나, 머신 컬과 오버헤드 익스텐션으로 바꿔.",
+        safety: "팔꿈치가 아프면 중량을 낮추고 손목을 중립으로 유지해. 몸통 반동이나 실패 반복은 사용하지 않아.",
+        mistake: "두 운동에 같은 중량을 맞추려 하지 말고, 팔꿈치가 앞뒤로 크게 움직이지 않게 고정해."
+      })
     ]
   },
   SAT: {
