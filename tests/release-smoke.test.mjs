@@ -88,6 +88,21 @@ test("weekly split matches the updated hypertrophy and recovery plan", () => {
   assert.doesNotMatch(sat, /레그프레스 \(가벼운 펌핑\)|파머스 워크/);
 });
 
+test("pull-up and dip supersets use assisted ten-rep rounds twice weekly", () => {
+  const wed = dayBlock("WED", "THU");
+  const sat = dayBlock("SAT", "SUN");
+
+  assert.match(wed, /id: "pullup-dip-superset-wed"/);
+  assert.equal((wed.match(/턱걸이 10회 → 딥스 10회/g) || []).length >= 3, true);
+  assert.match(wed, /총 3라운드/);
+  assert.match(wed, /restSec: 120/);
+  assert.match(sat, /id: "pullup-dip-superset-sat"/);
+  assert.equal((sat.match(/턱걸이 10회 → 딥스 10회/g) || []).length >= 2, true);
+  assert.match(sat, /총 2라운드/);
+  assert.match(app, /맨몸 10회가 안 되면 어시스트/);
+  assert.match(html, /턱걸이 10 · 딥스 10/);
+});
+
 test("strong cardio is limited while daily recovery activity remains", () => {
   const tue = dayBlock("TUE", "WED");
   const thu = dayBlock("THU", "FRI");

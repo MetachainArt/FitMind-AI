@@ -11,7 +11,7 @@ const WEEKDAYS = [
 ];
 
 const STORAGE_KEY = "fitmind_state_v1";
-const PLAN_VERSION = "daily_fat_loss_hypertrophy_v10";
+const PLAN_VERSION = "pullup_dip_superset_v11";
 const RETIRED_EXERCISE_IDS = new Set();
 const RETIRED_TEMPLATE_IDS = new Set();
 const RETIRED_EXERCISE_NAME_PATTERNS = [];
@@ -89,7 +89,9 @@ const EXERCISE_VIDEO_QUERY_OVERRIDES = {
   "lateral-raise-sat": { howTo: "델토이드 레이즈 머신 운동방법", machine: "Deltoid Raise 머신 사용법" },
   "hip-abduction-sat": { howTo: "힙 어브덕션 운동방법", machine: "힙 어브덕션 머신 사용법" },
   "russian-twist-sat": { howTo: "러시안 트위스트 운동방법", machine: "러시안 트위스트 도구 사용법" },
-  "farmers-walk": { howTo: "파머스 워크 운동방법", machine: "덤벨 파머스 워크 자세" }
+  "farmers-walk": { howTo: "파머스 워크 운동방법", machine: "덤벨 파머스 워크 자세" },
+  "pullup-dip-superset-wed": { howTo: "어시스트 턱걸이 딥스 슈퍼세트 운동방법", machine: "어시스트 풀업 딥스 머신 사용법" },
+  "pullup-dip-superset-sat": { howTo: "어시스트 턱걸이 딥스 슈퍼세트 운동방법", machine: "어시스트 풀업 딥스 머신 사용법" }
 };
 
 const ANALYTICS_SCOPES = ["day", "week", "month"];
@@ -190,21 +192,30 @@ const ROUTINE_PLAN = {
   },
   WED: {
     dayLabel: "WED",
-    theme: "등 · 후면어깨 · 이두",
-    trainingFocus: "수직 당기기와 수평 당기기를 균형 있게 진행하고 반동 없는 광배 수축을 우선한다.",
-    warmupMain: "어깨 가동성 + 가벼운 밴드 로우",
+    theme: "턱걸이·딥스 슈퍼세트 · 등 · 이두",
+    trainingFocus: "턱걸이와 딥스를 한 라운드로 묶고, 필요한 만큼 보조를 사용해 10회씩 정확하게 완성한다.",
+    warmupMain: "어깨 가동성 + 가벼운 풀다운·푸시다운",
     warmupTime: "5-7분",
-    warmupNote: "랫풀다운은 50kg 준비 세트 후 55kg에서 8-12회를 시험해.",
+    warmupNote: "맨몸 10회가 안 되면 어시스트 머신이나 밴드를 사용해. 슈퍼세트는 턱걸이 10회 직후 딥스 10회, 그 뒤 120초 휴식이야.",
     cardioMain: "근력 후 경사 걷기",
     cardioTime: "25-30분",
     cardioPlan: "경사 5-10%, 4.5-5.5km/h. 숨은 차지만 대화가 가능한 강도로 유지하고 하루 총 8,000-10,000보를 목표로 해.",
     exercises: [
-      exercise({ id: "lat-pulldown", name: "랫풀다운 · 55kg 시험", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
-      exercise({ id: "seated-row", name: "시티드 로우", sets: ["8-12회", "8-12회", "8-12회", "8-12회"], restSec: 120 }),
-      exercise({ id: "straight-arm-pulldown", name: "스트레이트 암 풀다운", sets: ["10-15회", "10-15회"], restSec: 75 }),
+      exercise({
+        id: "pullup-dip-superset-wed",
+        name: "슈퍼세트 A: 턱걸이 10회 → 딥스 10회",
+        sets: ["턱걸이 10회 → 딥스 10회", "턱걸이 10회 → 딥스 10회", "턱걸이 10회 → 딥스 10회"],
+        restSec: 120,
+        howTo: "턱걸이 10회를 끝낸 뒤 쉬지 않고 딥스 10회를 수행하면 1라운드야. 한 라운드가 끝난 뒤 120초 쉬고 총 3라운드 진행해.",
+        machine: "맨몸 10회가 안 되면 어시스트 풀업·딥스 머신을 사용해. 보조 중량은 10회를 정확히 하고 1-2회 여유가 남는 수준으로 맞춰.",
+        ball: "어시스트 머신이 없으면 밴드 턱걸이 10회와 체스트프레스 또는 삼두 푸시다운 10회를 묶어 진행해.",
+        safety: "반동이나 실패 반복은 사용하지 않아. 어깨 앞쪽이나 팔꿈치에 통증이 생기면 딥스를 체스트프레스 또는 푸시다운으로 바꿔.",
+        mistake: "맨몸 횟수에 집착해 가동범위를 줄이거나 턱만 바 위로 내밀면 턱걸이 실력이 제대로 쌓이지 않아."
+      }),
+      exercise({ id: "lat-pulldown", name: "랫풀다운 · 55kg 시험", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
+      exercise({ id: "seated-row", name: "시티드 로우", sets: ["8-12회", "8-12회", "8-12회"], restSec: 120 }),
       exercise({ id: "rear-delt-fly", name: "리버스 펙덱", sets: ["12-20회", "12-20회", "12-20회"], restSec: 75 }),
-      exercise({ id: "machine-biceps-curl", name: "머신 또는 EZ바 컬", sets: ["8-12회", "8-12회", "8-12회"], restSec: 75 }),
-      exercise({ id: "cable-hammer-curl", name: "해머 컬", sets: ["10-15회", "10-15회"], restSec: 75 })
+      exercise({ id: "machine-biceps-curl", name: "머신 또는 EZ바 컬", sets: ["8-12회", "8-12회", "8-12회"], restSec: 75 })
     ]
   },
   THU: {
@@ -248,15 +259,26 @@ const ROUTINE_PLAN = {
   },
   SAT: {
     dayLabel: "SAT",
-    theme: "컨디셔닝 · 지방감량",
-    trainingFocus: "HYROX와 인터벌을 겹치지 않고 한 가지만 선택해 주간 피로를 관리한다.",
+    theme: "턱걸이·딥스 기술 · 컨디셔닝",
+    trainingFocus: "가벼운 보조 슈퍼세트로 턱걸이 기술을 한 번 더 연습하고, HYROX와 인터벌은 한 가지만 선택한다.",
     warmupMain: "전신 관절 가동 + 가벼운 걷기",
     warmupTime: "7-10분",
-    warmupNote: "하체 통증이나 주간 중량 하락이 있으면 인터벌 대신 평지 걷기로 바꿔.",
+    warmupNote: "슈퍼세트는 수요일보다 보조를 크게 잡아 3회 이상 여유를 남겨. 주간 피로가 크면 슈퍼세트나 인터벌 중 하나를 생략해.",
     cardioMain: "HYROX 또는 3km 인터벌 중 하나",
     cardioTime: "약 40-60분",
     cardioPlan: "인터벌 선택 시 5분 워밍업 → 300m 7-8km/h + 200m 5-6km/h를 6회 → 5분 쿨다운. HYROX를 했다면 인터벌은 생략해.",
     exercises: [
+      exercise({
+        id: "pullup-dip-superset-sat",
+        name: "기술 슈퍼세트: 턱걸이 10회 → 딥스 10회",
+        sets: ["턱걸이 10회 → 딥스 10회", "턱걸이 10회 → 딥스 10회"],
+        restSec: 120,
+        howTo: "턱걸이 10회 직후 딥스 10회를 수행하고 120초 쉬어. 토요일은 총 2라운드만 진행해.",
+        machine: "수요일보다 보조 중량을 크게 설정해 모든 반복을 빠르고 정확하게 끝내고 3회 정도 여유를 남겨.",
+        ball: "어시스트 머신이 없으면 밴드 턱걸이와 체스트프레스 또는 삼두 푸시다운을 10회씩 묶어.",
+        safety: "HYROX나 인터벌 전에 실패지점까지 가지 않아. 어깨·팔꿈치 통증이나 주간 중량 하락이 있으면 이 슈퍼세트를 생략해.",
+        mistake: "수요일과 같은 보조 중량으로 무리하면 컨디셔닝 품질과 다음 주 회복이 떨어질 수 있어."
+      }),
       exercise({ id: "conditioning-choice", name: "컨디셔닝: HYROX 또는 3km 인터벌", sets: ["둘 중 하나 완료"], restSec: 0 }),
       exercise({ id: "cooldown-walk", name: "쿨다운 걷기 + 전신 스트레칭", sets: ["10분"], restSec: 0 })
     ]
@@ -1026,9 +1048,7 @@ function renderAll() {
 function renderHeader() {
   const weekday = weekdayByCode(selectedDay);
   const dateLabel = formatDateLabel(new Date());
-  const isSunday = new Date().getDay() === 0;
-  const weekendHint = isSunday ? " | 일요일은 회복일이라 월요일 루틴을 기본 추천 중" : "";
-  ui.todayLabel.textContent = `${dateLabel} | 선택 루틴: ${weekday.title}${weekendHint}`;
+  ui.todayLabel.textContent = `${dateLabel} | 선택 루틴: ${weekday.title}`;
 }
 
 function getExerciseIcon(exercise) {
