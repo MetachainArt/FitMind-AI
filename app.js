@@ -108,23 +108,37 @@ const WORKOUT_PERSIST_INTERVAL_MS = 30000;
 const FIT_GOALS = ["체중감량", "근육증가", "체력향상", "복근강화", "건강관리"];
 const FIT_INJURY_AREAS = ["무릎", "허리", "어깨", "손목", "팔꿈치", "발목"];
 const FIT_DAY_PARTS = ["하체", "등", "가슴/어깨", "하체 후면", "전신", "복근"];
+const LEGACY_GENERATOR_TAGS = {
+  "tpl-squat": { place: ["헬스장", "집"], equipment: ["머신", "맨몸"] },
+  "tpl-hip-hinge": { place: ["헬스장", "집"], equipment: ["머신", "밴드", "맨몸"] },
+  "tpl-lat-pull": { place: ["헬스장", "집"], equipment: ["머신", "밴드"] },
+  "tpl-row": { place: ["헬스장", "집"], equipment: ["머신", "케이블", "밴드"] },
+  "tpl-push": { place: ["헬스장", "집", "야외"], equipment: ["머신", "맨몸"] },
+  "tpl-shoulder": { place: ["헬스장", "집"], equipment: ["머신"] },
+  "tpl-hanging-knee-raise": { place: ["헬스장", "집", "야외"], equipment: ["맨몸"] },
+  "tpl-ab-wheel": { place: ["헬스장", "집"], equipment: ["맨몸"] }
+};
 const DEFAULT_GENERATOR_TEMPLATES = {
   exercises: [
-    { id: "tpl-squat", name: "레그프레스 또는 스쿼트 머신", part: "하체", place: ["헬스장", "집"], equipment: ["머신", "맨몸"], goals: ["체중감량", "근육증가", "건강관리"], avoid: ["무릎"] },
-    { id: "tpl-hip-hinge", name: "힙 쓰러스트 머신 또는 레그컬", part: "하체 후면", place: ["헬스장", "집"], equipment: ["머신", "밴드", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
-    { id: "tpl-lat-pull", name: "랫풀다운 또는 보조 풀업 머신", part: "등", place: ["헬스장", "집"], equipment: ["머신", "밴드"], goals: ["근육증가", "풀업", "건강관리"], avoid: ["어깨"] },
-    { id: "tpl-row", name: "버티컬 로우 또는 시티드 로우 머신", part: "등", place: ["헬스장", "집"], equipment: ["머신", "케이블", "밴드"], goals: ["근육증가", "체력향상", "풀업"], avoid: ["허리"] },
+    { id: "tpl-squat", name: "레그프레스 또는 스쿼트 머신", part: "하체", place: ["헬스장"], equipment: ["머신"], goals: ["체중감량", "근육증가", "건강관리"], avoid: ["무릎"] },
+    { id: "tpl-hip-hinge", name: "힙 쓰러스트 머신 또는 레그컬", part: "하체 후면", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
+    { id: "tpl-lat-pull", name: "랫풀다운 또는 보조 풀업 머신", part: "등", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "풀업", "건강관리"], avoid: ["어깨"] },
+    { id: "tpl-row", name: "버티컬 로우 또는 시티드 로우 머신", part: "등", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "체력향상", "풀업"], avoid: ["허리"] },
     { id: "tpl-pullover", name: "풀오버 머신", part: "등", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "풀업"], avoid: ["어깨"] },
-    { id: "tpl-push", name: "체스트 프레스 머신 또는 펙덱", part: "가슴/어깨", place: ["헬스장", "집", "야외"], equipment: ["머신", "맨몸"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
-    { id: "tpl-shoulder", name: "숄더 프레스 또는 델토이드 레이즈 머신", part: "가슴/어깨", place: ["헬스장", "집"], equipment: ["머신"], goals: ["근육증가"], avoid: ["어깨"] },
+    { id: "tpl-push", name: "체스트 프레스 머신 또는 펙덱", part: "가슴/어깨", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
+    { id: "tpl-shoulder", name: "숄더 프레스 또는 델토이드 레이즈 머신", part: "가슴/어깨", place: ["헬스장"], equipment: ["머신"], goals: ["근육증가"], avoid: ["어깨"] },
+    { id: "tpl-bodyweight-squat", name: "맨몸 스쿼트", part: "하체", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["체중감량", "근육증가", "건강관리"], avoid: ["무릎"] },
+    { id: "tpl-glute-bridge", name: "맨몸 글루트 브리지", part: "하체 후면", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["근육증가", "체력향상"], avoid: ["허리"] },
+    { id: "tpl-push-up", name: "무릎 푸시업", part: "가슴/어깨", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["근육증가", "체력향상"], avoid: ["어깨", "손목"] },
+    { id: "tpl-band-row", name: "발에 밴드를 건 시티드 밴드 로우", part: "등", place: ["헬스장", "집", "야외"], equipment: ["밴드"], goals: ["근육증가", "체력향상", "풀업"], avoid: ["허리", "어깨"] },
     { id: "tpl-plank", name: "플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: ["허리"] },
     { id: "tpl-side-plank", name: "사이드 플랭크", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["어깨"] },
     { id: "tpl-deadbug", name: "데드버그", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화", "건강관리"], avoid: [] },
     { id: "tpl-cable-crunch", name: "케이블 크런치", part: "복근", place: ["헬스장"], equipment: ["케이블"], goals: ["복근강화", "근육증가"], avoid: ["허리"] },
-    { id: "tpl-hanging-knee-raise", name: "행잉 니레이즈", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["어깨", "허리"] },
+    { id: "tpl-hanging-knee-raise", name: "행잉 니레이즈", part: "복근", place: ["헬스장", "집", "야외"], equipment: ["철봉"], goals: ["복근강화"], avoid: ["어깨", "허리"] },
     { id: "tpl-reverse-crunch", name: "리버스 크런치", part: "복근", place: ["헬스장", "집"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["허리"] },
     { id: "tpl-pallof-press", name: "Pallof press", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "건강관리"], avoid: [] },
-    { id: "tpl-ab-wheel", name: "Ab wheel 무릎 롤아웃", part: "복근", place: ["헬스장", "집"], equipment: ["맨몸"], goals: ["복근강화"], avoid: ["허리", "어깨"] },
+    { id: "tpl-ab-wheel", name: "Ab wheel 무릎 롤아웃", part: "복근", place: ["헬스장", "집"], equipment: ["AB휠"], goals: ["복근강화"], avoid: ["허리", "어깨"] },
     { id: "tpl-cable-woodchop", name: "케이블 우드찹 또는 밴드 우드찹", part: "복근", place: ["헬스장", "집"], equipment: ["케이블", "밴드"], goals: ["복근강화", "체중감량", "건강관리"], avoid: ["허리"] },
     { id: "tpl-cardio", name: "대화 가능한 강도 유산소", part: "유산소", place: ["헬스장", "집", "야외"], equipment: ["러닝", "자전거", "맨몸"], goals: ["체중감량", "체력향상", "건강관리"], avoid: ["무릎"] },
     { id: "tpl-mobility", name: "관절 가동성 + 스트레칭", part: "회복", place: ["헬스장", "집", "야외"], equipment: ["맨몸"], goals: ["건강관리"], avoid: [] }
@@ -453,6 +467,10 @@ const ui = {
   resetGeneratorTemplatesBtn: document.getElementById("resetGeneratorTemplatesBtn")
 };
 
+let storageReadFailure = "";
+let storageSnapshot = null;
+let storageConflict = false;
+const STORAGE_CONFLICT_MESSAGE = "다른 탭에서 저장 데이터를 변경해 이 탭의 저장을 중단했습니다. 이 화면의 미저장 기록은 전체 데이터 백업으로 보관한 뒤 다른 탭을 닫고 새로고침해 주세요. 새로고침하면 다른 탭의 최신 기록을 불러옵니다.";
 let state = loadState();
 let selectedDay = selectInitialDay();
 let analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
@@ -468,17 +486,36 @@ let workoutTimer = {
 let lastWorkoutPersistMs = 0;
 let editorSelectedExerciseId = null;
 let pendingInbodyImageDataUrl = "";
+let workoutJournal = null;
+let routinePlanner = null;
 
 bootstrap();
 
 function bootstrap() {
   prepareLoadedState();
+  if (window.WorkoutJournal) workoutJournal = window.WorkoutJournal.create({
+    mount: document.getElementById("workoutJournalPanel"), getState: () => state,
+    getSession: getCurrentSession, getPlan: getCurrentPlan, persist: persistState,
+    render: renderAll, getElapsed: getWorkoutElapsedSec, stopRest: stopRestTimer, pauseWorkout: () => pauseWorkoutTimer({ persist: false }),
+    syncSummary: syncExistingSummary, announce
+  });
+  if (window.RoutinePlanner) routinePlanner = window.RoutinePlanner.create({
+    mount: document.getElementById("routineApplyPanel"), getState: () => state,
+    getRoutine: getPlanByDay, normalize: normalizePlanForDay, sync: syncSessionToCurrentPlan,
+    persist: persistState, render: renderAll, announce
+  });
   bindEvents();
   renderAll();
+  if (storageReadFailure) setStorageNotice(storageReadFailure);
   announce("좋아, 오늘 순서대로 하나씩 진행해보자.");
 }
 
 function bindEvents() {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== STORAGE_KEY && event.key !== null) return;
+    if (event.storageArea && event.storageArea !== window.localStorage) return;
+    checkStorageSnapshot();
+  });
   window.addEventListener("pagehide", () => {
     applyWorkoutElapsedTick(getCurrentSession(), { forcePersist: true });
   });
@@ -551,61 +588,11 @@ function bindEvents() {
   });
 
   ui.completeSetBtn.addEventListener("click", () => {
-    const active = getActiveExercise();
-    if (!active) {
-      return;
-    }
-    const session = getCurrentSession();
-    const done = getSetDone(active.id);
-    const target = active.sets.length;
-
-    if (done >= target) {
-      announce("이 운동은 이미 목표 세트를 다 했어. 다음으로 넘어가자.");
-      return;
-    }
-
-    session.setDoneByExercise[active.id] = done + 1;
-    maybeStartWorkoutTimer();
-    if (done + 1 >= target) {
-      session.completedExerciseMap[active.id] = true;
-      moveActiveToNextIncomplete();
-      announce("좋아, 이 운동 끝! 다음 운동으로 넘어가자.");
-    } else {
-      announce(`좋아, ${done + 1}세트 완료. 잠깐 쉬고 다음 세트 가자.`);
-    }
-    session.updatedAt = new Date().toISOString();
-    const setSaved = persistState();
-    const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
-    if (isAllDone) {
-      saveCurrentSummary({ auto: true });
-    }
-    startRestTimer(active.restSec);
-    renderAll();
-    if (!setSaved) {
-      announce("세트는 화면에 반영됐지만 저장하지 못했어. 데이터 백업 후 저장공간을 확인해 줘.");
-    }
+    completeCurrentExercise("set");
   });
 
   ui.markExerciseDoneBtn.addEventListener("click", () => {
-    const active = getActiveExercise();
-    if (!active) {
-      return;
-    }
-    maybeStartWorkoutTimer();
-    const session = getCurrentSession();
-    session.setDoneByExercise[active.id] = active.sets.length;
-    session.completedExerciseMap[active.id] = true;
-    session.updatedAt = new Date().toISOString();
-    moveActiveToNextIncomplete();
-    const exerciseSaved = persistState();
-    const isAllDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
-    if (isAllDone) {
-      saveCurrentSummary({ auto: true });
-    }
-    renderAll();
-    announce(exerciseSaved
-      ? "운동 완료 처리했어. 다음 운동으로 이어가자."
-      : "운동 완료는 화면에 반영됐지만 저장하지 못했어. 저장공간을 확인해 줘.");
+    completeCurrentExercise("exercise");
   });
 
   ui.timerToggleBtn.addEventListener("click", () => {
@@ -698,10 +685,11 @@ function bindEvents() {
     if (!ok) {
       return;
     }
-    const key = makeSessionKey(selectedDay);
-    delete state.sessions[key];
     stopRestTimer();
     pauseWorkoutTimer();
+    const key = state.currentSessionKey;
+    delete state.sessions[key];
+    state.history = (state.history || []).filter((entry) => entry.sessionKey !== key);
     editorSelectedExerciseId = null;
     ensureSession(selectedDay);
     const resetSaved = persistState();
@@ -984,6 +972,12 @@ function bindEvents() {
     });
   }
 
+  document.getElementById("loadPlanProfileBtn")?.addEventListener("click", () => {
+    restoreGeneratorProfile(state.generatedPlanDraft, { includeGoalDetails: true });
+    renderGeneratorPanel();
+    ui.generatorMessage.textContent = "열린 계획의 입력 조건을 불러왔어요. 달라진 신체정보·운동 조건·주의사항을 확인한 뒤 요청해 주세요.";
+  });
+
   if (ui.savedGeneratedPlansList) {
     ui.savedGeneratedPlansList.addEventListener("click", (event) => {
       const target = event.target;
@@ -999,9 +993,10 @@ function bindEvents() {
         return;
       }
       state.generatedPlanDraft = plan;
+      restoreGeneratorProfile(plan, { includeGoalDetails: true });
       persistState();
       renderGeneratorPanel();
-      ui.generatorMessage.textContent = "저장한 맞춤 계획을 불러왔어요.";
+      ui.generatorMessage.textContent = "계획과 입력 조건을 불러왔어요. 현재 주의사항·알레르기와 다른 부분을 확인해 주세요.";
     });
   }
 
@@ -1074,6 +1069,56 @@ function renderAll() {
   renderInbodyPanel();
   renderGeneratorPanel();
   renderTimer();
+  workoutJournal?.render();
+}
+
+function syncExistingSummary() {
+  const session = getCurrentSession();
+  if (state.history.some(entry => entry.sessionKey === session.sessionKey)) {
+    upsertHistorySummary(buildCurrentSummary());
+  }
+}
+
+function completeCurrentExercise(kind) {
+  const active = getActiveExercise();
+  if (!active) return;
+  const session = getCurrentSession(), done = getSetDone(active.id);
+  if (done >= active.sets.length) return;
+  const before = JSON.parse(JSON.stringify({ session, history: state.history }));
+  if (workoutJournal && !(kind === "set" ? workoutJournal.captureSet(active, done) : workoutJournal.captureCompletion(active, "exercise"))) return;
+  applyWorkoutElapsedTick(session, { suppressPersist: true });
+  session.setDoneByExercise[active.id] = kind === "set" ? done + 1 : active.sets.length;
+  if (session.setDoneByExercise[active.id] >= active.sets.length) {
+    session.completedExerciseMap[active.id] = true;
+    moveActiveToNextIncomplete();
+  }
+  session.updatedAt = new Date().toISOString();
+  session.sourcePlanId = getCurrentPlan().sourcePlanId || "";
+  const allDone = getCompletedExerciseCount() >= getCurrentPlan().exercises.length;
+  const shouldStart = !workoutTimer.running && session.workoutElapsedSec === 0 && !allDone;
+  if (allDone) { session.workoutTimerRunning = false; session.workoutLastTickMs = null; }
+  else if (shouldStart) { session.workoutTimerRunning = true; session.workoutLastTickMs = Date.now(); }
+  if (allDone || state.history.some(entry => entry.sessionKey === session.sessionKey)) {
+    const summary = buildCurrentSummary();
+    upsertHistorySummary(summary);
+    session.lastSavedAt = summary.savedAt;
+  }
+  if (!persistState()) {
+    state.sessions[session.sessionKey] = before.session;
+    state.history = before.history;
+    announce("저장하지 못해 완료 처리를 취소했어. 기존 기록은 유지했어. 저장공간 또는 다른 탭의 변경을 확인해 줘.");
+    return;
+  }
+  if (allDone) {
+    stopRestTimer();
+    if (workoutTimer.intervalId) window.clearInterval(workoutTimer.intervalId);
+    workoutTimer = { intervalId: null, running: false };
+  } else {
+    if (shouldStart) startWorkoutTimer({ persist: false });
+    if (kind === "set") startRestTimer(active.restSec);
+  }
+  renderAll();
+  announce(allDone ? "오늘 루틴을 완료하고 기록을 저장했어." : kind === "set" ? "세트 완료를 저장했어. 잠깐 쉬고 이어가자." : "운동 완료를 저장했어. 다음 운동으로 이어가자.");
 }
 
 function renderHeader() {
@@ -1177,7 +1222,11 @@ function renderQueue() {
 }
 
 function renderRoutineEditor() {
-  const plan = getCurrentPlan();
+  const plan = getPlanByDay(selectedDay);
+  const scopeNote = document.getElementById("routineEditorScope");
+  if (scopeNote) scopeNote.textContent = getCurrentSession()?.planSnapshot
+    ? "오늘 진행 중인 루틴은 따로 보존되어 있습니다. 여기서 저장하는 변경은 다음 운동부터 반영됩니다. 오늘만 대체는 현재 운동에서 사용할 수 있습니다."
+    : "이 요일의 기본 운동 구성을 편집합니다.";
   const exercises = plan.exercises;
 
   if (!Array.isArray(exercises) || exercises.length === 0) {
@@ -1307,7 +1356,7 @@ function buildCurrentSummary() {
   const session = getCurrentSession();
   return {
     sessionKey: session.sessionKey,
-    date: getTodayDateString(),
+    date: session.sessionKey.slice(0, 10),
     dayCode: selectedDay,
     completionRate: getCompletionRate(),
     exerciseDone: getCompletedExerciseCount(),
@@ -1331,6 +1380,10 @@ function upsertHistorySummary(summary) {
 }
 
 function saveCurrentSummary({ manual = false, auto = false } = {}) {
+  if (getCurrentPlan().exercises.length > 0 && getCompletedExerciseCount() >= getCurrentPlan().exercises.length) {
+    stopRestTimer();
+    pauseWorkoutTimer();
+  }
   const summary = buildCurrentSummary();
   const hasProgress = summary.setDone > 0 || summary.workoutElapsedSec > 0 || summary.searchCount > 0;
   if (auto && !hasProgress) {
@@ -1652,14 +1705,14 @@ function saveInbodyRecord() {
     return;
   }
 
-  const nextRecords = (state.inbodyRecords || []).filter((item) => item.date !== record.date);
+  const previousRecords = state.inbodyRecords;
+  const nextRecords = (previousRecords || []).filter((item) => item.date !== record.date);
   nextRecords.unshift(record);
   state.inbodyRecords = trimInbodyRecords(nextRecords);
 
   let saved = persistState();
   if (!saved && record.imageDataUrl) {
-    record.imageDataUrl = "";
-    state.inbodyRecords = trimInbodyRecords(state.inbodyRecords);
+    state.inbodyRecords = trimInbodyRecords(nextRecords.map((item) => item.id === record.id ? { ...item, imageDataUrl: "" } : item));
     saved = persistState();
     ui.inbodyMessage.textContent = saved
       ? "브라우저 저장공간이 부족해 수치만 저장했어요. 이미지는 더 작은 파일로 다시 시도해 주세요."
@@ -1670,6 +1723,7 @@ function saveInbodyRecord() {
       : "브라우저 저장공간이 부족해 저장하지 못했어요.";
   }
 
+  if (!saved) state.inbodyRecords = previousRecords;
   if (saved) {
     pendingInbodyImageDataUrl = "";
     if (ui.inbodyImageInput) {
@@ -1693,12 +1747,16 @@ function buildInbodyRecommendations(records) {
   const messages = [];
 
   if (!hasCoreInbodyMetrics(latest)) {
-    messages.push("이미지는 저장됐어요. 체중, 골격근량, 체지방률을 입력하면 운동·식단 조정안을 더 정확하게 만들 수 있습니다.");
+    messages.push("기록을 저장했어요. 체중, 골격근량, 체지방률을 입력하면 운동·식단 조정안을 더 정확하게 만들 수 있습니다.");
     messages.push("현재는 하루 총 8,000-10,000보와 월·수·금 경사 걷기, 토요일 단일 컨디셔닝을 유지하고 저녁 단백질은 빼지 마세요.");
     return messages;
   }
 
   if (previous && hasCoreInbodyMetrics(previous)) {
+    const elapsedDays = Math.round((Date.parse(`${latest.date}T00:00:00Z`) - Date.parse(`${previous.date}T00:00:00Z`)) / 86400000);
+    messages.push(Number.isFinite(elapsedDays) && elapsedDays > 0
+      ? `이전 측정과 ${elapsedDays}일 간격의 변화입니다. 측정 조건에 따른 차이가 있을 수 있습니다.`
+      : "측정 날짜 간격을 확인할 수 없어 변화 속도를 판단하지 않습니다.");
     const weightDiff = latest.weightKg - previous.weightKg;
     const muscleDiff = latest.muscleKg - previous.muscleKg;
     const fatDiff = latest.bodyFatPercent - previous.bodyFatPercent;
@@ -1709,7 +1767,7 @@ function buildInbodyRecommendations(records) {
     if (fatDiff >= 1) {
       messages.push("체지방률이 올랐습니다. 저녁 바나나+프로틴만으로 끝내기보다 단백질 식품과 채소를 고정하고, 음료·간식·야식을 먼저 줄이세요.");
     }
-    if (weightDiff <= -2 && muscleDiff < 0) {
+    if (elapsedDays >= 21 && elapsedDays <= 35 && weightDiff <= -2 && muscleDiff < 0) {
       messages.push("4주 감량 속도가 빠르고 근육도 줄었습니다. 감량보다 근손실 방지가 우선이라 저녁 탄수화물을 조금 늘리세요.");
     }
     if (muscleDiff >= 0.3 && fatDiff <= -0.5) {
@@ -1805,6 +1863,7 @@ function readOptionalNumber(input) {
 }
 
 function normalizeOptionalNumber(value) {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim()) || typeof value === "boolean") return null;
   const number = Number(value);
   return Number.isFinite(number) ? Number(number.toFixed(1)) : null;
 }
@@ -1863,6 +1922,9 @@ function exportAppData() {
 async function importAppData() {
   const file = ui.importDataInput?.files?.[0];
   const previousState = state;
+  const previousReadFailure = storageReadFailure;
+  const previousSnapshot = storageSnapshot;
+  const previousConflict = storageConflict;
   let stateWasReplaced = false;
   if (!file) {
     return;
@@ -1878,27 +1940,47 @@ async function importAppData() {
     if (!isPlainObject(rawState) || !isPlainObject(rawState.sessions)) {
       throw new Error("invalid_backup");
     }
+    if ((rawState.generatedPlanDraft != null && !normalizeGeneratedPlan(rawState.generatedPlanDraft))
+      || (rawState.generatedPlans != null && (!Array.isArray(rawState.generatedPlans) || rawState.generatedPlans.some((plan) => !normalizeGeneratedPlan(plan))))) {
+      throw new Error("invalid_generated_plan");
+    }
+    const candidate = normalizeLoadedState(rawState);
+    // Bind the user's replacement confirmation to the data visible at that moment.
+    const confirmedSnapshot = window.localStorage.getItem(STORAGE_KEY);
     if (!window.confirm("현재 기기의 데이터를 백업 파일 내용으로 교체할까요?")) {
       ui.importDataInput.value = "";
       return;
     }
     stopRestTimer();
-    pauseWorkoutTimer();
-    state = normalizeLoadedState(rawState);
+    if (workoutTimer.intervalId) window.clearInterval(workoutTimer.intervalId);
+    workoutTimer.intervalId = null;
+    workoutTimer.running = false;
+    state = candidate;
     stateWasReplaced = true;
-    prepareLoadedState();
+    prepareLoadedState({ restoreTimer: false });
+    renderAll();
+    // A validated, explicitly confirmed import is the recovery path for unreadable storage.
+    storageReadFailure = "";
+    storageSnapshot = confirmedSnapshot;
+    storageConflict = false;
     if (!persistState()) {
       throw new Error("storage_failed");
     }
-    renderAll();
+    restoreWorkoutTimerIfNeeded();
     ui.inbodyMessage.textContent = "백업 데이터를 복원했어요.";
   } catch (_error) {
     if (stateWasReplaced) {
       state = previousState;
-      prepareLoadedState();
+      storageReadFailure = previousReadFailure;
+      storageSnapshot = previousSnapshot;
+      storageConflict = previousConflict || storageConflict;
+      prepareLoadedState({ restoreTimer: false });
       renderAll();
+      restoreWorkoutTimerIfNeeded({ persist: false });
     }
-    ui.inbodyMessage.textContent = "백업 파일을 복원하지 못했어요. FitMind JSON 파일인지 확인해 주세요.";
+    ui.inbodyMessage.textContent = storageConflict
+      ? "다른 탭에서 데이터가 바뀌어 백업 복원을 중단했습니다. 현재 화면을 백업하고 다른 탭을 닫은 뒤 다시 시도해 주세요."
+      : "백업 파일을 복원하지 못했어요. FitMind JSON 파일인지 확인해 주세요.";
   } finally {
     ui.importDataInput.value = "";
   }
@@ -1913,6 +1995,33 @@ function renderGeneratorPanel() {
   renderGeneratedPlanResult(state.generatedPlanDraft);
   renderSavedGeneratedPlans();
   renderTemplateLists();
+  const loadProfileButton = document.getElementById("loadPlanProfileBtn");
+  if (loadProfileButton) loadProfileButton.disabled = !state.generatedPlanDraft;
+  routinePlanner?.render();
+  if (typeof window.dispatchEvent === "function" && typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("fitmind:state-updated"));
+}
+
+function restoreGeneratorProfile(plan, { includeGoalDetails = false } = {}) {
+  if (!isPlainObject(plan?.profile)) return;
+  const profile = plan.profile;
+  renderGeneratorGoalOptions();
+  for (const [name, values] of [["fitGoals", profile.goals], ["fitDays", profile.days], ["fitInjuryAreas", profile.injuryAreas]]) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(input => { input.checked = Array.isArray(values) && values.includes(input.value); });
+  }
+  for (const [id, key] of [["fitTimeInput", "timeMin"], ["fitHeightInput", "heightCm"], ["fitWeightInput", "weightKg"], ["fitAgeInput", "age"],
+    ["fitSexSelect", "sex"], ["fitExperienceSelect", "experience"], ["fitPlaceSelect", "place"], ["fitDietSelect", "dietPreference"], ["fitInjuryInput", "injury"]]) {
+    const input = document.getElementById(id);
+    if (input) input.value = profile[key] == null ? "" : String(profile[key]);
+  }
+  for (const [id, key] of [["fitEquipmentInput", "equipment"], ["fitAllergyInput", "allergies"]]) {
+    const input = document.getElementById(id);
+    if (input) input.value = Array.isArray(profile[key]) ? profile[key].join(", ") : "";
+  }
+  if (includeGoalDetails) {
+    const details = typeof plan.inputSnapshot?.goalDetails === "string" ? plan.inputSnapshot.goalDetails : "";
+    document.getElementById("aiGoalDetails").value = details;
+    state.aiCoachPreferences.goalDetails = details;
+  }
 }
 
 function renderGeneratorGoalOptions() {
@@ -1943,6 +2052,8 @@ function renderGeneratedPlanResult(plan) {
       <article class="generated-day-card">
         <h4>${escapeHtml(day.day)}요일 · ${escapeHtml(day.part)}</h4>
         <p class="muted">${escapeHtml(day.cardio)}</p>
+        ${Number.isFinite(day.estimatedTotalSec) ? `<p class="muted">예상 총 ${Math.ceil(day.estimatedTotalSec / 60)}분 / 가능 ${escapeHtml(plan.profile.timeMin)}분 · 준비 ${day.warmupSec / 60}분 포함</p>` : ""}
+        ${day.notice ? `<p class="muted">${escapeHtml(day.notice)}</p>` : ""}
         <ul>${exercises}</ul>
       </article>
     `;
@@ -2087,7 +2198,12 @@ function generateAdaptivePlan(profile) {
     const part = dayParts[index % dayParts.length];
     const exercises = selectGeneratedExercises(part, profile, templates.exercises, intensity);
     const cardio = getCardioPlan(profile, part);
-    return { day, part, cardio, exercises };
+    const budget = getGeneratedTimeBudget(profile, part);
+    const estimatedTotalSec = budget.warmupSec + budget.cardioSec + exercises.reduce((sum, item) => sum + estimateGeneratedExerciseSec(item), 0);
+    const notice = exercises.length === 0
+      ? `${part}에 맞는 운동 후보가 부족합니다. 장소·장비·주의 부위를 확인하거나 해당 부위 템플릿을 추가해 주세요.`
+      : "세트당 수행 45초, 종목당 준비·이동 1분으로 계산한 예상입니다. 실제로 오래 걸리면 세트를 줄여 주세요.";
+    return { day, part, cardio, exercises, ...budget, estimatedTotalSec, notice };
   });
   const meal = buildGeneratedMeal(profile, templates.meals);
   const title = `${profile.goals.slice(0, 3).join(" · ")} 맞춤 ${profile.days.length}일 계획`;
@@ -2129,7 +2245,7 @@ function selectGeneratedExercises(part, profile, templates, intensity) {
     return placeOk && injuryOk;
   });
   const equipmentPool = placeAndInjuryPool.filter((item) => {
-    if (profile.equipment.length === 0 || item.equipment.length === 0) {
+    if (item.equipment.length === 0) {
       return true;
     }
     return item.equipment.some((tool) => {
@@ -2137,23 +2253,44 @@ function selectGeneratedExercises(part, profile, templates, intensity) {
       return normalized === "맨몸" || equipmentText.includes(normalized);
     });
   });
-  const pool = equipmentPool.length ? equipmentPool : placeAndInjuryPool;
-  const partPool = pool.filter((item) => item.part === part || (part === "전신" && item.part !== "회복"));
-  const fallbackPool = pool;
+  const partPool = equipmentPool.filter((item) => item.part === part || (part === "전신" && !["회복", "유산소"].includes(item.part)));
   const targetCount = profile.timeMin < 40 ? 3 : profile.timeMin < 70 ? 4 : 5;
-  const selected = uniqueById(partPool.concat(fallbackPool))
+  const selected = uniqueById(partPool)
     .sort((a, b) => getTemplateGoalScore(b, profile.goals) - getTemplateGoalScore(a, profile.goals))
     .slice(0, targetCount);
 
-  return selected.map((item) => {
-    const isCardio = item.part === "유산소";
-    return {
+  const budget = getGeneratedTimeBudget(profile, part);
+  let remainingSec = profile.timeMin * 60 - budget.warmupSec - budget.cardioSec;
+  return selected.map((item, index) => {
+    const shareSec = remainingSec / (selected.length - index);
+    const sets = Math.min(intensity.sets, Math.floor((shareSec - 60 + intensity.restSec) / (45 + intensity.restSec)));
+    if (sets < 1) return null;
+    const result = {
       name: item.name,
-      sets: isCardio ? 1 : intensity.sets,
-      reps: isCardio ? getCardioDuration(profile) : intensity.reps,
-      restSec: isCardio ? 0 : intensity.restSec
+      part: item.part,
+      equipment: [...item.equipment],
+      sets,
+      reps: intensity.reps,
+      restSec: intensity.restSec
     };
-  });
+    remainingSec -= estimateGeneratedExerciseSec(result);
+    return result;
+  }).filter(Boolean);
+}
+
+function estimateGeneratedExerciseSec(item) {
+  return item.sets * 45 + Math.max(0, item.sets - 1) * item.restSec + 60;
+}
+
+function getGeneratedTimeBudget(profile, part) {
+  const totalSec = profile.timeMin * 60;
+  const warmupSec = Math.min(300, Math.max(120, Math.floor(totalSec * 0.15 / 60) * 60));
+  const includeCardio = profile.goals.some((goal) => ["체중감량", "체력향상", "건강관리"].includes(goal));
+  const cardioSec = includeCardio ? Math.min(["하체", "하체 후면"].includes(part) ? 600 : 1500, Math.floor(totalSec * 0.25 / 60) * 60) : 0;
+    return {
+      warmupSec,
+      cardioSec
+    };
 }
 
 function getTemplateGoalScore(template, goals) {
@@ -2171,14 +2308,8 @@ function getIntensityByExperience(experience) {
 }
 
 function getCardioPlan(profile, part) {
-  const shouldInclude = profile.goals.some((goal) => ["체중감량", "체력향상", "건강관리"].includes(goal));
-  if (!shouldInclude) {
-    return "유산소 선택: 컨디션이 좋으면 5-10분 가볍게";
-  }
-  if (part === "하체" || part === "하체 후면") {
-    return "유산소 포함: 하체 피로를 고려해 5-10분 아주 가볍게";
-  }
-  return `유산소 포함: ${getCardioDuration(profile)} 대화 가능한 강도`;
+  const minutes = getGeneratedTimeBudget(profile, part).cardioSec / 60;
+  return minutes > 0 ? `유산소 포함: ${minutes}분 대화 가능한 강도 · 통증이 생기면 중단` : "이 시간 예산에는 추가 유산소를 포함하지 않았습니다.";
 }
 
 function getCardioDuration(profile) {
@@ -2241,6 +2372,7 @@ function saveGeneratedPlanDraft() {
   }
   const saved = {
     ...state.generatedPlanDraft,
+    originPlanId: state.generatedPlanDraft.originPlanId || state.generatedPlanDraft.id,
     id: `saved_${Date.now().toString(36)}`,
     savedAt: new Date().toISOString(),
     savedLabel: `${formatDateLabel(new Date())} ${state.generatedPlanDraft.title}`
@@ -2420,10 +2552,16 @@ function normalizeGeneratorTemplates(raw) {
   if (!isPlainObject(raw)) {
     return fallback;
   }
-  const exercises = Array.isArray(raw.exercises)
+  let exercises = Array.isArray(raw.exercises)
     ? raw.exercises.map(normalizeExerciseTemplate).filter(Boolean).filter((item) => !isRetiredExerciseTemplate(item))
     : fallback.exercises;
   const meals = Array.isArray(raw.meals) ? raw.meals.map(normalizeMealTemplate).filter(Boolean) : fallback.meals;
+  const newAlternativeIds = new Set(["tpl-bodyweight-squat", "tpl-glute-bridge", "tpl-push-up", "tpl-band-row"]);
+  const previousDefaults = fallback.exercises.filter((item) => !newAlternativeIds.has(item.id));
+  // Upgrade an untouched old default set; retain user-added, edited or deleted templates.
+  if (exercises.length === previousDefaults.length && exercises.every((item, index) => JSON.stringify(item) === JSON.stringify(previousDefaults[index]))) {
+    exercises = fallback.exercises;
+  }
   return {
     exercises: exercises.length ? exercises : fallback.exercises,
     meals: meals.length ? meals : fallback.meals
@@ -2440,7 +2578,7 @@ function normalizeExerciseTemplate(item) {
   if (!isPlainObject(item) || typeof item.name !== "string" || typeof item.part !== "string") {
     return null;
   }
-  return {
+  const normalized = {
     id: typeof item.id === "string" ? item.id : `tpl-${Date.now().toString(36)}`,
     name: item.name,
     part: item.part,
@@ -2449,6 +2587,15 @@ function normalizeExerciseTemplate(item) {
     goals: normalizeStringArray(item.goals),
     avoid: normalizeStringArray(item.avoid)
   };
+  const legacy = LEGACY_GENERATOR_TAGS[normalized.id];
+  const current = DEFAULT_GENERATOR_TEMPLATES.exercises.find((entry) => entry.id === normalized.id);
+  if (legacy && current && normalized.name === current.name
+    && JSON.stringify(normalized.place) === JSON.stringify(legacy.place)
+    && JSON.stringify(normalized.equipment) === JSON.stringify(legacy.equipment)) {
+    normalized.place = [...current.place];
+    normalized.equipment = [...current.equipment];
+  }
+  return normalized;
 }
 
 function normalizeMealTemplate(item) {
@@ -2602,16 +2749,16 @@ function maybeStartWorkoutTimer() {
   }
 }
 
-function restoreWorkoutTimerIfNeeded() {
+function restoreWorkoutTimerIfNeeded({ persist = true } = {}) {
   const session = getCurrentSession();
   if (!session.workoutTimerRunning) {
     return;
   }
-  applyWorkoutElapsedTick(session);
-  startWorkoutTimer();
+  applyWorkoutElapsedTick(session, { suppressPersist: !persist });
+  startWorkoutTimer({ persist });
 }
 
-function startWorkoutTimer() {
+function startWorkoutTimer({ persist = true } = {}) {
   const session = getCurrentSession();
   if (workoutTimer.running) {
     return;
@@ -2623,12 +2770,12 @@ function startWorkoutTimer() {
     applyWorkoutElapsedTick(getCurrentSession());
     renderSummary();
   }, 1000);
-  persistState();
+  if (persist) persistState();
 }
 
-function pauseWorkoutTimer() {
+function pauseWorkoutTimer({ persist = true } = {}) {
   const session = getCurrentSession();
-  applyWorkoutElapsedTick(session);
+  applyWorkoutElapsedTick(session, { suppressPersist: !persist });
   if (workoutTimer.intervalId) {
     window.clearInterval(workoutTimer.intervalId);
   }
@@ -2637,7 +2784,7 @@ function pauseWorkoutTimer() {
   session.workoutTimerRunning = false;
   session.workoutLastTickMs = null;
   session.updatedAt = new Date().toISOString();
-  persistState();
+  if (persist) persistState();
 }
 
 function resetWorkoutTimer() {
@@ -2650,7 +2797,7 @@ function resetWorkoutTimer() {
   persistState();
 }
 
-function applyWorkoutElapsedTick(session, { forcePersist = false } = {}) {
+function applyWorkoutElapsedTick(session, { forcePersist = false, suppressPersist = false } = {}) {
   if (!session || !session.workoutTimerRunning) {
     return;
   }
@@ -2663,7 +2810,7 @@ function applyWorkoutElapsedTick(session, { forcePersist = false } = {}) {
   session.workoutElapsedSec += deltaSec;
   session.workoutLastTickMs = lastTick + deltaSec * 1000;
   session.updatedAt = new Date().toISOString();
-  if (forcePersist || now - lastWorkoutPersistMs >= WORKOUT_PERSIST_INTERVAL_MS) {
+  if (!suppressPersist && (forcePersist || now - lastWorkoutPersistMs >= WORKOUT_PERSIST_INTERVAL_MS)) {
     if (persistState()) {
       lastWorkoutPersistMs = now;
     }
@@ -2707,6 +2854,8 @@ function activateExercise(exerciseId) {
   renderCurrentExercise();
   renderQueue();
   renderTimer();
+  workoutJournal?.followActive?.();
+  workoutJournal?.render();
   announce(saved
     ? `${target.name}, 이 운동부터 먼저 진행하자.`
     : "운동은 바꿨지만 순서를 저장하지 못했어. 저장공간을 확인해 줘.");
@@ -2802,6 +2951,8 @@ function normalizePlanForDay(rawPlan, dayCode) {
     cardioMain: typeof source.cardioMain === "string" ? source.cardioMain : base.cardioMain,
     cardioTime: typeof source.cardioTime === "string" ? source.cardioTime : base.cardioTime,
     cardioPlan: typeof source.cardioPlan === "string" ? source.cardioPlan : (base.cardioPlan || ""),
+    sourcePlanId: typeof source.sourcePlanId === "string" ? source.sourcePlanId : "",
+    sourcePlanTitle: typeof source.sourcePlanTitle === "string" ? source.sourcePlanTitle : "",
     exercises: replaceRetiredExercises(exercises, dayCode)
   };
 }
@@ -2902,7 +3053,7 @@ function getPlanByDay(dayCode) {
 }
 
 function getCurrentPlan() {
-  return getPlanByDay(selectedDay);
+  return getCurrentSession()?.planSnapshot || getPlanByDay(selectedDay);
 }
 
 function buildYoutubeSearchUrl(query) {
@@ -3100,7 +3251,7 @@ function syncSessionToCurrentPlan(dayCode = selectedDay) {
   if (!session) {
     return;
   }
-  const plan = getPlanByDay(dayCode);
+  const plan = session.planSnapshot || getPlanByDay(dayCode);
   const exercises = Array.isArray(plan.exercises) ? plan.exercises : [];
   const nextSetDone = {};
   const nextCompleted = {};
@@ -3112,7 +3263,7 @@ function syncSessionToCurrentPlan(dayCode = selectedDay) {
     if (clamped > 0) {
       nextSetDone[item.id] = clamped;
     }
-    if (Boolean(session.completedExerciseMap[item.id]) || clamped >= item.sets.length) {
+    if (clamped >= item.sets.length) {
       nextCompleted[item.id] = true;
     }
   });
@@ -3123,6 +3274,11 @@ function syncSessionToCurrentPlan(dayCode = selectedDay) {
     session.activeExerciseId = exercises[0] ? exercises[0].id : null;
   }
   session.updatedAt = new Date().toISOString();
+  if (dayCode === selectedDay && Array.isArray(state.history)) {
+    state.history = state.history.map((entry) => entry.sessionKey === session.sessionKey
+      ? { ...entry, ...buildCurrentSummary(), savedAt: entry.savedAt }
+      : entry);
+  }
 }
 
 function escapeHtml(value) {
@@ -3144,6 +3300,8 @@ function createEmptySession(dayCode) {
     dayCode,
     setDoneByExercise: {},
     completedExerciseMap: {},
+    actualSetsByExercise: {},
+    exerciseNamesById: {},
     searchCount: 0,
     workoutElapsedSec: 0,
     workoutTimerRunning: false,
@@ -3166,6 +3324,8 @@ function ensureSession(dayCode) {
   }
   state.currentSessionKey = key;
   const session = state.sessions[key];
+  session.sessionKey = key;
+  session.dayCode = dayCode;
   if (!isPlainObject(session.setDoneByExercise)) {
     session.setDoneByExercise = {};
   }
@@ -3207,6 +3367,8 @@ function createInitialState() {
     inbodyRecords: [],
     generatedPlans: [],
     generatedPlanDraft: null,
+    routineChange: null,
+    aiCoachPreferences: { model: "", reasoningEffort: "low", goalDetails: "", inbodyId: "", adaptationDays: 7, adaptationDifficulty: "" },
     generatorGoals: [...FIT_GOALS],
     generatorTemplates: cloneGeneratorTemplates(DEFAULT_GENERATOR_TEMPLATES)
   };
@@ -3214,6 +3376,31 @@ function createInitialState() {
 
 function isPlainObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeGeneratedPlan(plan) {
+  if (!isPlainObject(plan) || !Array.isArray(plan.schedule)
+    || !isPlainObject(plan.meal) || !Array.isArray(plan.meal.items)
+    || plan.meal.items.some((item) => typeof item !== "string")) return null;
+  for (const day of plan.schedule) {
+    if (!isPlainObject(day) || typeof day.day !== "string" || typeof day.part !== "string" || !Array.isArray(day.exercises)) return null;
+    for (const item of day.exercises) {
+      if (!isPlainObject(item) || typeof item.name !== "string" || typeof item.reps !== "string"
+        || !Number.isInteger(item.sets) || item.sets < 1 || item.sets > 100
+        || !Number.isFinite(item.restSec) || item.restSec < 0 || item.restSec > 600) return null;
+    }
+  }
+  const profile = isPlainObject(plan.profile) ? plan.profile : {};
+  return {
+    ...plan,
+    id: typeof plan.id === "string" ? plan.id : `generated_${Date.now().toString(36)}`,
+    title: typeof plan.title === "string" ? plan.title : "맞춤 계획",
+    explanation: typeof plan.explanation === "string" ? plan.explanation : "",
+    profile: { ...profile, goals: normalizeStringArray(profile.goals), days: normalizeStringArray(profile.days) },
+    schedule: plan.schedule.map((day) => ({ ...day, cardio: typeof day.cardio === "string" ? day.cardio : "", exercises: day.exercises.map((item) => ({ ...item })) })),
+    meal: { ...plan.meal, name: typeof plan.meal.name === "string" ? plan.meal.name : "식단 예시", items: [...plan.meal.items],
+      note: typeof plan.meal.note === "string" ? plan.meal.note : "", proteinNote: typeof plan.meal.proteinNote === "string" ? plan.meal.proteinNote : "" }
+  };
 }
 
 function normalizeLoadedState(parsed) {
@@ -3225,12 +3412,25 @@ function normalizeLoadedState(parsed) {
   initial.planVersion = PLAN_VERSION;
   initial.analyticsScope = ANALYTICS_SCOPES.includes(parsed.analyticsScope) ? parsed.analyticsScope : "week";
   initial.currentSessionKey = typeof parsed.currentSessionKey === "string" ? parsed.currentSessionKey : null;
+  if (isPlainObject(parsed.aiCoachPreferences)) {
+    if (["", "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"].includes(parsed.aiCoachPreferences.reasoningEffort)) {
+      initial.aiCoachPreferences.reasoningEffort = parsed.aiCoachPreferences.reasoningEffort;
+    }
+    for (const [key, limit] of [["model", 160], ["goalDetails", 2000], ["inbodyId", 200], ["adaptationDifficulty", 1000]]) {
+      if (typeof parsed.aiCoachPreferences[key] === "string") initial.aiCoachPreferences[key] = parsed.aiCoachPreferences[key].slice(0, limit);
+    }
+    if (Array.isArray(parsed.aiCoachPreferences.inbodyIds)) initial.aiCoachPreferences.inbodyIds = normalizeStringArray(parsed.aiCoachPreferences.inbodyIds).slice(0, 6);
+    initial.aiCoachPreferences.adaptationDays = parsed.aiCoachPreferences.adaptationDays === 28 ? 28 : 7;
+  }
 
   if (isPlainObject(parsed.sessions)) {
     Object.keys(parsed.sessions).forEach((sessionKey) => {
       const session = parsed.sessions[sessionKey];
       if (isPlainObject(session)) {
         initial.sessions[sessionKey] = { ...session };
+        if (isPlainObject(session.planSnapshot)) initial.sessions[sessionKey].planSnapshot = normalizePlanForDay(session.planSnapshot, session.dayCode);
+        else delete initial.sessions[sessionKey].planSnapshot;
+        if (window.WorkoutJournal) initial.sessions[sessionKey].actualSetsByExercise = window.WorkoutJournal.normalizeActualSets(session.actualSetsByExercise);
       }
     });
   }
@@ -3247,13 +3447,13 @@ function normalizeLoadedState(parsed) {
 
   if (Array.isArray(parsed.generatedPlans)) {
     initial.generatedPlans = parsed.generatedPlans
-      .filter((entry) => isPlainObject(entry))
-      .map((entry) => ({ ...entry }))
+      .map(normalizeGeneratedPlan)
+      .filter(Boolean)
       .slice(0, 12);
   }
 
   if (isPlainObject(parsed.generatedPlanDraft)) {
-    initial.generatedPlanDraft = { ...parsed.generatedPlanDraft };
+    initial.generatedPlanDraft = normalizeGeneratedPlan(parsed.generatedPlanDraft);
   }
 
   if (isPlainObject(parsed.generatorTemplates)) {
@@ -3269,28 +3469,66 @@ function normalizeLoadedState(parsed) {
     initial.customPlans = { ...parsed.customPlans };
   }
 
+  if (isPlainObject(parsed.routineChange) && isPlainObject(parsed.routineChange.days)) {
+    const days = {};
+    for (const [code, change] of Object.entries(parsed.routineChange.days)) {
+      if (ROUTINE_PLAN[code] && isPlainObject(change) && isPlainObject(change.after)) {
+        days[code] = { before: isPlainObject(change.before) ? normalizePlanForDay(change.before, code) : null, after: normalizePlanForDay(change.after, code) };
+      }
+    }
+    if (Object.keys(days).length) initial.routineChange = { ...parsed.routineChange, days };
+  }
+
   return initial;
 }
 
 function loadState() {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return createInitialState();
-  }
   try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    storageSnapshot = raw;
+    if (!raw) return createInitialState();
     return normalizeLoadedState(JSON.parse(raw));
-  } catch (_error) {
+  } catch (error) {
+    storageReadFailure = error instanceof SyntaxError
+      ? "저장 데이터가 손상되어 임시 모드로 시작했습니다. 기존 데이터는 덮어쓰지 않습니다. 정상 백업을 복원해 주세요."
+      : "이 브라우저의 저장 데이터를 읽지 못해 임시 모드로 시작했습니다. 저장 접근 권한을 확인한 뒤 새로고침해 주세요. 기존 데이터는 덮어쓰지 않습니다.";
     return createInitialState();
   }
 }
 
-function persistState() {
+function checkStorageSnapshot() {
+  if (storageConflict) {
+    setStorageNotice(STORAGE_CONFLICT_MESSAGE);
+    return false;
+  }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    setStorageNotice("");
+    if (window.localStorage.getItem(STORAGE_KEY) !== storageSnapshot) {
+      storageConflict = true;
+      setStorageNotice(STORAGE_CONFLICT_MESSAGE);
+      return false;
+    }
     return true;
   } catch (_error) {
-    setStorageNotice("이 기기의 저장공간이 부족해 변경사항을 저장하지 못했습니다. 데이터 백업 후 오래된 인바디 기록을 정리해 주세요.");
+    setStorageNotice("현재 저장 데이터를 확인할 수 없어 덮어쓰기를 중단했습니다. 이 화면을 백업한 뒤 저장 접근 권한을 확인해 주세요.");
+    return false;
+  }
+}
+
+function persistState() {
+  if (storageReadFailure) {
+    setStorageNotice(storageReadFailure);
+    return false;
+  }
+  if (!checkStorageSnapshot()) return false;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    storageSnapshot = JSON.stringify(state);
+    setStorageNotice("");
+    return true;
+  } catch (error) {
+    setStorageNotice(error.name === "SecurityError"
+      ? "브라우저가 저장 접근을 차단해 변경사항을 저장하지 못했습니다. 저장 접근 권한을 확인해 주세요."
+      : "이 기기의 저장공간이 부족하거나 저장을 사용할 수 없어 변경사항을 저장하지 못했습니다. 데이터 백업 후 저장 설정과 공간을 확인해 주세요.");
     return false;
   }
 }
@@ -3303,15 +3541,16 @@ function setStorageNotice(message) {
   ui.storageNotice.hidden = !message;
 }
 
-function prepareLoadedState() {
+function prepareLoadedState({ restoreTimer = true } = {}) {
   selectedDay = selectInitialDay();
   analyticsScope = ANALYTICS_SCOPES.includes(state.analyticsScope) ? state.analyticsScope : "week";
   normalizeCustomPlans();
   ensureGeneratorState();
   state.analyticsScope = analyticsScope;
+  restoreGeneratorProfile(state.generatedPlanDraft);
   editorSelectedExerciseId = null;
   ensureSession(selectedDay);
-  restoreWorkoutTimerIfNeeded();
+  if (restoreTimer) restoreWorkoutTimerIfNeeded();
 }
 
 function selectInitialDay() {

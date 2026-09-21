@@ -3,3 +3,9 @@
 .playwright-cli/
 output/
 tests/
+server/
+docs/
+supabase/
+README.md
+AGENTS.md
+.env*

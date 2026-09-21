@@ -1474,6 +1474,54 @@ input[type="range"] {
 
 }
 
+.ai-coach-card {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid var(--focus-ring, #2563eb);
+  border-radius: 16px;
+  background: #f3f8ff;
+  min-width: 0;
+}
+.ai-coach-card h3, .ai-coach-card p { margin: 0; }
+.ai-connection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ai-status { font-weight: 600; overflow-wrap: anywhere; }
+.ai-data-note { font-size: 0.82rem; line-height: 1.6; color: #475569; }
+.ai-result-meta { padding: 10px 12px; border-radius: 10px; background: #eaf2ff; font-size: 0.85rem; overflow-wrap: anywhere; }
+.ai-login-link { overflow-wrap: anywhere; }
+.ai-coach-card [hidden], .ai-result-meta[hidden] { display: none; }
+.ai-coach-card[aria-busy="true"] { border-style: dashed; }
+
+.routine-apply-panel, .workout-journal {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  min-width: 0;
+}
+.routine-apply-panel:empty, .workout-journal:empty { display: none; }
+.routine-apply-panel .btn, .workout-journal .btn { margin: 4px 4px 4px 0; }
+.plan-diff { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.plan-diff h4 { margin: 0 0 8px; }
+.plan-diff-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.plan-diff-columns > div { min-width: 0; overflow-wrap: anywhere; }
+.plan-diff-columns ul { padding-left: 20px; font-size: .88rem; }
+.plan-diff-columns li { margin-bottom: 6px; }
+.journal-table-scroll { overflow-x: auto; max-width: 100%; }
+.journal-table-scroll table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.journal-table-scroll th, .journal-table-scroll td { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; overflow-wrap: anywhere; }
+.workout-journal details { margin-top: 12px; }
+.workout-journal summary { cursor: pointer; padding: 8px 0; }
+.workout-journal label { display: grid; gap: 5px; }
+.workout-journal .generator-field-grid { margin: 10px 0; }
+.ai-coach-card details { max-width: 100%; overflow-wrap: anywhere; }
+.ai-coach-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+@media (max-width: 700px) {
+  .plan-diff-columns { grid-template-columns: 1fr; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

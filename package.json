@@ -2,7 +2,9 @@
   "name": "fitmind-gym-routine",
   "private": true,
   "scripts": {
+    "build": "node scripts/build-static.mjs",
+    "start": "node server/index.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check app.js && npm test"
+    "check": "node --check app.js && node --check routine-planner.js && node --check workout-journal.js && node --check ai-coach.js && node --check server/index.mjs && npm test"
   }
 }
